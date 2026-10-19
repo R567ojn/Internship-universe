@@ -1,0 +1,13 @@
+{
+  "name": "internhub-tools",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Server-side one-off scripts for InternHub (grant/revoke the admin custom claim). Requires a Firebase service-account key — never commit it.",
+  "bin": { "set-admin-claim": "setAdminClaim.js" },
+  "scripts": {
+    "grant-admin": "node setAdminClaim.js"
+  },
+  "dependencies": {
+    "firebase-admin": "^12.0.0"
+  }
+}

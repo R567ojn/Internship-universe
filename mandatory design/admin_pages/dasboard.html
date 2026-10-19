@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>InternHub Admin — Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* ============ ADMIN TOKENS — InternHub "control room" ============ */
+:root{
+  --bg:#0b110d; --panel:#111a14; --panel2:#0e1510;
+  --line:rgba(151,255,196,.10); --line2:rgba(151,255,196,.22);
+  --txt:#e9f6ee; --mut:#8fa89a; --dim:#5f7468;
+  --acc:#2fd57f; --acc-ink:#04150b; --green:#17925a; --mint:#7fe0ae; --mint2:#c9f4dc;
+  --amber:#e5a144; --amber-bg:rgba(229,161,68,.13);
+  --coral:#e0705c; --coral-bg:rgba(224,112,92,.13);
+  --lime:#b8e08a; --lime-bg:rgba(184,224,138,.13);
+  --sage:#9db4a6; --sage-bg:rgba(157,180,166,.12);
+  --r:14px;
+  --sh1:0 1px 0 rgba(255,255,255,.03) inset,0 10px 30px -18px rgba(0,0,0,.7);
+  --fd:"Fraunces",Georgia,serif; --fs:"Inter",-apple-system,"Segoe UI",sans-serif; --fm:"JetBrains Mono",ui-monospace,monospace;
+  --ease:cubic-bezier(.4,0,.2,1);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--txt);font:14px/1.55 var(--fs);-webkit-font-smoothing:antialiased;
+  background-image:radial-gradient(900px 340px at 70% -10%,rgba(47,213,127,.07),transparent 60%)}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+input{font:inherit}
+svg{display:block;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+::selection{background:rgba(47,213,127,.35)}
+:focus-visible{outline:2px solid var(--acc);outline-offset:2px;border-radius:6px}
+.eyebrow{font:500 10.5px var(--fm);letter-spacing:.14em;text-transform:uppercase;color:var(--dim)}
+.display{font-family:var(--fd);font-weight:600;letter-spacing:-.01em}
+
+/* ============ ADMIN SIDEBAR ============ */
+.shell{display:flex;min-height:100vh}
+.asb{width:256px;flex:none;background:var(--panel2);border-right:1px solid var(--line);position:sticky;top:0;height:100vh;overflow:hidden;display:flex;flex-direction:column;transition:width .35s var(--ease);z-index:120}
+body.asb-collapsed .asb{width:78px}
+.asb-top{display:flex;align-items:center;gap:10px;padding:18px 16px 14px}
+.logo{width:30px;height:30px;flex:none;border-radius:9px;background:var(--green);display:grid;place-items:center;color:#eafff3}
+.logo svg{width:15px;height:15px;stroke-width:2.4}
+.brand-t{min-width:0;white-space:nowrap;transition:opacity .2s}
+.brand-t b{font-size:15.5px;font-weight:700}
+.brand-t .tag{font:600 9px var(--fm);letter-spacing:.12em;color:var(--acc);border:1px solid var(--line2);border-radius:5px;padding:2px 6px;margin-left:7px;vertical-align:2px}
+body.asb-collapsed .brand-t{opacity:0;width:0;overflow:hidden}
+.asb-collapse{margin-left:auto;width:30px;height:30px;border-radius:8px;display:grid;place-items:center;color:var(--mut);transition:.2s}
+.asb-collapse:hover{background:rgba(151,255,196,.08);color:var(--mint)}
+.asb-collapse svg{width:15px;height:15px;transition:transform .3s var(--ease)}
+body.asb-collapsed .asb-collapse svg{transform:rotate(180deg)}
+body.asb-collapsed .asb-collapse{margin-left:0}
+.asb-nav{flex:1;overflow-y:auto;overflow-x:hidden;padding:6px 14px;scrollbar-width:none;display:flex;flex-direction:column;gap:3px}
+.asb-lbl{padding:14px 12px 7px;transition:opacity .2s}
+body.asb-collapsed .asb-lbl{opacity:0;height:8px;padding:4px 0}
+.anav{position:relative;display:flex;align-items:center;gap:12px;width:100%;padding:10px 12px;border-radius:10px;color:var(--mut);font-size:13.5px;font-weight:500;text-align:left;transition:.2s}
+.anav:hover{background:rgba(151,255,196,.06);color:var(--mint2)}
+.anav.on{background:rgba(47,213,127,.12);color:var(--mint);font-weight:600;box-shadow:inset 2px 0 0 var(--acc)}
+.anav .ico{flex:none;width:20px;height:20px;display:grid;place-items:center}
+.anav .ico svg{width:17px;height:17px}
+.anav .txt{white-space:nowrap;max-width:160px;transition:max-width .3s var(--ease),opacity .2s}
+body.asb-collapsed .txt{max-width:0;opacity:0;overflow:hidden}
+body.asb-collapsed .anav{justify-content:center;padding:10px}
+.abadge{position:absolute;right:10px;top:50%;transform:translateY(-50%);min-width:20px;height:19px;padding:0 6px;border-radius:999px;background:var(--amber);color:#241503;font:700 10.5px/19px var(--fs);text-align:center}
+body.asb-collapsed .abadge{right:7px;top:6px;transform:none;min-width:15px;height:15px;font-size:9px;line-height:15px;padding:0 3px}
+.tip{position:absolute;left:calc(100% + 10px);top:50%;transform:translateY(-50%);background:#1c2a20;border:1px solid var(--line2);color:var(--mint2);font-size:12px;padding:5px 10px;border-radius:7px;white-space:nowrap;opacity:0;pointer-events:none;transition:opacity .2s;z-index:200}
+body.asb-collapsed .anav:hover .tip,body.asb-collapsed .acct:hover .tip,body.asb-collapsed .alogout:hover .tip{opacity:1}
+/* account bottom */
+.asb-acct{border-top:1px solid var(--line);padding:12px;display:flex;flex-direction:column;gap:6px}
+.acct{position:relative;display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:11px;transition:.2s;text-align:left;width:100%}
+.acct:hover{background:rgba(151,255,196,.06)}
+.acct .av{width:36px;height:36px;flex:none;border-radius:50%;background:linear-gradient(140deg,var(--green),#0a3d26);color:var(--mint2);display:grid;place-items:center;font:700 12.5px var(--fs);border:1px solid var(--line2)}
+.acct .inf{min-width:0;white-space:nowrap;transition:opacity .2s}
+.acct .nm{display:block;font-size:13px;font-weight:600}
+.acct .rl{display:block;font:500 10px var(--fm);letter-spacing:.1em;text-transform:uppercase;color:var(--acc)}
+body.asb-collapsed .inf{opacity:0;width:0;overflow:hidden}
+body.asb-collapsed .acct{justify-content:center}
+.alogout{position:relative;display:flex;align-items:center;gap:12px;width:100%;padding:9px 12px;border-radius:10px;color:var(--mut);font-size:13px;font-weight:500;transition:.2s}
+.alogout:hover{background:var(--coral-bg);color:var(--coral)}
+.alogout .ico svg{width:16px;height:16px}
+.alogout .txt{white-space:nowrap;transition:max-width .3s var(--ease),opacity .2s}
+body.asb-collapsed .txt{max-width:0;opacity:0;overflow:hidden}
+body.asb-collapsed .alogout{justify-content:center}
+.backdrop{position:fixed;inset:0;background:rgba(0,0,0,.5);opacity:0;pointer-events:none;transition:opacity .3s;z-index:110}
+body.asb-open .backdrop{opacity:1;pointer-events:auto}
+
+/* ============ MAIN ============ */
+.amain{flex:1;min-width:0;padding:26px clamp(16px,2.6vw,34px) 44px}
+/* header */
+.ahead{display:flex;align-items:flex-start;gap:16px;flex-wrap:wrap;margin-bottom:20px}
+.ahead h1{font-size:clamp(22px,2.6vw,28px)}
+.ahead .sub{color:var(--mut);font-size:13.5px;margin-top:4px}
+.ahead .sub .mono{font:500 10.5px var(--fm);letter-spacing:.12em;color:var(--dim);text-transform:uppercase;margin-left:10px}
+.ahead-r{margin-left:auto;display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+.searchbox{display:flex;align-items:center;gap:9px;background:var(--panel);border:1px solid var(--line);border-radius:11px;padding:9px 13px;width:250px;transition:.2s}
+.searchbox:focus-within{border-color:var(--line2);box-shadow:0 0 0 3px rgba(47,213,127,.12)}
+.searchbox svg{width:15px;height:15px;color:var(--dim);flex:none}
+.searchbox input{flex:1;min-width:0;background:none;border:0;outline:0;color:var(--txt);font-size:13px}
+.searchbox input::placeholder{color:var(--dim)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border-radius:10px;font-weight:600;font-size:13px;padding:9px 15px;transition:.2s var(--ease);white-space:nowrap}
+.btn svg{width:15px;height:15px}
+.btn.primary{background:var(--acc);color:var(--acc-ink);font-weight:700}
+.btn.primary:hover{filter:brightness(1.12);transform:translateY(-1px)}
+.btn.ghostd{background:var(--panel);border:1px solid var(--line);color:var(--mut)}
+.btn.ghostd:hover{border-color:var(--line2);color:var(--mint2)}
+.btn.sm{padding:7px 12px;font-size:12px;border-radius:9px}
+.btn.amber{background:var(--amber-bg);border:1px solid rgba(229,161,68,.4);color:var(--amber)}
+.btn.amber:hover{background:rgba(229,161,68,.22)}
+.btn.coral{background:var(--coral-bg);border:1px solid rgba(224,112,92,.4);color:var(--coral)}
+.btn.coral:hover{background:rgba(224,112,92,.22)}
+.icon-btn{position:relative;width:38px;height:38px;border-radius:10px;background:var(--panel);border:1px solid var(--line);display:grid;place-items:center;color:var(--mut);transition:.2s}
+.icon-btn:hover{border-color:var(--line2);color:var(--mint)}
+.icon-btn svg{width:16px;height:16px}
+.icon-btn .dot{position:absolute;top:8px;right:9px;width:7px;height:7px;border-radius:50%;background:var(--amber);border:2px solid var(--panel2)}
+/* quick actions strip */
+.qbar{display:flex;gap:9px;flex-wrap:wrap;margin-bottom:20px}
+/* cards */
+.card{background:linear-gradient(180deg,var(--panel),var(--panel2));border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--sh1)}
+.card-h{display:flex;align-items:baseline;gap:10px;padding:16px 18px 0}
+.card-h h2{font-size:15px;font-weight:700}
+.card-h .note{margin-left:auto;font:500 10.5px var(--fm);letter-spacing:.1em;text-transform:uppercase;color:var(--dim)}
+.linklike{font-size:12px;font-weight:600;color:var(--acc);margin-left:auto}
+.linklike:hover{text-decoration:underline}
+/* stats */
+.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin-bottom:16px}
+.stat{padding:16px 18px;position:relative;overflow:hidden;transition:border-color .25s,transform .25s var(--ease)}
+.stat:hover{border-color:var(--line2);transform:translateY(-2px)}
+.stat .lb{font:500 10.5px var(--fm);letter-spacing:.13em;text-transform:uppercase;color:var(--dim)}
+.stat .vl{display:flex;align-items:baseline;gap:9px;margin-top:8px}
+.stat .vl b{font-size:26px;font-weight:800;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.stat .dl{font:600 11px var(--fm);border-radius:6px;padding:3px 7px}
+.dl.up{background:rgba(47,213,127,.13);color:var(--acc)}
+.dl.warn{background:var(--amber-bg);color:var(--amber)}
+.stat .sp{position:absolute;right:16px;bottom:16px;opacity:.9}
+.stat.attn{border-color:rgba(229,161,68,.35)}
+.stat.attn .vl b{color:var(--amber)}
+.ring{position:absolute;right:16px;top:16px}
+/* rows layout */
+.row1{display:grid;grid-template-columns:minmax(0,1.62fr) minmax(0,1fr);gap:14px;margin-bottom:16px}
+.row2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.45fr);gap:14px}
+/* queue */
+.qrow{display:flex;align-items:center;gap:13px;padding:13px 18px;border-top:1px solid var(--line);transition:background .2s;animation:rowin .4s var(--ease) both}
+@keyframes rowin{from{opacity:0;transform:translateY(-6px)}}
+.qrow:hover{background:rgba(151,255,196,.04)}
+.qrow:first-of-type{border-top:0;margin-top:12px}
+.mono-av{width:38px;height:38px;flex:none;border-radius:10px;background:rgba(47,213,127,.1);border:1px solid var(--line);color:var(--mint);display:grid;place-items:center;font:700 12px var(--fs)}
+.qmain{flex:1;min-width:0}
+.qmain b{display:block;font-size:13.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.qmain .chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:4px}
+.mchip{font:500 10.5px var(--fm);letter-spacing:.05em;color:var(--mut);background:rgba(157,180,166,.1);border-radius:6px;padding:2.5px 7px}
+.qmeta{flex:none;text-align:right;font-size:11.5px;color:var(--dim);line-height:1.5}
+.qmeta b{color:var(--mut);font-weight:600}
+.pill{flex:none;display:inline-flex;align-items:center;gap:6px;font:600 10px var(--fm);letter-spacing:.09em;text-transform:uppercase;border-radius:7px;padding:4.5px 9px}
+.pill::before{content:"";width:5px;height:5px;border-radius:50%;background:currentColor}
+.p-pending{background:var(--amber-bg);color:var(--amber)}
+.p-changes{background:var(--coral-bg);color:var(--coral)}
+.p-verified{background:rgba(47,213,127,.13);color:var(--acc)}
+.p-published{background:var(--lime-bg);color:var(--lime)}
+.p-draft{background:var(--sage-bg);color:var(--sage)}
+/* activity */
+.act{padding:14px 18px 16px;display:flex;flex-direction:column}
+.act-it{position:relative;display:flex;gap:12px;padding:9px 0}
+.act-it+.act-it::before{content:"";position:absolute;left:14px;top:-2px;bottom:calc(100% - 34px);width:0}
+.act-ico{flex:none;width:29px;height:29px;border-radius:9px;display:grid;place-items:center;border:1px solid var(--line)}
+.act-ico svg{width:13px;height:13px}
+.t-ver{background:rgba(47,213,127,.1);color:var(--acc)}
+.t-sub{background:rgba(127,224,174,.08);color:var(--mint)}
+.t-user{background:var(--sage-bg);color:var(--sage)}
+.t-edit{background:rgba(229,161,68,.1);color:var(--amber)}
+.t-pub{background:var(--lime-bg);color:var(--lime)}
+.t-rem{background:var(--coral-bg);color:var(--coral)}
+.act-tx{min-width:0;font-size:12.5px;color:var(--mut)}
+.act-tx b{color:var(--txt);font-weight:600}
+.act-tx time{display:block;font:500 10px var(--fm);letter-spacing:.1em;color:var(--dim);text-transform:uppercase;margin-top:3px}
+/* chart */
+.chart-body{padding:14px 18px 16px}
+.legend{display:flex;gap:16px;align-items:center}
+.legend span{display:flex;gap:7px;align-items:center;font:500 10.5px var(--fm);letter-spacing:.08em;color:var(--mut);text-transform:uppercase}
+.legend i{width:9px;height:9px;border-radius:3px}
+#chartSvg{width:100%;height:auto}
+#chartSvg .wk:hover rect{filter:brightness(1.25)}
+#chartSvg text{font:500 9.5px var(--fm);fill:var(--dim)}
+/* recent table */
+.rrow{display:flex;align-items:center;gap:12px;padding:12px 18px;border-top:1px solid var(--line);transition:background .2s}
+.rrow:hover{background:rgba(151,255,196,.04)}
+.rrow:first-of-type{border-top:0;margin-top:12px}
+.rmain{flex:1;min-width:0}
+.rmain b{display:block;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rmain span{display:block;font-size:11.5px;color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rpills{display:flex;gap:6px;flex:none}
+.rdate{flex:none;font:500 10.5px var(--fm);letter-spacing:.06em;color:var(--dim);width:74px;text-align:right}
+/* empty */
+.empty{padding:44px 20px;text-align:center;color:var(--mut)}
+.empty .e-ico{width:46px;height:46px;margin:0 auto 12px;border-radius:12px;background:rgba(47,213,127,.1);border:1px solid var(--line);color:var(--acc);display:grid;place-items:center}
+.empty .e-ico svg{width:20px;height:20px}
+.empty h3{font-size:14.5px;color:var(--txt);font-weight:700}
+.empty p{font-size:12.5px;max-width:340px;margin:6px auto 0}
+/* skeleton */
+.sk{background:linear-gradient(90deg,rgba(151,255,196,.05) 25%,rgba(151,255,196,.1) 50%,rgba(151,255,196,.05) 75%);background-size:200% 100%;animation:sh 1.1s infinite;border-radius:8px}
+@keyframes sh{to{background-position:-200% 0}}
+/* modal */
+.modal{position:fixed;inset:0;z-index:300;display:grid;place-items:center;padding:18px;visibility:hidden;opacity:0;transition:.28s var(--ease)}
+.modal.open{visibility:visible;opacity:1}
+.modal-bk{position:absolute;inset:0;background:rgba(0,0,0,.6);backdrop-filter:blur(3px)}
+.modal-card{position:relative;width:min(520px,100%);background:var(--panel);border:1px solid var(--line2);border-radius:18px;box-shadow:0 30px 80px -30px rgba(0,0,0,.8);transform:translateY(14px) scale(.98);transition:.3s var(--ease)}
+.modal.open .modal-card{transform:none}
+.modal-x{position:absolute;top:12px;right:12px;width:32px;height:32px;border-radius:9px;background:rgba(151,255,196,.07);display:grid;place-items:center;color:var(--mut)}
+.modal-x svg{width:14px;height:14px}
+.m-body{padding:24px}
+.m-body .eyebrow{color:var(--acc)}
+.m-body h3{font-size:19px;margin:8px 0 2px}
+.m-co{color:var(--mut);font-size:13px}
+.m-meta{display:flex;flex-wrap:wrap;gap:6px;margin:14px 0}
+.m-info{border:1px dashed var(--line2);border-radius:10px;padding:11px 13px;font-size:12.5px;color:var(--mut);display:flex;flex-direction:column;gap:5px}
+.m-info b{color:var(--txt)}
+.m-foot{display:flex;gap:9px;margin-top:18px;flex-wrap:wrap}
+.m-foot .btn{flex:1}
+.m-foot .primary{flex:1.3}
+.toast{position:fixed;left:50%;bottom:26px;transform:translate(-50%,16px);z-index:400;background:#1c2a20;border:1px solid var(--line2);color:var(--mint2);border-radius:999px;padding:10px 18px;font-size:13px;opacity:0;pointer-events:none;transition:.3s var(--ease);box-shadow:0 16px 40px -16px rgba(0,0,0,.8)}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+.foot{margin-top:36px;text-align:center;font:500 10.5px var(--fm);letter-spacing:.12em;color:var(--dim);text-transform:uppercase}
+
+/* ============ RESPONSIVE ============ */
+@media (max-width:1240px){.stats{grid-template-columns:repeat(2,1fr)}.row1,.row2{grid-template-columns:1fr}}
+@media (max-width:960px){
+  .asb{position:fixed;left:0;top:0;width:270px !important;transform:translateX(-105%);transition:transform .35s var(--ease);box-shadow:0 0 60px rgba(0,0,0,.6)}
+  body.asb-open .asb{transform:none}
+  body.asb-collapsed .txt,body.asb-collapsed .inf,body.asb-collapsed .brand-t{max-width:160px;opacity:1;width:auto}
+  body.asb-collapsed .anav,body.asb-collapsed .acct,body.asb-collapsed .alogout{justify-content:flex-start}
+  .asb-collapse{display:none}
+  .tip{display:none}
+  .searchbox{width:100%;order:5}
+  .ahead-r{width:100%}
+}
+@media (max-width:640px){
+  .stats{grid-template-columns:1fr}
+  .qrow,.rrow{flex-wrap:wrap}
+  .qmeta{text-align:left}
+  .rpills{width:100%;justify-content:flex-start}
+  .rdate{width:auto}
+  .qbar{overflow-x:auto;flex-wrap:nowrap;padding-bottom:6px}
+}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{transition-duration:.01ms !important;animation-duration:.01ms !important}}
+</style>
+</head>
+<body>
+<div class="shell">
+  <!-- ============ ADMIN SIDEBAR ============ -->
+  <aside class="asb">
+    <div class="asb-top">
+      <span class="logo"><svg viewBox="0 0 24 24"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg></span>
+      <span class="brand-t"><b>InternHub</b><span class="tag">ADMIN</span></span>
+      <button class="asb-collapse" id="asbToggle" aria-label="Collapse sidebar"><svg viewBox="0 0 24 24"><path d="M11 17l-5-5 5-5M18 17l-5-5 5-5"/></svg></button>
+    </div>
+    <nav class="asb-nav">
+      <p class="eyebrow asb-lbl">Overview</p>
+      <button class="anav on"><span class="ico"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg></span><span class="txt">Dashboard</span><span class="tip">Dashboard</span></button>
+      <button class="anav" data-toast="Analytics page — designed next."><span class="ico"><svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-8M22 20H2"/></svg></span><span class="txt">Analytics</span><span class="tip">Analytics</span></button>
+      <p class="eyebrow asb-lbl">Manage</p>
+      <button class="anav" data-toast="Manage Internships — designed next."><span class="ico"><svg viewBox="0 0 24 24"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M9 7V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2"/></svg></span><span class="txt">Manage internships</span><span class="tip">Manage internships</span></button>
+      <button class="anav" id="navQueue"><span class="ico"><svg viewBox="0 0 24 24"><path d="M12 2l7 4v6c0 5-3.5 8.5-7 10-3.5-1.5-7-5-7-10V6z"/><path d="M9 12l2 2 4-4"/></svg></span><span class="txt">Suggestions & verification</span><span class="abadge" id="qBadge">0</span><span class="tip">Suggestions & verification</span></button>
+      <button class="anav" data-toast="Manage Users — designed next."><span class="ico"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg></span><span class="txt">Manage users</span><span class="tip">Manage users</span></button>
+      <button class="anav" data-toast="Add Internship page — designed next."><span class="ico"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg></span><span class="txt">Add internship</span><span class="tip">Add internship</span></button>
+      <p class="eyebrow asb-lbl">System</p>
+      <button class="anav" data-toast="Settings — designed later."><span class="ico"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h0a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h0a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v0a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span><span class="txt">Settings</span><span class="tip">Settings</span></button>
+    </nav>
+    <div class="asb-acct">
+      <button class="acct" data-toast="Admin profile — designed later.">
+        <span class="av">NA</span>
+        <span class="inf"><span class="nm">Nadia Atem</span><span class="rl">Administrator</span></span>
+        <span class="tip">Admin profile</span>
+      </button>
+      <button class="alogout" id="logoutBtn">
+        <span class="ico"><svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5M21 12H9"/></svg></span>
+        <span class="txt">Logout</span>
+        <span class="tip">Logout</span>
+      </button>
+    </div>
+  </aside>
+  <div class="backdrop" id="backdrop"></div>
+
+  <!-- ============ MAIN ============ -->
+  <main class="amain">
+    <header class="ahead">
+      <div>
+        <h1 class="display" id="greet">Good morning, Admin</h1>
+        <p class="sub">Here's what's happening across InternHub.<span class="mono" id="dateLine"></span></p>
+      </div>
+      <div class="ahead-r">
+        <div class="searchbox"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg><input id="adminSearch" placeholder="Search internships, companies…" autocomplete="off"></div>
+        <button class="icon-btn" id="bellBtn" aria-label="Notifications"><svg viewBox="0 0 24 24"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg><span class="dot"></span></button>
+        <button class="btn ghostd" data-toast="Opens the student-facing site."><svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>View site</button>
+        <button class="btn primary" data-toast="Add Internship page — designed next."><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>Add internship</button>
+      </div>
+    </header>
+
+    <div class="qbar">
+      <button class="btn ghostd" id="qaReview"><svg viewBox="0 0 24 24"><path d="M12 2l7 4v6c0 5-3.5 8.5-7 10-3.5-1.5-7-5-7-10V6z"/><path d="M9 12l2 2 4-4"/></svg>Review suggestions <span class="abadge" style="position:static;transform:none" id="qaBadge">0</span></button>
+      <button class="btn ghostd" data-toast="Manage Internships — designed next."><svg viewBox="0 0 24 24"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M9 7V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2"/></svg>Manage internships</button>
+      <button class="btn ghostd" data-toast="Manage Users — designed next."><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>Manage users</button>
+      <button class="btn ghostd" data-toast="Analytics — designed next."><svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-8M22 20H2"/></svg>Analytics</button>
+    </div>
+
+    <!-- stats -->
+    <section class="stats" id="stats"></section>
+
+    <!-- queue + activity -->
+    <section class="row1">
+      <div class="card">
+        <div class="card-h"><h2>Pending verification</h2><span class="note" id="qCount"></span><button class="linklike" data-toast="Full review queue — designed next.">Open queue →</button></div>
+        <div id="queue"></div>
+      </div>
+      <div class="card">
+        <div class="card-h"><h2>Recent activity</h2><span class="note">Platform events</span></div>
+        <div class="act" id="activity"></div>
+      </div>
+    </section>
+
+    <!-- chart + recent -->
+    <section class="row2">
+      <div class="card">
+        <div class="card-h"><h2>Additions vs verifications</h2>
+          <div class="legend" style="margin-left:auto"><span><i style="background:var(--mint)"></i>Added</span><span><i style="background:var(--green)"></i>Verified</span></div>
+        </div>
+        <div class="chart-body"><svg id="chartSvg" viewBox="0 0 560 220"></svg></div>
+      </div>
+      <div class="card">
+        <div class="card-h"><h2>Recently added</h2><span class="note">Latest listings</span><button class="linklike" data-toast="Manage Internships — designed next.">Manage all →</button></div>
+        <div id="recent"></div>
+      </div>
+    </section>
+
+    <footer class="foot">InternHub Admin · control centre · © 2026</footer>
+  </main>
+</div>
+
+<!-- review modal -->
+<div class="modal" id="modal" aria-hidden="true">
+  <div class="modal-bk" data-close></div>
+  <div class="modal-card" role="dialog" aria-modal="true">
+    <button class="modal-x" data-close aria-label="Close"><svg viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
+    <div class="m-body">
+      <p class="eyebrow">Review suggestion</p>
+      <h3 id="mTitle"></h3>
+      <p class="m-co" id="mCo"></p>
+      <div class="m-meta" id="mMeta"></div>
+      <div class="m-info" id="mInfo"></div>
+      <div class="m-foot">
+        <button class="btn coral" id="mReject">Reject</button>
+        <button class="btn amber" id="mChanges">Request changes</button>
+        <button class="btn primary" id="mVerify"><svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg>Verify & publish</button>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+/* ============ SAMPLE DATA — replace with Firebase collections later ============ */
+let SUG=[
+ {id:1,t:"Backend Engineering Intern",co:"CloudCam Systems",f:"Software Engineering",city:"Douala",by:"M. Ngu",hrs:2,st:"pending",src:"cloudcam.cm/careers"},
+ {id:2,t:"Marketing & Communications Intern",co:"GreenLeaf Agro",f:"Marketing",city:"Buea",by:"A. Che",hrs:5,st:"pending",src:"linkedin.com/jobs/…"},
+ {id:3,t:"Actuarial Analyst Intern",co:"Axa Cameroun",f:"Finance",city:"Douala",by:"T. Kum",hrs:9,st:"pending",src:"axa.cm/internships"},
+ {id:4,t:"Lab Technician Intern",co:"Centre Pasteur",f:"Health",city:"Yaoundé",by:"R. Eba",hrs:26,st:"changes",src:"pasteur.cm/jobs"}
+];
+const RECENT=[
+ {t:"Software Engineering Intern",co:"Afrimax Technologies",f:"Software Engineering",city:"Douala",added:"2h ago",v:"verified",pub:"published"},
+ {t:"Data Analyst Intern",co:"Orange Cameroun",f:"Data & AI",city:"Douala",added:"5h ago",v:"verified",pub:"published"},
+ {t:"UX Research Intern",co:"Minka Health",f:"Design",city:"Yaoundé",added:"9h ago",v:"pending",pub:"draft"},
+ {t:"AgriTech Intern",co:"AgriPro Cameroon",f:"Agriculture",city:"Buea",added:"Yesterday",v:"verified",pub:"published"},
+ {t:"Growth Marketing Intern",co:"Tokeri Ventures",f:"Marketing",city:"Remote",added:"Yesterday",v:"verified",pub:"draft"}
+];
+let ACT=[
+ {k:"ver",tx:"You verified & published <b>Finance Analyst Intern</b> — MTN Cameroun",tm:"2h ago"},
+ {k:"sub",tx:"<b>A. Che</b> submitted Marketing & Communications Intern — GreenLeaf Agro",tm:"5h ago"},
+ {k:"user",tx:"<b>12 new students</b> registered on InternHub",tm:"Yesterday"},
+ {k:"edit",tx:"You edited <b>Electrical Engineering Intern</b> — Eneo Cameroon",tm:"Yesterday"},
+ {k:"pub",tx:"<b>Accounting Intern</b> — SGC Bank went live in Browse",tm:"2d ago"},
+ {k:"rem",tx:"You removed an expired listing — <b>Farm Operations Intern</b>",tm:"3d ago"}
+];
+const STATS={total:128,verified:96,students:1841};
+const WEEKS={added:[6,9,7,11,8,12,10,14],verified:[5,7,6,9,7,10,9,12]};
+let query="";
+
+const $=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+const initials=n=>n.split(/\s+/).map(w=>w[0]).join("").slice(0,2).toUpperCase();
+const ACT_ICO={ver:'<svg viewBox="0 0 24 24"><path d="M12 2l7 4v6c0 5-3.5 8.5-7 10-3.5-1.5-7-5-7-10V6z"/><path d="M9 12l2 2 4-4"/></svg>',sub:'<svg viewBox="0 0 24 24"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4z"/></svg>',user:'<svg viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 8v6M22 11h-6"/></svg>',edit:'<svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>',pub:'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a15 15 0 0 1 0 18 15 15 0 0 1 0-18z"/></svg>',rem:'<svg viewBox="0 0 24 24"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg>'};
+
+/* ---------- header ---------- */
+const h=new Date().getHours();
+$("#greet").textContent=(h<12?"Good morning":h<18?"Good afternoon":"Good evening")+", Admin";
+$("#dateLine").textContent=new Date().toLocaleDateString("en-GB",{weekday:"long",day:"numeric",month:"long",year:"numeric"});
+
+/* ---------- renderers ---------- */
+function pendingCount(){return SUG.filter(s=>s.st==="pending").length;}
+function renderStats(){
+ const pct=Math.round(STATS.verified/STATS.total*100);
+ const pc=pendingCount();
+ $("#stats").innerHTML=
+ `<div class="card stat"><span class="lb">Total internships</span><div class="vl"><b>${STATS.total}</b><span class="dl up">+6 this wk</span></div>
+   <svg class="sp" width="86" height="30" viewBox="0 0 86 30"><path d="M2 24 14 20 26 22 38 15 50 17 62 10 74 12 84 6" stroke="var(--mint)" stroke-width="2" fill="none"/></svg></div>
+ <div class="card stat"><span class="lb">Verified</span><div class="vl"><b>${STATS.verified}</b><span class="dl up">${pct}%</span></div>
+   <svg class="ring" width="42" height="42" viewBox="0 0 42 42"><circle cx="21" cy="21" r="16" stroke="rgba(151,255,196,.12)" stroke-width="4" fill="none"/><circle cx="21" cy="21" r="16" stroke="var(--acc)" stroke-width="4" fill="none" stroke-linecap="round" stroke-dasharray="${pct} 100" transform="rotate(-90 21 21)"/></svg></div>
+ <div class="card stat attn"><span class="lb">Pending verification</span><div class="vl"><b>${pc}</b><span class="dl warn">needs review</span></div>
+   <svg class="sp" width="86" height="30" viewBox="0 0 86 30"><path d="M2 20 16 22 30 12 44 18 58 8 72 14 84 10" stroke="var(--amber)" stroke-width="2" fill="none"/></svg></div>
+ <div class="card stat"><span class="lb">Total students</span><div class="vl"><b>${STATS.students.toLocaleString()}</b><span class="dl up">+38 this wk</span></div>
+   <svg class="sp" width="86" height="30" viewBox="0 0 86 30"><path d="M2 26 14 24 26 21 38 20 50 16 62 14 74 9 84 5" stroke="var(--mint)" stroke-width="2" fill="none"/></svg></div>`;
+ $("#qBadge").textContent=pc;$("#qaBadge").textContent=pc;
+}
+function match(q,...vals){return !q||vals.join(" ").toLowerCase().includes(q);}
+function renderQueue(){
+ const q=query.toLowerCase();
+ const list=SUG.filter(s=>match(q,s.t,s.co,s.f,s.city,s.by));
+ $("#qCount").textContent=pendingCount()+" awaiting review";
+ if(!list.length){$("#queue").innerHTML=`<div class="empty"><div class="e-ico"><svg viewBox="0 0 24 24"><path d="M12 2l7 4v6c0 5-3.5 8.5-7 10-3.5-1.5-7-5-7-10V6z"/><path d="M9 12l2 2 4-4"/></svg></div><h3>${q?"No matching suggestions":"Queue clear"}</h3><p>${q?"No pending suggestions match your search.":"No suggestions waiting for verification. New student submissions will appear here."}</p></div>`;return;}
+ $("#queue").innerHTML=list.map((s,i)=>`<div class="qrow" style="animation-delay:${i*50}ms">
+   <span class="mono-av">${esc(initials(s.co))}</span>
+   <div class="qmain"><b>${esc(s.t)}</b><div class="chips"><span class="mchip">${esc(s.f)}</span><span class="mchip">${esc(s.city)}</span></div></div>
+   <div class="qmeta"><b>${esc(s.by)}</b><br>${s.hrs<24?s.hrs+"h ago":"Yesterday"}</div>
+   <span class="pill ${s.st==="pending"?"p-pending":"p-changes"}">${s.st==="pending"?"Pending":"Needs changes"}</span>
+   <button class="btn primary sm" data-review="${s.id}">Review</button></div>`).join("");
+}
+function renderRecent(){
+ const q=query.toLowerCase();
+ const list=RECENT.filter(r=>match(q,r.t,r.co,r.f,r.city));
+ if(!list.length){$("#recent").innerHTML=`<div class="empty"><div class="e-ico"><svg viewBox="0 0 24 24"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M9 7V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2"/></svg></div><h3>No matching internships</h3><p>Try a different search term.</p></div>`;return;}
+ $("#recent").innerHTML=list.map(r=>`<div class="rrow">
+   <span class="mono-av">${esc(initials(r.co))}</span>
+   <div class="rmain"><b>${esc(r.t)}</b><span>${esc(r.co)} · ${esc(r.city)}</span></div>
+   <span class="rdate">${esc(r.added)}</span>
+   <div class="rpills"><span class="pill ${r.v==="verified"?"p-verified":"p-pending"}">${r.v}</span><span class="pill ${r.pub==="published"?"p-published":"p-draft"}">${r.pub}</span></div>
+   <button class="btn ghostd sm" data-toast="Manage Internships — designed next.">Manage</button></div>`).join("");
+}
+function renderActivity(){
+ if(!ACT.length){$("#activity").innerHTML=`<div class="empty"><div class="e-ico">${ACT_ICO.sub}</div><h3>No recent activity</h3><p>Platform events will appear here as they happen.</p></div>`;return;}
+ $("#activity").innerHTML=ACT.slice(0,6).map(a=>`<div class="act-it"><span class="act-ico t-${a.k}">${ACT_ICO[a.k]}</span><div class="act-tx">${a.tx}<time>${a.tm}</time></div></div>`).join("");
+}
+function buildChart(){
+ const W=560,H=220,PL=34,PB=26,PT=12,max=16,n=WEEKS.added.length;
+ const gw=(W-PL-10)/n;let s=`<g>`;
+ for(let g=0;g<=4;g++){const y=PT+(H-PT-PB)*g/4;const v=max-max*g/4;
+  s+=`<line x1="${PL}" y1="${y}" x2="${W-6}" y2="${y}" stroke="rgba(151,255,196,.08)"/><text x="4" y="${y+3}">${v}</text>`;}
+ for(let i=0;i<n;i++){
+  const x=PL+i*gw+gw/2;const hA=(H-PT-PB)*WEEKS.added[i]/max;const hV=(H-PT-PB)*WEEKS.verified[i]/max;
+  s+=`<g class="wk"><title>Week ${i+1}: ${WEEKS.added[i]} added · ${WEEKS.verified[i]} verified</title>
+   <rect x="${x-13}" y="${H-PB-hA}" width="11" height="${hA}" rx="3" fill="var(--mint)"/>
+   <rect x="${x+2}" y="${H-PB-hV}" width="11" height="${hV}" rx="3" fill="var(--green)"/>
+   <text x="${x}" y="${H-8}" text-anchor="middle">W${i+1}</text></g>`;}
+ $("#chartSvg").innerHTML=s+"</g>";
+}
+function renderAll(){renderStats();renderQueue();renderRecent();renderActivity();}
+
+/* ---------- skeletons ---------- */
+function skeletons(){
+ $("#stats").innerHTML=Array(4).fill('<div class="card stat"><div class="sk" style="height:10px;width:45%"></div><div class="sk" style="height:26px;width:35%;margin-top:12px"></div></div>').join("");
+ $("#queue").innerHTML=Array(3).fill('<div style="padding:14px 18px;display:flex;gap:12px"><div class="sk" style="width:38px;height:38px;flex:none"></div><div style="flex:1;display:flex;flex-direction:column;gap:8px"><div class="sk" style="height:12px;width:60%"></div><div class="sk" style="height:10px;width:40%"></div></div></div>').join("");
+ $("#recent").innerHTML=Array(4).fill('<div style="padding:12px 18px;display:flex;gap:12px"><div class="sk" style="width:38px;height:38px;flex:none"></div><div style="flex:1;display:flex;flex-direction:column;gap:8px"><div class="sk" style="height:12px;width:55%"></div><div class="sk" style="height:10px;width:35%"></div></div></div>').join("");
+ $("#activity").innerHTML=Array(4).fill('<div style="display:flex;gap:12px;padding:8px 0"><div class="sk" style="width:29px;height:29px;flex:none"></div><div class="sk" style="height:12px;width:75%;margin-top:8px"></div></div>').join("");
+}
+
+/* ---------- review workflow ---------- */
+let reviewId=null;
+function openReview(id){
+ const s=SUG.find(x=>x.id===id);if(!s)return;reviewId=id;
+ $("#mTitle").textContent=s.t;$("#mCo").textContent=s.co;
+ $("#mMeta").innerHTML=`<span class="mchip">${esc(s.f)}</span><span class="mchip">${esc(s.city)}</span><span class="pill ${s.st==="pending"?"p-pending":"p-changes"}">${s.st==="pending"?"Pending":"Needs changes"}</span>`;
+ $("#mInfo").innerHTML=`<span>Submitted by <b>${esc(s.by)}</b> · ${s.hrs<24?s.hrs+" hours ago":"yesterday"}</span><span>Source: <b>${esc(s.src)}</b></span>`;
+ $("#modal").classList.add("open");$("#modal").setAttribute("aria-hidden","false");document.body.style.overflow="hidden";
+}
+function closeModal(){$("#modal").classList.remove("open");$("#modal").setAttribute("aria-hidden","true");document.body.style.overflow="";}
+document.querySelectorAll("[data-review]").length; // delegated below
+document.addEventListener("click",e=>{const r=e.target.closest("[data-review]");if(r)openReview(+r.dataset.review);});
+$("#mVerify").addEventListener("click",()=>{
+ const s=SUG.find(x=>x.id===reviewId);if(!s)return;
+ SUG=SUG.filter(x=>x.id!==reviewId);STATS.total++;STATS.verified++;
+ ACT.unshift({k:"ver",tx:`You verified & published <b>${esc(s.t)}</b> — ${esc(s.co)}`,tm:"Just now"});
+ closeModal();renderAll();toast("Verified & published — now live in Browse.");});
+$("#mChanges").addEventListener("click",()=>{
+ const s=SUG.find(x=>x.id===reviewId);if(!s)return;s.st="changes";
+ ACT.unshift({k:"edit",tx:`You requested changes on <b>${esc(s.t)}</b>`,tm:"Just now"});
+ closeModal();renderAll();toast("Changes requested — the student will be notified.");});
+$("#mReject").addEventListener("click",()=>{
+ const s=SUG.find(x=>x.id===reviewId);if(!s)return;
+ SUG=SUG.filter(x=>x.id!==reviewId);
+ ACT.unshift({k:"rem",tx:`You rejected <b>${esc(s.t)}</b> — ${esc(s.co)}`,tm:"Just now"});
+ closeModal();renderAll();toast("Suggestion rejected and removed from the queue.");});
+document.querySelectorAll("[data-close]").forEach(el=>el.addEventListener("click",closeModal));
+document.addEventListener("keydown",e=>{if(e.key==="Escape"){closeModal();document.body.classList.remove("asb-open");}});
+
+/* ---------- search / misc ---------- */
+$("#adminSearch").addEventListener("input",e=>{query=e.target.value.trim();renderQueue();renderRecent();});
+$("#qaReview").addEventListener("click",()=>{$("#queue").scrollIntoView({behavior:"smooth",block:"center"});});
+$("#navQueue").addEventListener("click",()=>{document.body.classList.remove("asb-open");$("#queue").scrollIntoView({behavior:"smooth",block:"center"});});
+$("#bellBtn").addEventListener("click",()=>toast("3 pending suggestions · 12 new students this week."));
+$("#logoutBtn").addEventListener("click",()=>toast("Signed out of Admin (demo)."));
+document.querySelectorAll("[data-toast]").forEach(b=>b.addEventListener("click",()=>toast(b.dataset.toast)));
+let toastT;function toast(m){const t=$("#toast");t.textContent=m;t.classList.add("show");clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove("show"),2600);}
+
+/* ---------- sidebar ---------- */
+const mqMob=matchMedia("(max-width:960px)");
+$("#asbToggle").addEventListener("click",()=>{mqMob.matches?document.body.classList.toggle("asb-open"):document.body.classList.toggle("asb-collapsed");});
+$("#backdrop").addEventListener("click",()=>document.body.classList.remove("asb-open"));
+
+/* ---------- init ---------- */
+skeletons();buildChart();
+setTimeout(renderAll,700);
+</script>
+</body>
+</html>

@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Account · InternHub</title>
+<meta name="description" content="Manage your InternHub profile, preferences, notification alerts and account security.">
+<meta name="robots" content="noindex">
+<link rel="icon" href="../favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/css/ui.css">
+<link rel="stylesheet" href="../assets/css/app.css">
+</head>
+<body data-app="student" data-nav="account">
+<div id="view">
+  <!-- PROFILE HEADER -->
+  <div class="profile-header">
+    <div class="profile-avatar" id="pfAvatar">··</div>
+    <div class="profile-info">
+      <h1 id="pfName">Your profile</h1>
+      <p id="pfSub">Keep your details current so we can match you with the right internships.</p>
+      <span class="mono member" id="pfSince" hidden></span>
+    </div>
+  </div>
+
+  <!-- PERSONAL INFORMATION -->
+  <section class="pcard">
+    <div class="pcard-head"><h3>Personal information</h3><span class="eyebrow">Your details</span></div>
+    <form id="personalForm" novalidate>
+      <div class="field-grid">
+        <div class="field"><label for="fName">Full name</label>
+          <input class="input" id="fName" autocomplete="name" maxlength="80"><span class="field-err">Enter your name.</span></div>
+        <div class="field"><label for="fEmail">Email</label>
+          <input class="input" id="fEmail" type="email" disabled><span class="hint">Email cannot be changed</span></div>
+        <div class="field"><label for="fPhone">Phone number</label>
+          <input class="input" id="fPhone" autocomplete="tel" maxlength="30" placeholder="e.g. +237 …"></div>
+        <div class="field"><label for="fInst">Institution</label>
+          <input class="input" id="fInst" maxlength="120" placeholder="e.g. University of Buea"></div>
+        <div class="field"><label for="fCourse">Course / field</label>
+          <input class="input" id="fCourse" maxlength="120" placeholder="e.g. Computer Engineering"></div>
+        <div class="field"><label for="fLevel">Level</label>
+          <select class="select" id="fLevel"><option value="">Select…</option></select></div>
+        <div class="field span-full"><label for="fBio">Bio <span class="opt-label">(optional)</span></label>
+          <textarea class="textarea" id="fBio" maxlength="600" placeholder="Tell companies a bit about yourself, your interests, or what you're looking for…"></textarea></div>
+      </div>
+      <div class="actions">
+        <button class="btn btn-primary" type="submit">Save changes</button>
+        <button class="btn btn-ghost" type="reset">Reset</button>
+        <span class="hint" id="profileSaved"></span>
+      </div>
+    </form>
+  </section>
+
+  <!-- INTERNSHIP PREFERENCES -->
+  <section class="pcard" id="preferences">
+    <div class="pcard-head"><h3>Internship preferences</h3><span class="eyebrow">Help us match you better</span></div>
+    <div class="field-grid">
+      <div class="field span-full"><label>Preferred fields</label>
+        <div class="fchips" id="prefFields"></div><span class="hint">Select the fields you're most interested in</span></div>
+      <div class="field span-full"><label>Preferred locations</label>
+        <div class="fchips" id="prefLocs"></div><span class="hint">Where would you like to work?</span></div>
+      <div class="field span-full"><label>Preferred work mode</label>
+        <div class="mode-seg" id="prefMode"></div></div>
+    </div>
+    <div class="actions"><button class="btn btn-primary" type="button" id="savePrefs">Save preferences</button>
+      <span class="hint" id="prefsSaved"></span></div>
+  </section>
+
+  <!-- NOTIFICATIONS -->
+  <section class="pcard">
+    <div class="pcard-head"><h3>Notifications</h3><span class="eyebrow">Stay updated</span></div>
+    <div class="switch-group">
+      <label class="switch"><span class="sw-label"><b>New internships</b><span>Get notified when new opportunities match your preferences</span></span>
+        <input type="checkbox" data-n="newMatches"><span class="track"></span></label>
+      <label class="switch"><span class="sw-label"><b>Closing soon</b><span>Reminders for internships with deadlines within a week</span></span>
+        <input type="checkbox" data-n="deadlineReminders"><span class="track"></span></label>
+      <label class="switch"><span class="sw-label"><b>Application status</b><span>Updates when companies respond to your applications</span></span>
+        <input type="checkbox" data-n="applicationStatus"><span class="track"></span></label>
+      <label class="switch"><span class="sw-label"><b>Weekly digest</b><span>Summary of new opportunities every Monday</span></span>
+        <input type="checkbox" data-n="weeklyDigest"><span class="track"></span></label>
+    </div>
+    <div class="actions"><button class="btn btn-primary" type="button" id="saveNotifs">Save notifications</button>
+      <span class="hint" id="notifsSaved"></span></div>
+  </section>
+
+  <!-- ACCOUNT -->
+  <section class="pcard">
+    <div class="pcard-head"><h3>Account</h3><span class="eyebrow">Security &amp; data</span></div>
+    <div class="account-actions">
+      <button class="btn btn-ghost" type="button" id="changePwBtn">Change password</button>
+      <button class="btn btn-ghost" type="button" id="changeEmailBtn">Change email</button>
+      <button class="btn btn-ghost" type="button" id="exportBtn">Export my data</button>
+      <button class="btn btn-danger" type="button" id="deleteAccBtn">Delete account</button>
+    </div>
+  </section>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+<script src="../assets/js/firebase-config.js"></script>
+<script src="../assets/js/lib/ui.js"></script>
+<script src="../assets/js/services/platform.js"></script>
+<script src="../assets/js/services/auth.js"></script>
+<script src="../assets/js/services/notifications.js"></script>
+<script src="../assets/js/lib/notify-ui.js"></script>
+<script src="../assets/js/lib/shell.js"></script>
+<script src="../assets/js/lib/router.js"></script>
+<script>
+window.onReady(async function () {
+  const p = await Auth.requireSignedIn();
+  if (!p) return;
+
+  let cfg = {}; try { cfg = (await Settings.load()) || {}; } catch (_) {}
+
+  const $ = (id) => document.getElementById(id);
+  const LEVELS = ['Year 1', 'Year 2', 'Year 3', 'Year 4', "Master's", 'Graduate'];
+  const MODE_ICONS = { 'On-site': 'building', 'Hybrid': 'users', 'Remote': 'globe' };
+  const savedLevel = p.academicLevel || '';
+
+  // ---- profile header ----
+  function renderHeader() {
+    const q = Auth.profile || p;
+    $('pfAvatar').textContent = UI.initials(q.displayName);
+    $('pfName').textContent = q.displayName || 'Your profile';
+    const sub = [q.course ? q.course + ' student' : '', q.institution].filter(Boolean).join(' · ');
+    $('pfSub').textContent = sub || 'Keep your details current so we can match you with the right internships.';
+    const since = q.createdAt instanceof Date && !isNaN(q.createdAt)
+      ? q.createdAt.toLocaleDateString('en-GB', { month: 'long', year: 'numeric' }) : '';
+    $('pfSince').textContent = since ? 'Member since ' + since : '';
+    $('pfSince').hidden = !since;
+  }
+  renderHeader();
+
+  // ---- personal information ----
+  const form = $('personalForm');
+  // a level saved before this design stays selectable, so saving can't silently erase it
+  const opts = savedLevel && !LEVELS.includes(savedLevel) ? [savedLevel].concat(LEVELS) : LEVELS;
+  $('fLevel').insertAdjacentHTML('beforeend', opts.map((v) => `<option>${UI.esc(v)}</option>`).join(''));
+  function fill() {
+    const q = Auth.profile || p; // updateProfile swaps the profile object — always read the live one
+    $('fName').value = q.displayName || '';
+    $('fEmail').value = q.email || '';
+    $('fPhone').value = q.phone || '';
+    $('fInst').value = q.institution || '';
+    $('fCourse').value = q.course || '';
+    $('fLevel').value = q.academicLevel || '';
+    $('fBio').value = q.bio || '';
+  }
+  fill();
+  // native reset blanks every field — return to the saved values instead
+  form.addEventListener('reset', () => requestAnimationFrame(fill));
+  $('fName').addEventListener('input', () => $('fName').closest('.field').classList.remove('is-invalid'));
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const name = $('fName').value.trim();
+    $('fName').closest('.field').classList.toggle('is-invalid', !name);
+    if (!name) return;
+    const saved = $('profileSaved');
+    saved.textContent = 'Saving…';
+    const res = await Auth.updateProfile({
+      displayName: name, phone: $('fPhone').value.trim(), institution: $('fInst').value.trim(),
+      course: $('fCourse').value.trim(), academicLevel: $('fLevel').value, bio: $('fBio').value.trim()
+    });
+    if (!res.ok) { saved.textContent = ''; UI.toast(res.error || 'Could not save', 'error'); return; }
+    saved.textContent = 'Saved'; setTimeout(() => { saved.textContent = ''; }, 2500);
+    renderHeader();
+    UI.toast('Profile updated');
+  });
+
+  // ---- internship preferences ----
+  const pref = {
+    fields: new Set(p.preferences && p.preferences.fields || []),
+    locations: new Set(p.preferences && p.preferences.locations || []),
+    mode: (p.preferences && p.preferences.workModes || [])[0] || ''
+  };
+  function chipSet(el, values, isOn) {
+    el.innerHTML = values.length
+      ? values.map((v) => `<button type="button" class="fchip${isOn(v) ? ' is-on' : ''}" data-v="${UI.esc(v)}" aria-pressed="${isOn(v)}">${UI.esc(v)}</button>`).join('')
+      : '<p class="hint">No options available yet.</p>';
+  }
+  function drawPrefs() {
+    chipSet($('prefFields'), cfg.fields || [], (v) => pref.fields.has(v));
+    chipSet($('prefLocs'), cfg.locations || [], (v) => pref.locations.has(v));
+    const modes = cfg.workModes || [];
+    $('prefMode').innerHTML = modes.length
+      ? modes.map((m) => `<button type="button" data-m="${UI.esc(m)}"${pref.mode === m ? ' class="is-on"' : ''}>${UI.icon(MODE_ICONS[m] || 'briefcase', 14)}${UI.esc(m)}</button>`).join('')
+      : '';
+  }
+  drawPrefs();
+  function toggleSet(set, elId, cls) {
+    $(elId).addEventListener('click', (e) => {
+      const c = e.target.closest('.' + cls); if (!c) return;
+      const v = c.dataset.v;
+      set.has(v) ? set.delete(v) : set.add(v);
+      drawPrefs();
+    });
+  }
+  toggleSet(pref.fields, 'prefFields', 'fchip');
+  toggleSet(pref.locations, 'prefLocs', 'fchip');
+  $('prefMode').addEventListener('click', (e) => {
+    const b = e.target.closest('button'); if (!b) return;
+    pref.mode = pref.mode === b.dataset.m ? '' : b.dataset.m;
+    drawPrefs();
+  });
+  $('savePrefs').addEventListener('click', async () => {
+    const msg = $('prefsSaved'); msg.textContent = 'Saving…';
+    const res = await Auth.updateProfile({ preferences: {
+      ...(p.preferences || {}), fields: [...pref.fields], locations: [...pref.locations],
+      workModes: pref.mode ? [pref.mode] : [] } });
+    if (res.ok) { msg.textContent = 'Saved'; setTimeout(() => { msg.textContent = ''; }, 2500); UI.toast('Preferences saved'); }
+    else { msg.textContent = ''; UI.toast(res.error || 'Could not save', 'error'); }
+  });
+
+  // ---- notifications ----
+  let notifState = { ...(p.notifications || {}) };
+  const boxes = [...document.querySelectorAll('.switch-group input[data-n]')];
+  boxes.forEach((b) => { b.checked = !!notifState[b.dataset.n]; });
+  $('saveNotifs').addEventListener('click', async () => {
+    const msg = $('notifsSaved'); msg.textContent = 'Saving…';
+    const next = { ...notifState };
+    boxes.forEach((b) => { next[b.dataset.n] = b.checked; });
+    const res = await Auth.updateProfile({ notifications: next });
+    if (res.ok) { notifState = next; msg.textContent = 'Saved'; setTimeout(() => { msg.textContent = ''; }, 2500); UI.toast('Notification settings saved'); }
+    else { msg.textContent = ''; UI.toast(res.error || 'Could not save', 'error'); }
+  });
+
+  // ---- account · confirmation modals ----
+  function formModal(o) {
+    return new Promise((resolve) => {
+      const bd = document.createElement('div');
+      bd.className = 'modal-backdrop';
+      bd.innerHTML = `<div class="modal modal-sm" role="dialog" aria-modal="true" aria-label="${UI.esc(o.title)}">
+        <h3 class="modal-title">${UI.esc(o.title)}</h3>
+        <p class="modal-msg">${UI.esc(o.message || '')}</p>
+        <form novalidate>${o.fields.map((f, i) => `
+          <div class="field"><label for="fm${i}">${UI.esc(f.label)}</label>
+            <input class="input" id="fm${i}" type="${f.type}" autocomplete="${f.auto}">
+            <span class="field-err">${UI.esc(f.err)}</span></div>`).join('')}
+          <div class="modal-actions">
+            <button type="button" class="btn btn-ghost" data-act="cancel">Cancel</button>
+            <button type="submit" class="btn ${o.danger ? 'btn-danger' : 'btn-primary'}">${UI.esc(o.confirmLabel)}</button>
+          </div></form></div>`;
+      document.body.appendChild(bd);
+      const inputs = [...bd.querySelectorAll('input')];
+      const close = (v) => {
+        bd.classList.remove('is-open');
+        setTimeout(() => bd.remove(), 240);
+        document.removeEventListener('keydown', onKey);
+        resolve(v);
+      };
+      const onKey = (e) => { if (e.key === 'Escape') close(null); };
+      document.addEventListener('keydown', onKey);
+      requestAnimationFrame(() => { bd.classList.add('is-open'); if (inputs[0]) inputs[0].focus(); });
+      bd.addEventListener('click', (e) => {
+        if (e.target === bd || (e.target.closest('[data-act="cancel"]'))) close(null);
+      });
+      bd.querySelector('form').addEventListener('submit', (e) => {
+        e.preventDefault();
+        let ok = true;
+        o.fields.forEach((f, i) => {
+          const good = f.validate ? f.validate(inputs[i].value, inputs) : !!inputs[i].value.trim();
+          inputs[i].closest('.field').classList.toggle('is-invalid', !good);
+          if (!good) ok = false;
+        });
+        if (ok) close(inputs.map((i) => i.value));
+      });
+    });
+  }
+  const isEmail = (v) => /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v.trim());
+  function emailCredential(pw) { return firebase.auth.EmailAuthProvider.credential(firebaseAuth.currentUser.email, pw); }
+
+  $('changePwBtn').addEventListener('click', async () => {
+    const v = await formModal({
+      title: 'Change password', confirmLabel: 'Update password',
+      message: "Confirm your current password, then choose a new one. You'll stay signed in on this device.",
+      fields: [
+        { label: 'Current password', type: 'password', auto: 'current-password', err: 'Enter your current password.' },
+        { label: 'New password', type: 'password', auto: 'new-password', err: 'Use at least 6 characters.', validate: (x) => x.length >= 6 },
+        { label: 'Confirm new password', type: 'password', auto: 'new-password', err: "Passwords don't match.", validate: (x, all) => !!x && x === all[1].value }
+      ]
+    });
+    if (!v) return;
+    const res = await Auth.changePassword(emailCredential(v[0]), v[1]);
+    if (res.ok) UI.toast('Password updated');
+    else UI.toast(res.error || 'Could not update password', 'error');
+  });
+
+  $('changeEmailBtn').addEventListener('click', async () => {
+    const v = await formModal({
+      title: 'Change email', confirmLabel: 'Update email',
+      message: 'Your sign-in address changes immediately — confirm it with your current password.',
+      fields: [
+        { label: 'New email', type: 'email', auto: 'email', err: 'Enter a valid email.', validate: isEmail },
+        { label: 'Your password', type: 'password', auto: 'current-password', err: 'Confirm with your password.' }
+      ]
+    });
+    if (!v) return;
+    const res = await Auth.changeEmail(emailCredential(v[1]), v[0].trim());
+    if (res.ok) { $('fEmail').value = v[0].trim(); UI.toast('Email updated — check your inbox to verify.'); }
+    else UI.toast(res.error || 'Could not update email', 'error');
+  });
+
+  $('exportBtn').addEventListener('click', async () => {
+    UI.toast('Preparing your export…');
+    const data = await Auth.exportData();
+    if (!data) { UI.toast('Nothing to export yet.', 'error'); return; }
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href = url; a.download = 'internhub-my-data.json';
+    document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 1000);
+  });
+
+  $('deleteAccBtn').addEventListener('click', async () => {
+    const v = await formModal({
+      title: 'Delete account', confirmLabel: 'Delete my account', danger: true,
+      message: 'This action cannot be undone. All your data, saved internships and preferences will be permanently removed.',
+      fields: [{ label: 'Your password', type: 'password', auto: 'current-password', err: 'Confirm with your password.' }]
+    });
+    if (!v) return;
+    const res = await Auth.deleteAccount(v[0]);
+    if (res.ok) window.location.href = H('index.html') + '?deleted=1';
+    else UI.toast(res.error || 'Could not delete account', 'error');
+  });
+
+  if (location.hash.length > 1) {
+    const target = document.getElementById(location.hash.slice(1));
+    if (target) target.scrollIntoView();
+  }
+});
+</script>
+</body>
+</html>

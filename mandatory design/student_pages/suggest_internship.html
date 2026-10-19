@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>InternHub — Suggest an Internship</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f4f4f1; --surface:#fbfbfa; --ink:#0d1b12; --ink2:#3f4a44; --muted:#6b7570;
+  --line:#e3e5df; --line2:#d6dad2;
+  --green:#0e6b3f; --green-ink:#0a5232; --green-deep:#0a3d26;
+  --mint:#dcefe2; --mint2:#eaf5ee;
+  --amber:#b45309; --amber-bg:#fdf3e3;
+  --coral:#b3543f; --coral-bg:#f6ded9;
+  --lime:#e0f2d6; --lime-ink:#46711c;
+  --sage:#eceee8; --sage-ink:#5c6660;
+  --r:14px;
+  --sh1:0 1px 2px rgba(13,27,18,.05),0 8px 24px -12px rgba(13,27,18,.12);
+  --sh2:0 2px 6px rgba(13,27,18,.06),0 18px 36px -18px rgba(13,27,18,.20);
+  --fd:"Fraunces",Georgia,serif; --fs:"Inter",-apple-system,"Segoe UI",sans-serif; --fm:"JetBrains Mono",ui-monospace,monospace;
+  --ease:cubic-bezier(.4,0,.2,1);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--ink);font:14.5px/1.55 var(--fs);-webkit-font-smoothing:antialiased}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+input,select,textarea{font:inherit}
+img{display:block}
+svg{display:block;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+::selection{background:var(--mint)}
+:focus-visible{outline:2px solid var(--green);outline-offset:2px;border-radius:6px}
+.eyebrow{font:500 11px var(--fm);letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.display{font-family:var(--fd);font-weight:600;letter-spacing:-.01em}
+.sechead{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-bottom:14px}
+.sechead h2{font-size:21px}
+
+/* ============ TOPBAR ============ */
+.topbar{position:sticky;top:0;z-index:100;height:64px;display:flex;align-items:center;gap:14px;padding:0 20px;background:rgba(244,244,241,.86);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+.icon-btn{width:38px;height:38px;border-radius:10px;display:grid;place-items:center;color:var(--ink2);transition:.2s}
+.icon-btn:hover{background:var(--mint2);color:var(--green-ink)}
+.icon-btn svg{width:18px;height:18px}
+.brand{display:flex;align-items:center;gap:10px;font-weight:700;font-size:16.5px;color:var(--ink);text-decoration:none;margin-right:6px}
+.logo{width:28px;height:28px;border-radius:8px;background:var(--green);display:grid;place-items:center;color:#fff;flex:none}
+.logo svg{width:14px;height:14px;stroke-width:2.4}
+.top-nav{display:flex;gap:4px}
+.top-nav a{padding:8px 13px;border-radius:9px;font-size:13.5px;font-weight:500;color:var(--ink2);text-decoration:none;transition:.2s}
+.top-nav a:hover{color:var(--green-ink);background:var(--mint2)}
+.top-nav a.on{color:var(--ink);font-weight:600;background:#eceee8}
+.tb-right{margin-left:auto;display:flex;align-items:center;gap:6px}
+.avatar-wrap{position:relative}
+.avatar{width:34px;height:34px;border-radius:50%;background:var(--green);color:#fff;font-weight:600;font-size:13px;display:grid;place-items:center}
+.chev{width:14px;height:14px;color:var(--muted)}
+.menu{position:absolute;right:0;top:calc(100% + 8px);min-width:190px;background:var(--surface);border:1px solid var(--line);border-radius:12px;box-shadow:var(--sh2);padding:6px;opacity:0;transform:translateY(-6px) scale(.98);pointer-events:none;transition:.22s var(--ease)}
+.menu.open{opacity:1;transform:none;pointer-events:auto}
+.menu button{display:flex;width:100%;align-items:center;gap:9px;padding:9px 11px;border-radius:8px;font-size:13.5px;color:var(--ink2);transition:.15s}
+.menu button:hover{background:var(--mint2);color:var(--green-ink)}
+.menu svg{width:15px;height:15px}
+.menu hr{border:0;border-top:1px solid var(--line);margin:5px 4px}
+
+/* ============ SIDEBAR ============ */
+.shell{display:flex;min-height:calc(100vh - 64px)}
+.sidebar{width:250px;flex:none;background:#f7f8f6;border-right:1px solid var(--line);position:sticky;top:64px;height:calc(100vh - 64px);overflow:hidden;transition:width .35s var(--ease)}
+body.sb-collapsed .sidebar{width:76px}
+.sb-scroll{height:100%;overflow-y:auto;overflow-x:hidden;padding:18px 14px;scrollbar-width:none;display:flex;flex-direction:column;gap:4px}
+.sb-label{padding:4px 12px 8px;transition:opacity .2s}
+body.sb-collapsed .sb-label{opacity:0}
+.nav-btn{position:relative;display:flex;align-items:center;gap:12px;width:100%;padding:10px 12px;border-radius:10px;color:var(--ink2);font-size:14px;font-weight:500;transition:.2s;text-align:left}
+.nav-btn:hover{background:var(--mint2);color:var(--green-ink)}
+.nav-btn.on{background:var(--mint);color:var(--green-ink);font-weight:600}
+.nav-btn .ico svg{width:18px;height:18px}
+.nav-btn .txt{white-space:nowrap;max-width:160px;transition:max-width .3s var(--ease),opacity .2s}
+body.sb-collapsed .txt{max-width:0;opacity:0;overflow:hidden}
+body.sb-collapsed .nav-btn{justify-content:center;padding:10px}
+.nbadge{position:absolute;right:10px;top:50%;transform:translateY(-50%);min-width:20px;height:20px;padding:0 6px;border-radius:999px;background:var(--green);color:#fff;font:600 11px/20px var(--fs);text-align:center}
+body.sb-collapsed .nbadge{right:6px;top:6px;transform:none;min-width:16px;height:16px;font-size:9.5px;line-height:16px;padding:0 4px}
+.sb-card{margin-top:auto;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px}
+body.sb-collapsed .sb-card{display:none}
+.sb-card .eyebrow{display:block;margin-bottom:10px}
+.sb-card ol{list-style:none;display:flex;flex-direction:column;gap:8px}
+.sb-card li{display:flex;gap:10px;align-items:baseline;font-size:12.5px;color:var(--ink2)}
+.sb-card li b{flex:none;width:18px;height:18px;border-radius:6px;background:var(--mint);color:var(--green-ink);font:600 10.5px/18px var(--fm);text-align:center}
+.backdrop{position:fixed;inset:0;top:64px;background:rgba(10,20,14,.4);opacity:0;pointer-events:none;transition:opacity .3s;z-index:90}
+body.sb-open .backdrop{opacity:1;pointer-events:auto}
+
+/* ============ MAIN ============ */
+.main{flex:1;min-width:0;padding:24px clamp(14px,2.6vw,32px) 40px}
+
+/* ---- intro band ---- */
+.intro{position:relative;border-radius:18px;padding:clamp(24px,3vw,34px) clamp(18px,3vw,36px);color:#eafff3;overflow:hidden;background:linear-gradient(150deg,#0a3d26 0%,#0e6b3f 55%,#0a4930 100%)}
+.intro::before{content:"";position:absolute;inset:0;pointer-events:none;background:radial-gradient(680px 240px at 90% -20%,rgba(140,255,190,.20),transparent 62%),repeating-linear-gradient(90deg,rgba(255,255,255,.035) 0 1px,transparent 1px 90px)}
+.intro>*{position:relative}
+.intro .eyebrow{color:#9fd8b4}
+.intro h1{font-size:clamp(24px,3vw,34px);color:#f7fdf9;margin:10px 0 6px;max-width:560px}
+.intro p{color:#cfe9d8;font-size:14px;max-width:560px}
+.intro .stat-line{margin-top:14px;font:500 11px var(--fm);letter-spacing:.12em;color:#8fc7a6;text-transform:uppercase}
+.orbits{position:absolute;right:8px;top:6px;width:340px;opacity:.8;pointer-events:none}
+.orbits .sig{stroke-dasharray:6 8;animation:dash 16s linear infinite}
+@keyframes dash{to{stroke-dashoffset:-420}}
+
+/* ---- layout ---- */
+.suggest-grid{display:grid;grid-template-columns:minmax(0,1fr) 378px;gap:22px;align-items:start;margin-top:24px}
+.form-col{position:relative;min-width:0}
+
+/* ---- form cards ---- */
+.fcard{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:20px}
+.fcard+.fcard{margin-top:14px}
+.fhead{display:flex;align-items:baseline;gap:10px;margin-bottom:16px}
+.fstep{font:600 11px var(--fm);color:var(--green-ink);background:var(--mint);border-radius:6px;padding:3px 8px}
+.fhead h3{font-size:15.5px;font-weight:600}
+.fhead .opt{margin-left:auto;font-size:11.5px;color:var(--muted)}
+.fgrid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.span2{grid-column:1/-1}
+.field label{display:flex;align-items:baseline;gap:4px;font-size:13px;font-weight:600;margin-bottom:7px;color:var(--ink)}
+.req{color:var(--green)}
+.count{margin-left:auto;font:500 11px var(--fm);color:var(--muted)}
+.field input,.field textarea,.field select{width:100%;background:#fff;border:1px solid var(--line2);border-radius:10px;padding:11px 13px;font-size:14px;color:var(--ink);transition:border-color .2s,box-shadow .2s;outline:none}
+.field textarea{resize:vertical;min-height:96px}
+.field input:focus,.field textarea:focus,.field select:focus{border-color:var(--green);box-shadow:0 0 0 3px var(--mint)}
+.field input::placeholder,.field textarea::placeholder{color:#a8b2ac}
+.hint{font-size:12px;color:var(--muted);margin-top:6px}
+.hint.good{color:var(--green-ink)}
+.hint.bad{color:var(--coral)}
+.fmsg{display:none;font-size:12px;color:var(--coral);margin-top:6px}
+.field.err input,.field.err textarea{border-color:var(--coral);box-shadow:0 0 0 3px var(--coral-bg)}
+.field.err .fmsg{display:block}
+@keyframes nudge{0%,100%{transform:translateX(0)}25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}
+.field.err{animation:nudge .3s var(--ease)}
+/* chips */
+.fchips{display:flex;flex-wrap:wrap;gap:8px}
+.fchip{display:flex;align-items:center;gap:8px;border:1px solid var(--line2);background:#fff;border-radius:999px;padding:8px 14px;font-size:13px;font-weight:500;color:var(--ink2);transition:.18s var(--ease)}
+.fchip svg{width:14px;height:14px}
+.fchip:hover{border-color:var(--green);color:var(--green-ink);transform:translateY(-1px)}
+.fchip.on{background:var(--mint);border-color:var(--green);color:var(--green-ink);font-weight:600}
+.cchip{border:1px solid var(--line2);background:#fff;border-radius:999px;padding:8px 15px;font-size:13px;color:var(--ink2);transition:.18s}
+.cchip:hover{border-color:var(--green);color:var(--green-ink)}
+.cchip.on{background:var(--green);border-color:var(--green);color:#fff}
+/* segmented work mode */
+.seg{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;background:var(--sage);border-radius:12px;padding:4px}
+.seg button{display:flex;align-items:center;justify-content:center;gap:8px;border-radius:9px;padding:10px;font-size:13px;font-weight:600;color:var(--ink2);transition:.2s var(--ease)}
+.seg button svg{width:14px;height:14px}
+.seg button.on{background:var(--surface);color:var(--green-ink);box-shadow:var(--sh1)}
+/* submit */
+.submit-row{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-top:18px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border-radius:10px;font-weight:600;font-size:13.5px;padding:10px 16px;transition:.2s var(--ease);white-space:nowrap}
+.btn svg{width:15px;height:15px}
+.btn.primary{background:var(--green);color:#fff}
+.btn.primary:hover{background:var(--green-ink);transform:translateY(-1px)}
+.btn.primary:disabled{opacity:.65;transform:none;cursor:default}
+.btn.ghost{background:var(--surface);border:1px solid var(--line2);color:var(--ink2)}
+.btn.ghost:hover{border-color:var(--green);color:var(--green-ink)}
+.btn.big{padding:13px 22px;font-size:14.5px;border-radius:12px}
+.spin{width:15px;height:15px;border:2px solid rgba(255,255,255,.35);border-top-color:#fff;border-radius:50%;animation:rot .7s linear infinite}
+@keyframes rot{to{transform:rotate(360deg)}}
+.submit-note{font-size:12px;color:var(--muted)}
+
+/* ---- success overlay ---- */
+.done{position:absolute;inset:0;z-index:5;background:rgba(251,251,250,.94);backdrop-filter:blur(6px);border-radius:18px;display:grid;place-items:center;opacity:0;visibility:hidden;transition:.35s var(--ease)}
+.done.show{opacity:1;visibility:visible}
+.done-card{text-align:center;padding:30px;max-width:440px}
+.done-check{width:74px;height:74px;margin:0 auto 18px}
+.done-check circle{stroke:var(--green);stroke-dasharray:166;stroke-dashoffset:166}
+.done-check path{stroke:var(--green);stroke-dasharray:48;stroke-dashoffset:48;stroke-width:3}
+.done.show circle{animation:draw .6s .1s var(--ease) forwards}
+.done.show path{animation:draw .4s .6s var(--ease) forwards}
+@keyframes draw{to{stroke-dashoffset:0}}
+.done-card h3{font-size:24px;margin-bottom:8px}
+.done-card p{color:var(--muted);font-size:13.5px}
+.done-actions{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:22px}
+
+/* ---- preview column ---- */
+.pv-col{position:sticky;top:84px;display:flex;flex-direction:column;gap:14px}
+.pv-label{display:flex;align-items:center;gap:8px}
+.pv-label .dot{width:7px;height:7px;border-radius:50%;background:var(--green);animation:pulse 2s infinite}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(14,107,63,.35)}70%{box-shadow:0 0 0 8px rgba(14,107,63,0)}100%{box-shadow:0 0 0 0 rgba(14,107,63,0)}}
+.pv-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);overflow:hidden;box-shadow:var(--sh1)}
+.pv-media{position:relative;height:168px;background:linear-gradient(140deg,var(--green),var(--green-deep))}
+.pv-media img{width:100%;height:100%;object-fit:cover}
+.pv-media .noimg{position:absolute;inset:0;display:grid;place-items:center;color:rgba(255,255,255,.5);font:700 30px var(--fs)}
+.pv-media .noimg::after{content:"";position:absolute;inset:0;background:repeating-linear-gradient(-45deg,rgba(255,255,255,.05) 0 10px,transparent 10px 20px)}
+.badge{font:600 10.5px var(--fm);letter-spacing:.08em;text-transform:uppercase;border-radius:7px;padding:4px 8px}
+.badge.pend{position:absolute;top:10px;left:10px;background:rgba(236,238,232,.92);color:var(--sage-ink);backdrop-filter:blur(4px)}
+.pv-av{position:absolute;left:14px;bottom:-15px;width:32px;height:32px;border-radius:50%;background:var(--green-deep);color:#bfe8cd;display:grid;place-items:center;font:700 11.5px var(--fs);border:2px solid var(--surface)}
+.pv-body{padding:22px 16px 14px}
+.pv-body h3{font-size:15.5px;font-weight:600}
+.pv-body h3.ph,.pv-co.ph{color:#a8b2ac;font-weight:500}
+.pv-co{display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--muted);margin-top:3px}
+.pv-meta{list-style:none;display:flex;flex-wrap:wrap;gap:5px 12px;margin-top:10px}
+.pv-meta li{display:flex;align-items:center;gap:5px;font-size:12px;color:var(--ink2)}
+.pv-meta li.ph{color:#b6bfb9}
+.pv-meta svg{width:12.5px;height:12.5px;color:var(--muted)}
+.pv-foot{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;border-top:1px solid var(--line);font-size:12px;color:var(--muted)}
+.pv-foot .mono{font:500 10px var(--fm);letter-spacing:.1em;text-transform:uppercase}
+/* workflow */
+.wf{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:18px}
+.wf h4{font-size:13.5px;font-weight:700;margin-bottom:14px}
+.wf-step{position:relative;display:flex;gap:12px;padding-bottom:18px}
+.wf-step:last-child{padding-bottom:0}
+.wf-step::before{content:"";position:absolute;left:15px;top:32px;bottom:0;width:1.5px;background:linear-gradient(var(--line2),var(--mint))}
+.wf-step:last-child::before{display:none}
+.wf-ico{flex:none;width:31px;height:31px;border-radius:10px;background:var(--mint2);color:var(--green-ink);display:grid;place-items:center;border:1px solid var(--mint)}
+.wf-ico svg{width:14px;height:14px}
+.wf-step b{display:block;font-size:13px}
+.wf-step span{font-size:12px;color:var(--muted)}
+
+/* ---- history ---- */
+.history{margin-top:34px}
+.hrow{display:flex;align-items:center;gap:14px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:13px 16px}
+.hrow+.hrow{margin-top:10px}
+@keyframes rowin{from{opacity:0;transform:translateY(-8px)}}
+.hrow.new{animation:rowin .45s var(--ease)}
+.h-ico{flex:none;width:38px;height:38px;border-radius:10px;background:var(--sage);color:var(--sage-ink);display:grid;place-items:center}
+.h-ico svg{width:16px;height:16px}
+.h-main{flex:1;min-width:0}
+.h-main b{display:block;font-size:13.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.h-main span{display:block;font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.status{flex:none;display:flex;align-items:center;gap:7px;font:600 10.5px var(--fm);letter-spacing:.08em;text-transform:uppercase;border-radius:7px;padding:5px 10px}
+.status::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.st-pending{background:var(--sage);color:var(--sage-ink)}
+.st-verified{background:var(--mint);color:var(--green-ink)}
+.st-published{background:var(--lime);color:var(--lime-ink)}
+.st-needs{background:var(--amber-bg);color:var(--amber)}
+.st-rejected{background:var(--coral-bg);color:var(--coral)}
+.h-empty{border:1.5px dashed var(--line2);border-radius:var(--r);padding:44px 24px;text-align:center;background:var(--mint2)}
+.h-empty .e-ico{width:46px;height:46px;border-radius:12px;background:var(--mint);color:var(--green-ink);display:grid;place-items:center;margin:0 auto 14px}
+.h-empty .e-ico svg{width:20px;height:20px}
+.h-empty h3{font-size:16px}
+.h-empty p{color:var(--muted);font-size:13px;max-width:380px;margin:7px auto 0}
+.foot{margin-top:34px;text-align:center;font:500 11px var(--fm);letter-spacing:.1em;color:var(--muted);text-transform:uppercase}
+.toast{position:fixed;left:50%;bottom:26px;transform:translate(-50%,16px);z-index:300;background:rgba(13,27,18,.94);color:#eafff3;border-radius:999px;padding:10px 18px;font-size:13px;opacity:0;pointer-events:none;transition:.3s var(--ease);box-shadow:var(--sh2)}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+
+/* ============ RESPONSIVE ============ */
+@media (max-width:1100px){.suggest-grid{grid-template-columns:1fr}.pv-col{position:static}}
+@media (max-width:960px){
+  .top-nav{display:none}
+  .sidebar{position:fixed;left:0;top:64px;z-index:140;width:278px !important;transform:translateX(-105%);transition:transform .35s var(--ease);box-shadow:var(--sh2)}
+  body.sb-open .sidebar{transform:none}
+  body.sb-collapsed .txt{max-width:160px;opacity:1}
+  body.sb-collapsed .sb-card{display:block}
+  body.sb-collapsed .sb-label{opacity:1}
+  .orbits{display:none}
+}
+@media (max-width:640px){
+  .fgrid{grid-template-columns:1fr}
+  .seg{grid-template-columns:1fr}
+  .hrow{flex-wrap:wrap}
+  .status{margin-left:52px}
+}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{transition-duration:.01ms !important;animation-duration:.01ms !important;animation-iteration-count:1 !important}}
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <button class="icon-btn" id="sbToggle" aria-label="Toggle navigation"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M9 4v16"/></svg></button>
+  <a class="brand" href="#"><span class="logo"><svg viewBox="0 0 24 24"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg></span>InternHub</a>
+  <nav class="top-nav"><a href="#" data-toast="Browse prototype — separate file.">Internships</a><a href="#" class="on">Suggest</a></nav>
+  <div class="tb-right">
+    <div class="avatar-wrap">
+      <button id="avBtn" style="display:flex;align-items:center;gap:6px" aria-label="Account"><span class="avatar">T</span><svg class="chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></button>
+      <div class="menu" id="avMenu">
+        <button data-toast="Dashboard prototype — separate file."><svg viewBox="0 0 24 24"><path d="M3 10.5L12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/></svg>Dashboard</button>
+        <button data-toast="No saved internships yet — tap the bookmark on any card."><svg viewBox="0 0 24 24"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>Saved</button>
+        <hr>
+        <button data-toast="Signed out (design prototype)."><svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5M21 12H9"/></svg>Sign out</button>
+      </div>
+    </div>
+  </div>
+</header>
+
+<div class="shell">
+  <aside class="sidebar">
+    <div class="sb-scroll">
+      <p class="eyebrow sb-label">My space</p>
+      <button class="nav-btn" data-toast="Dashboard prototype — separate file."><span class="ico"><svg viewBox="0 0 24 24"><path d="M3 10.5L12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/></svg></span><span class="txt">Dashboard</span></button>
+      <button class="nav-btn" data-toast="Browse prototype — separate file."><span class="ico"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg></span><span class="txt">Browse internships</span></button>
+      <button class="nav-btn" data-toast="No saved internships yet — tap the bookmark on any card."><span class="ico"><svg viewBox="0 0 24 24"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg></span><span class="txt">Saved</span><span class="nbadge" id="savedBadge" hidden>0</span></button>
+      <button class="nav-btn on"><span class="ico"><svg viewBox="0 0 24 24"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4z"/></svg></span><span class="txt">Suggest internship</span></button>
+      <div class="sb-card">
+        <span class="eyebrow">How InternHub works</span>
+        <ol>
+          <li><b>1</b>Discover opportunities across Cameroon</li>
+          <li><b>2</b>Save the ones that fit you</li>
+          <li><b>3</b>Apply on the company's own site</li>
+        </ol>
+      </div>
+    </div>
+  </aside>
+  <div class="backdrop" id="backdrop"></div>
+
+  <main class="main">
+    <!-- ===== INTRO ===== -->
+    <section class="intro">
+      <svg class="orbits" viewBox="0 0 340 200" aria-hidden="true">
+        <circle cx="252" cy="100" r="72" stroke="rgba(140,255,190,.22)" stroke-dasharray="3 7"/>
+        <circle cx="252" cy="100" r="42" stroke="rgba(140,255,190,.16)"/>
+        <path class="sig" d="M14 158 C 92 128, 148 52, 252 100" stroke="rgba(140,255,190,.5)" stroke-width="1.6"/>
+        <circle cx="14" cy="158" r="4" fill="#9fe8bd" stroke="none"/>
+        <circle cx="150" cy="86" r="3" fill="#9fe8bd" stroke="none" opacity=".7"/>
+        <circle cx="252" cy="100" r="5" fill="#dcefe2" stroke="none"/>
+      </svg>
+      <p class="eyebrow">Community submissions</p>
+      <h1 class="display">Know an internship? Help another student discover it.</h1>
+      <p>Send in opportunities you've found — online or in real life. Every suggestion is reviewed, verified and published so the whole student community can benefit.</p>
+      <p class="stat-line">132 community suggestions · 96 published · 5 cities</p>
+    </section>
+
+    <div class="suggest-grid">
+      <!-- ===== FORM ===== -->
+      <div class="form-col" id="formCol">
+        <form id="suggestForm" novalidate>
+          <div class="fcard">
+            <div class="fhead"><span class="fstep">01</span><h3>The opportunity</h3></div>
+            <div class="fgrid">
+              <div class="field span2" id="wTitle">
+                <label for="fTitle">Internship title <span class="req">*</span></label>
+                <input id="fTitle" placeholder="e.g. Software Engineering Intern" maxlength="80">
+                <p class="fmsg">Please add the internship title.</p>
+              </div>
+              <div class="field span2" id="wCompany">
+                <label for="fCompany">Company / organisation <span class="req">*</span></label>
+                <input id="fCompany" placeholder="e.g. Afrimax Technologies">
+                <p class="fmsg">Please add the company or organisation name.</p>
+              </div>
+              <div class="field span2" id="wField">
+                <label>Field <span class="req">*</span></label>
+                <div class="fchips" id="fieldChips"></div>
+                <p class="fmsg">Choose the closest field for this internship.</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="fcard">
+            <div class="fhead"><span class="fstep">02</span><h3>Location & work mode</h3></div>
+            <div class="fgrid">
+              <div class="field span2" id="wCity">
+                <label>City <span class="req">*</span></label>
+                <div class="fchips" id="cityChips"></div>
+                <p class="fmsg">Pick a city — or “Other” to type one in.</p>
+              </div>
+              <div class="field span2" id="cityOtherWrap" style="display:none">
+                <label for="fCityOther">Your city</label>
+                <input id="fCityOther" placeholder="e.g. Kribi">
+              </div>
+              <div class="field">
+                <label for="fArea">Area <span style="color:var(--muted);font-weight:500">(optional)</span></label>
+                <input id="fArea" placeholder="e.g. Mile 17, Bonapriso…">
+              </div>
+              <div class="field" id="wMode">
+                <label>Work mode <span class="req">*</span></label>
+                <div class="seg" id="modeSeg">
+                  <button type="button" data-mode="On-site"><svg viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M9 7h2m2 0h2M9 11h2m2 0h2M9 15h2m2 0h2"/></svg>On-site</button>
+                  <button type="button" data-mode="Hybrid"><svg viewBox="0 0 24 24"><path d="M12 3v6m0 0a4 4 0 1 0 4 4"/><circle cx="12" cy="9" r="0"/><path d="M5 21a7 7 0 0 1 14 0"/></svg>Hybrid</button>
+                  <button type="button" data-mode="Remote"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></svg>Remote</button>
+                </div>
+                <p class="fmsg">Select how the intern will work.</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="fcard">
+            <div class="fhead"><span class="fstep">03</span><h3>Links</h3><span class="opt">Where you found it</span></div>
+            <div class="fgrid">
+              <div class="field span2" id="wSource">
+                <label for="fSource">Source link <span class="req">*</span></label>
+                <input id="fSource" type="url" placeholder="https://… the page where you found this opportunity">
+                <p class="hint" id="sourceHint">Paste the page where you discovered it — a company career page, LinkedIn post, flyer site…</p>
+                <p class="fmsg">A valid source link (https://…) is required so we can review it.</p>
+              </div>
+              <div class="field span2" id="wApply">
+                <label for="fApply">Application link <span style="color:var(--muted);font-weight:500">(optional, if different)</span></label>
+                <input id="fApply" type="url" placeholder="https://… direct application URL">
+                <p class="hint" id="applyHint">If applications happen on a different page, add it here.</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="fcard">
+            <div class="fhead"><span class="fstep">04</span><h3>Details</h3><span class="opt">Everything helps</span></div>
+            <div class="fgrid">
+              <div class="field span2">
+                <label for="fDesc">Description <span class="count" id="descCount">0 / 600</span></label>
+                <textarea id="fDesc" maxlength="600" placeholder="What will the intern do? Requirements? Anything a student should know before applying…"></textarea>
+              </div>
+              <div class="field">
+                <label for="fDur">Duration</label>
+                <label class="select" style="position:relative"><select id="fDur">
+                  <option value="">Not sure yet</option><option>1 – 2 months</option><option>3 months</option><option>4 – 5 months</option><option>6 months</option><option>6+ months</option>
+                </select></label>
+              </div>
+              <div class="field">
+                <label for="fDeadline">Application deadline</label>
+                <input id="fDeadline" type="date">
+              </div>
+              <div class="field span2">
+                <label for="fContact">Contact info <span style="color:var(--muted);font-weight:500">(optional)</span></label>
+                <input id="fContact" placeholder="e.g. careers@company.cm · +237 6XX XX XX XX">
+                <p class="hint">Only share contact details that are publicly available.</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="fcard">
+            <div class="fhead"><span class="fstep">05</span><h3>Cover image</h3><span class="opt">Optional</span></div>
+            <div class="field" id="wImg">
+              <label for="fImg">Image URL</label>
+              <input id="fImg" type="url" placeholder="https://…/image.jpg">
+              <p class="hint" id="imgHint">Paste a direct link to a company or office image. No image? We'll generate a clean cover automatically.</p>
+            </div>
+          </div>
+
+          <div class="submit-row">
+            <button class="btn primary big" id="submitBtn" type="submit">
+              <svg viewBox="0 0 24 24"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4z"/></svg>
+              Submit for review
+            </button>
+            <p class="submit-note">Required fields marked <span style="color:var(--green);font-weight:700">*</span> · Reviewed before publishing</p>
+          </div>
+        </form>
+
+        <!-- success overlay -->
+        <div class="done" id="doneOverlay">
+          <div class="done-card">
+            <svg class="done-check" viewBox="0 0 64 64"><circle cx="32" cy="32" r="26.5" fill="none" stroke-width="2.5"/><path d="M21 33l8 8 15-16" fill="none"/></svg>
+            <h3 class="display">Suggestion submitted.</h3>
+            <p>Thank you for helping another student discover an opportunity. Our team will review it shortly — track its status in your submission history below.</p>
+            <div class="done-actions">
+              <button class="btn primary" id="againBtn">Suggest another</button>
+              <button class="btn ghost" data-toast="Browse prototype — separate file.">Browse internships</button>
+              <button class="btn ghost" data-toast="Dashboard prototype — separate file.">View dashboard</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== PREVIEW + WORKFLOW ===== -->
+      <aside class="pv-col">
+        <p class="eyebrow pv-label"><span class="dot"></span>Live preview</p>
+        <article class="pv-card" id="pvCard"></article>
+        <div class="wf">
+          <h4>What happens next?</h4>
+          <div class="wf-step"><span class="wf-ico"><svg viewBox="0 0 24 24"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4z"/></svg></span><div><b>You suggest</b><span>Share the opportunity with a link and details.</span></div></div>
+          <div class="wf-step"><span class="wf-ico"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg></span><div><b>We review</b><span>Our team checks, edits and verifies the listing.</span></div></div>
+          <div class="wf-step"><span class="wf-ico"><svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg></span><div><b>Students discover</b><span>It goes live in Browse for the whole community.</span></div></div>
+        </div>
+      </aside>
+    </div>
+
+    <!-- ===== HISTORY ===== -->
+    <section class="history">
+      <div class="sechead"><h2 class="display">Your suggestions</h2><span class="eyebrow" id="histCount"></span></div>
+      <div id="histList"></div>
+    </section>
+
+    <footer class="foot">© 2026 InternHub · Verified opportunities across Cameroon</footer>
+  </main>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+const $=s=>document.querySelector(s);
+const FIELDS=["Software Engineering","Data & AI","Design","Finance","Agriculture","Engineering","Health","Marketing"];
+const CITIES=["Douala","Yaoundé","Buea","Limbe"];
+const FICO={"Software Engineering":'<svg viewBox="0 0 24 24"><path d="M8 6l-5 6 5 6M16 6l5 6-5 6"/></svg>',"Data & AI":'<svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-8M22 20H2"/></svg>',Design:'<svg viewBox="0 0 24 24"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/></svg>',Finance:'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v10M15 9.5c0-1.4-1.3-2.5-3-2.5s-3 1.1-3 2.5 1.3 2.5 3 2.5 3 1.1 3 2.5-1.3 2.5-3 2.5-3-1.1-3-2.5"/></svg>',Agriculture:'<svg viewBox="0 0 24 24"><path d="M12 22V8"/><path d="M12 8C12 4 9 2 5 2c0 4 3 6 7 6zM12 12c0-4 3-6 7-6 0 4-3 6-7 6z"/></svg>',Engineering:'<svg viewBox="0 0 24 24"><path d="M13 2L3 14h7l-1 8 10-12h-7l1-8z"/></svg>',Health:'<svg viewBox="0 0 24 24"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>',Marketing:'<svg viewBox="0 0 24 24"><path d="M3 11l18-8v18L3 13v-2z"/><path d="M7 13v6a2 2 0 0 0 4 0v-4"/></svg>'};
+const IC={tag:'<svg viewBox="0 0 24 24"><path d="M20.6 13.4L11 3H4v7l9.6 10.4a2 2 0 0 0 2.8 0l4.2-4.2a2 2 0 0 0 0-2.8z"/></svg>',clock:'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>',pin:'<svg viewBox="0 0 24 24"><path d="M20 10c0 6-8 12-8 12S4 16 4 10a8 8 0 0 1 16 0z"/><circle cx="12" cy="10" r="3"/></svg>',mode:'<svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></svg>',send:'<svg viewBox="0 0 24 24"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4z"/></svg>'};
+const esc=s=>String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+const initials=n=>n.split(/\s+/).map(w=>w[0]).join("").slice(0,2).toUpperCase();
+const F={title:"",company:"",field:"",city:"",area:"",mode:"",source:"",apply:"",desc:"",dur:"",deadline:"",contact:"",img:""};
+let imgOk=false;
+let history=[
+ {t:"Sales Intern",co:"QuickSell Douala",date:"30 August 2026",st:"pending"},
+ {t:"UI Design Intern",co:"Nkolbisson Studio",date:"26 August 2026",st:"needs"},
+ {t:"Data Science Intern",co:"Cameroon Data Lab",date:"18 August 2026",st:"published"},
+ {t:"Crypto Trading Intern",co:"Unknown LLC",date:"12 August 2026",st:"rejected"}
+];
+const ST={pending:["Pending review","st-pending"],verified:["Verified","st-verified"],published:["Published","st-published"],needs:["Needs changes","st-needs"],rejected:["Rejected","st-rejected"]};
+
+/* ---------- chips ---------- */
+$("#fieldChips").innerHTML=FIELDS.map(f=>'<button type="button" class="fchip" data-f="'+esc(f)+'">'+(FICO[f]||IC.tag)+esc(f)+"</button>").join("");
+$("#cityChips").innerHTML=CITIES.map(c=>'<button type="button" class="cchip" data-c="'+c+'">'+c+"</button>").join("")+'<button type="button" class="cchip" data-c="Other">Other</button>';
+$("#fieldChips").addEventListener("click",e=>{const b=e.target.closest("[data-f]");if(!b)return;F.field=F.field===b.dataset.f?"":b.dataset.f;syncChips();clearErr("wField");renderPreview();});
+$("#cityChips").addEventListener("click",e=>{const b=e.target.closest("[data-c]");if(!b)return;
+ const c=b.dataset.c;
+ if(c==="Other"){$("#cityOtherWrap").style.display="";F.city=$("#fCityOther").value.trim();}
+ else{$("#cityOtherWrap").style.display="none";F.city=F.city===c?"":c;}
+ syncChips();clearErr("wCity");renderPreview();});
+$("#fCityOther").addEventListener("input",e=>{F.city=e.target.value.trim();clearErr("wCity");renderPreview();});
+function syncChips(){
+ document.querySelectorAll("#fieldChips .fchip").forEach(b=>b.classList.toggle("on",b.dataset.f===F.field));
+ document.querySelectorAll("#cityChips .cchip").forEach(b=>{
+   const c=b.dataset.c;
+   b.classList.toggle("on",c==="Other"?(F.city&&!CITIES.includes(F.city)):F.city===c);});
+}
+$("#modeSeg").addEventListener("click",e=>{const b=e.target.closest("[data-mode]");if(!b)return;F.mode=b.dataset.mode;
+ document.querySelectorAll("#modeSeg button").forEach(x=>x.classList.toggle("on",x===b));clearErr("wMode");renderPreview();});
+
+/* ---------- inputs ---------- */
+const bind=(id,key,after)=>$(id).addEventListener("input",e=>{F[key]=e.target.value;after&&after();renderPreview();});
+bind("#fTitle","title",()=>clearErr("wTitle"));
+bind("#fCompany","company",()=>clearErr("wCompany"));
+bind("#fArea","area");bind("#fApply","apply",()=>urlHint("#applyHint",F.apply,"applyHint"));
+bind("#fContact","contact");bind("#fDur","dur");bind("#fDeadline","deadline");
+bind("#fSource","source",()=>{urlHint("#sourceHint",F.source,"sourceHint");clearErr("wSource");});
+$("#fDesc").addEventListener("input",e=>{F.desc=e.target.value;$("#descCount").textContent=F.desc.length+" / 600";renderPreview();});
+$("#fDeadline").min=new Date().toISOString().split("T")[0];
+function urlHint(sel,val){
+ const el=$(sel);el.classList.remove("good","bad");
+ if(!val){el.textContent=el.dataset.orig||(el.dataset.orig=el.textContent);return;}
+ if(/^https?:\/\/.+\..+/.test(val)){el.textContent="Link looks good.";el.classList.add("good");}
+ else{el.textContent="Hmm — a link should start with http:// or https://";el.classList.add("bad");}
+}
+/* image url preview w/ debounce */
+let imgT;$("#fImg").addEventListener("input",e=>{F.img=e.target.value.trim();clearTimeout(imgT);
+ imgT=setTimeout(()=>{const h=$("#imgHint");h.classList.remove("good","bad");
+  if(!F.img){imgOk=false;h.textContent=h.dataset.orig||(h.dataset.orig=h.textContent);renderPreview();return;}
+  const t=new Image();
+  t.onload=()=>{imgOk=true;h.textContent="Image loaded — see the preview.";h.classList.add("good");renderPreview();};
+  t.onerror=()=>{imgOk=false;h.textContent="We couldn't load that image — we'll use a clean fallback cover instead.";h.classList.add("bad");renderPreview();};
+  t.src=F.img;},450);
+ renderPreview();});
+
+/* ---------- preview ---------- */
+function renderPreview(){
+ const media=(F.img&&imgOk)?'<img src="'+esc(F.img)+'" alt="">':'<div class="noimg">'+esc(initials(F.company||"InternHub"))+"</div>";
+ const meta=[];
+ meta.push(F.field?'<li>'+FICO[F.field]+esc(F.field)+"</li>":'<li class="ph">'+IC.tag+"Field</li>");
+ const loc=[F.city,F.area].filter(Boolean).join(" · ");
+ meta.push(loc?'<li>'+IC.pin+esc(loc)+"</li>":'<li class="ph">'+IC.pin+"City</li>");
+ meta.push(F.mode?'<li>'+IC.mode+esc(F.mode)+"</li>":'<li class="ph">'+IC.mode+"Work mode</li>");
+ if(F.dur)meta.push('<li>'+IC.clock+esc(F.dur)+"</li>");
+ const dl=F.deadline?"Closes "+new Date(F.deadline+"T00:00").toLocaleDateString("en-GB",{day:"numeric",month:"short"}):"Deadline —";
+ $("#pvCard").innerHTML=
+  '<div class="pv-media">'+media+'<span class="badge pend">Pending verification</span><span class="pv-av">'+esc(initials(F.company||"IH"))+"</span></div>"+
+  '<div class="pv-body"><h3 class="'+(F.title?"":"ph")+'">'+esc(F.title||"Internship title")+'</h3>'+
+  '<p class="pv-co '+(F.company?"":"ph")+'">'+esc(F.company||"Company name")+"</p>"+
+  '<ul class="pv-meta">'+meta.join("")+"</ul></div>"+
+  '<div class="pv-foot"><span>'+esc(dl)+'</span><span class="mono">Community suggestion</span></div>';
+}
+
+/* ---------- validation ---------- */
+function setErr(id,on){const w=$("#"+id);w.classList.toggle("err",on);if(on){w.style.animation="none";void w.offsetWidth;w.style.animation="";}}
+function clearErr(id){$("#"+id).classList.remove("err");}
+function validURL(v){return /^https?:\/\/.+\..+/.test(v);}
+function validate(){
+ const errs=[];
+ if(!F.title.trim())errs.push("wTitle");
+ if(!F.company.trim())errs.push("wCompany");
+ if(!F.field)errs.push("wField");
+ if(!F.city)errs.push("wCity");
+ if(!F.mode)errs.push("wMode");
+ if(!F.source.trim()||!validURL(F.source.trim()))errs.push("wSource");
+ ["wTitle","wCompany","wField","wCity","wMode","wSource"].forEach(id=>setErr(id,errs.includes(id)));
+ if(errs.length){toast("A few required fields need attention.");$("#"+errs[0]).scrollIntoView({behavior:"smooth",block:"center"});return false;}
+ return true;
+}
+
+/* ---------- submit ---------- */
+$("#suggestForm").addEventListener("submit",e=>{
+ e.preventDefault();
+ if(!validate())return;
+ const btn=$("#submitBtn");btn.disabled=true;
+ btn.innerHTML='<span class="spin"></span>Submitting…';
+ setTimeout(()=>{
+  history.unshift({t:F.title.trim(),co:F.company.trim(),date:new Date().toLocaleDateString("en-GB",{day:"numeric",month:"long",year:"numeric"}),st:"pending",fresh:true});
+  renderHistory();
+  $("#doneOverlay").classList.add("show");
+  btn.disabled=false;btn.innerHTML='<svg viewBox="0 0 24 24"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4z"/></svg>Submit for review';
+ },900);
+});
+$("#againBtn").addEventListener("click",()=>{
+ $("#doneOverlay").classList.remove("show");
+ resetForm();
+ $("#formCol").scrollIntoView({behavior:"smooth",block:"start"});
+});
+function resetForm(){
+ Object.keys(F).forEach(k=>F[k]="");imgOk=false;
+ ["#fTitle","#fCompany","#fArea","#fSource","#fApply","#fDesc","#fContact","#fImg","#fCityOther"].forEach(s=>$(s).value="");
+ $("#fDur").value="";$("#fDeadline").value="";$("#descCount").textContent="0 / 600";
+ document.querySelectorAll("#modeSeg button").forEach(b=>b.classList.remove("on"));
+ $("#cityOtherWrap").style.display="none";
+ syncChips();renderPreview();
+}
+
+/* ---------- history ---------- */
+function renderHistory(){
+ const box=$("#histList");
+ $("#histCount").textContent=history.length+" submissions";
+ if(!history.length){box.innerHTML='<div class="h-empty"><div class="e-ico">'+IC.send+'</div><h3 class="display">You haven\'t suggested an opportunity yet.</h3><p>Sharing even one internship can help dozens of students discover a path they'd never find alone.</p></div>';return;}
+ box.innerHTML=history.map(h=>{const[txt,cls]=ST[h.st];
+  return '<div class="hrow'+(h.fresh?" new":"")+'"><span class="h-ico">'+IC.send+'</span><div class="h-main"><b>'+esc(h.t)+'</b><span>'+esc(h.co)+" · submitted "+esc(h.date)+'</span></div><span class="status '+cls+'">'+txt+"</span></div>";}).join("");
+ history.forEach(h=>h.fresh=false);
+}
+
+/* ---------- toast / nav ---------- */
+let toastT;function toast(m){const t=$("#toast");t.textContent=m;t.classList.add("show");clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove("show"),2300);}
+document.querySelectorAll("[data-toast]").forEach(b=>b.addEventListener("click",()=>{closeMenus();toast(b.dataset.toast);}));
+function closeMenus(){document.querySelectorAll(".menu").forEach(m=>m.classList.remove("open"));}
+$("#avBtn").addEventListener("click",e=>{e.stopPropagation();const m=$("#avMenu"),o=m.classList.contains("open");closeMenus();m.classList.toggle("open",!o);});
+document.addEventListener("click",e=>{if(!e.target.closest(".avatar-wrap"))closeMenus();});
+const mqMob=matchMedia("(max-width:960px)");
+$("#sbToggle").addEventListener("click",()=>{mqMob.matches?document.body.classList.toggle("sb-open"):document.body.classList.toggle("sb-collapsed");});
+$("#backdrop").addEventListener("click",()=>document.body.classList.remove("sb-open"));
+
+/* ---------- init ---------- */
+renderPreview();renderHistory();
+</script>
+</body>
+</html>

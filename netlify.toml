@@ -1,0 +1,36 @@
+# InternHub · Netlify configuration (static multi-page site)
+# Direct routes and refreshes work because every page is a real file; unknown
+# paths return the 404 page (see _redirects).
+#
+# The only "build" is a whitelist copy into dist/ (tools/build.js). Netlify has no
+# publish-time ignore, so publishing "." would push the repo's dev-only folders —
+# `mandatory design/`, `skill/`, `tools/` — to public URLs.
+
+[build]
+  command = "node tools/build.js"
+  publish = "dist"
+
+# Sensible defaults. Replace or add site-specific values only if your
+# deployment genuinely requires them. Do not commit secrets here.
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    X-Frame-Options = "SAMEORIGIN"
+    Permissions-Policy = "geolocation=(), microphone=(), camera=()"
+
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    # Filenames are unhashed (app.css, ui.js), so a long immutable cache would pin
+    # returning visitors to stale CSS/JS across deploys. Revalidate instead.
+    Cache-Control = "public, max-age=300, must-revalidate"
+
+[[headers]]
+  for = "/*.html"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
+
+# Route fallbacks (404 handling) live in the conventional _redirects file.

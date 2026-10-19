@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dashboard · InternHub</title>
+<meta name="description" content="Your InternHub dashboard: saved internships, upcoming deadlines and what's new this week.">
+<meta name="robots" content="noindex">
+<link rel="icon" href="../favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/css/ui.css">
+<link rel="stylesheet" href="../assets/css/app.css">
+<style>
+.dash-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}
+.dash-lower{display:flex;flex-direction:column;gap:20px;margin-top:34px}
+.dash-grid{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:20px;align-items:start}
+.deadline-list{display:flex;flex-direction:column;gap:2px}
+.deadline-item{display:flex;align-items:center;gap:12px;padding:12px 4px;border-bottom:1px solid var(--line)}
+.deadline-item:last-child{border-bottom:0}
+.deadline-item .dl-main{min-width:0;flex:1}
+.deadline-item .dl-title{font-weight:600;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.deadline-item .dl-co{font-size:12.5px;color:var(--mut)}
+.dl-days{font:600 11px var(--fm);letter-spacing:.04em;text-transform:uppercase;color:var(--mut);white-space:nowrap}
+.dl-days.is-urgent{color:var(--amber)} .dl-days.is-closed{color:var(--dim);text-decoration:line-through}
+.pref-line{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+@media (max-width:900px){.dash-grid{grid-template-columns:1fr}}
+@media (max-width:640px){.dash-lower{margin-top:26px}}
+</style>
+</head>
+<body data-app="student" data-nav="dashboard">
+<div id="view">
+  <section class="hero">
+    <div>
+      <p class="eyebrow" id="todayLine">—</p>
+      <h1 id="greetLine">Loading…</h1>
+      <p class="hero-sub" id="heroSub">Pick up where you left off — roles you've saved, deadlines closing in and what's new this week.</p>
+      <div class="dash-actions">
+        <a class="btn btn-primary" href="#" data-navlink="browse">Find internships</a>
+        <a class="btn btn-ghost" href="#" data-navlink="suggest">Suggest a role</a>
+      </div>
+    </div>
+    <div class="hero-aside">
+      <div class="hstat">
+        <span class="ico" id="savedIco"></span>
+        <div><p class="lbl">Saved</p><p class="val"><span id="savedCount">0</span> saved</p></div>
+      </div>
+      <div class="hstat">
+        <div>
+          <p class="lbl">Profile strength</p>
+          <p class="val" id="heroPct">—</p>
+          <div class="pbar"><i id="heroPctBar"></i></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="chips is-scroll" id="chips" role="tablist" aria-label="Internship fields"></div>
+
+  <div class="toolbar toolbar-panel">
+    <div class="search-field">
+      <span id="searchIc"></span>
+      <input class="input" type="search" id="searchInput" placeholder="Search role, company, city or field…" aria-label="Search internships" autocomplete="off">
+    </div>
+    <div style="display:flex;gap:8px;align-items:center">
+      <button type="button" class="btn btn-sm" id="viewSavedBtn" aria-pressed="true">Saved</button>
+      <button type="button" class="btn btn-ghost btn-sm" id="viewAllBtn" aria-pressed="false">All</button>
+    </div>
+    <select class="select" id="sortSelect" aria-label="Sort internships">
+      <option value="newest">Newest first</option>
+      <option value="closing">Closing soon</option>
+      <option value="az">Title A–Z</option>
+    </select>
+    <button type="button" class="btn btn-ghost btn-sm" id="filterBtn" aria-expanded="false" aria-controls="filterPanel">
+      <span id="filterIc"></span> Filters <span class="fcount" id="fCount" hidden>0</span>
+    </button>
+  </div>
+
+  <section class="fdrawer" id="filterPanel" aria-label="Filters">
+    <div>
+      <div class="fdrawer-in">
+        <div class="fgroup">
+          <h4>Work mode</h4>
+          <div class="chk-row" id="modeRow"></div>
+        </div>
+        <div class="fgroup">
+          <h4>City</h4>
+          <select class="select" id="citySelect" aria-label="City"><option>All cities</option></select>
+        </div>
+        <div class="fgroup">
+          <h4>Trust &amp; visibility</h4>
+          <label class="switch"><input type="checkbox" id="verOnly"><span class="track"></span>Verified only</label>
+          <label class="switch"><input type="checkbox" id="incClosed"><span class="track"></span>Include closed listings</label>
+        </div>
+        <div class="fgroup" style="align-self:end">
+          <button type="button" class="linklike" id="resetFilters">Reset all filters</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="results-head">
+    <p class="eyebrow" id="resultsLabel" aria-live="polite">—</p>
+    <p class="view-note" id="viewNote" hidden>Showing saved only · <button type="button" id="clearView">show all</button></p>
+  </div>
+
+  <div id="grid"></div>
+
+  <div class="state" id="empty" hidden>
+    <div class="state-icon" id="emptyIco"></div>
+    <h3 id="emptyTitle">No internships match</h3>
+    <p class="state-msg" id="emptyText">Try adjusting your search or filters — new verified roles are added regularly.</p>
+    <button type="button" class="btn btn-primary" id="emptyReset">Clear search &amp; filters</button>
+  </div>
+
+  <section class="cta" id="suggestCta">
+    <div>
+      <h2>Know an opening we're missing?</h2>
+      <p>Send it in with a link — signed-in students publish instantly; guest suggestions go to our review queue.</p>
+    </div>
+    <a class="btn btn-lime" id="ctaSuggest" href="#">Suggest an internship</a>
+  </section>
+
+  <div class="dash-lower">
+    <div class="dash-grid">
+      <section class="panel" id="savedPanel" aria-labelledby="savedH">
+        <div class="panel-head"><h2 id="savedH">Saved internships</h2><a class="notif-mark" href="#" data-navlink="browse">Browse more</a></div>
+        <div id="savedBox"></div>
+      </section>
+
+      <div style="display:flex;flex-direction:column;gap:20px">
+        <section class="panel" aria-labelledby="dlH">
+          <div class="panel-head"><h3 id="dlH">Closing soon</h3></div>
+          <div class="deadline-list" id="deadlineBox"></div>
+        </section>
+        <section class="panel" aria-labelledby="prefH">
+          <div class="panel-head"><h3 id="prefH">Your focus</h3><a class="notif-mark" href="#" data-navlink="account">Edit</a></div>
+          <div id="prefBox"></div>
+        </section>
+      </div>
+    </div>
+
+    <section class="darkzone" style="margin-top:34px">
+      <div class="mq-head">
+        <h2 id="newH">New this week</h2>
+        <span class="eyebrow">Flows continuously · hover to pause</span>
+      </div>
+      <div class="marquee" id="marquee"><div class="mq-track" id="mqTrack"></div></div>
+    </section>
+  </div>
+</div>
+
+<div data-side class="sb-discover">
+  <p class="sb-label">Discover</p>
+  <div id="qLinks"></div>
+</div>
+<div data-side class="sb-card">
+  <h5>Profile strength</h5>
+  <p class="pct" id="pctLine">—</p>
+  <div class="pbar"><i id="pctBar"></i></div>
+  <a href="#" id="cvLink">Complete your profile</a>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+<script src="../assets/js/firebase-config.js"></script>
+<script src="../assets/js/lib/ui.js"></script>
+<script src="../assets/js/services/platform.js"></script>
+<script src="../assets/js/services/auth.js"></script>
+<script src="../assets/js/services/internships.js"></script>
+<script src="../assets/js/services/saved.js"></script>
+<script src="../assets/js/services/notifications.js"></script>
+<script src="../assets/js/lib/rows.js"></script>
+<script src="../assets/js/lib/notify-ui.js"></script>
+<script src="../assets/js/lib/shell.js"></script>
+<script src="../assets/js/lib/router.js"></script>
+<script>
+window.onReady(async function () {
+  if (!(await Auth.requireSignedIn())) return;
+  Rows.initSaveHandling();
+
+  const p = Auth.profile;
+  const $ = (id) => document.getElementById(id);
+  const grid = $('grid');
+  let ALL = [];
+  let VOCAB = Settings.DEFAULT;
+  const state = { q: '', field: 'All fields', modes: [], city: 'All cities',
+    verOnly: false, incClosed: false, sort: 'newest', view: 'saved' };
+
+  DetailModal.init(() => ALL);
+
+  // static nav links (portable paths) + icons
+  const LINKS = { browse: 'student_pages/browse.html', suggest: 'student_pages/suggest.html',
+    'whats-new': 'student_pages/whats-new.html', account: 'student_pages/account.html' };
+  document.querySelectorAll('[data-navlink]').forEach((a) => { a.href = H(LINKS[a.dataset.navlink]); });
+  $('ctaSuggest').href = H(LINKS.suggest);
+  $('cvLink').href = H(LINKS.account) + '?tab=profile';
+  const findBtn = document.querySelector('.dash-actions [data-navlink="browse"]');
+  if (findBtn) findBtn.insertAdjacentHTML('beforeend', UI.icon('arrow-right', 16));
+  $('searchIc').innerHTML = UI.icon('search', 16);
+  $('filterIc').innerHTML = UI.icon('filter', 15);
+  $('savedIco').innerHTML = UI.icon('bookmark', 17);
+  $('emptyIco').innerHTML = UI.icon('briefcase', 22);
+
+  // greeting + date
+  const first = (p.displayName || '').trim().split(/\s+/)[0] || 'there';
+  const now = new Date();
+  const hr = now.getHours();
+  $('greetLine').textContent = `${hr < 12 ? 'Good morning' : hr < 18 ? 'Good afternoon' : 'Good evening'}, ${first}`;
+  $('todayLine').textContent = now.toLocaleDateString('en-GB',
+    { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }).toUpperCase();
+
+  // profile strength · computed from the real profile, never hardcoded
+  function profileStrength() {
+    const prefs = p.preferences || {};
+    const checks = [p.displayName, p.email, p.phone, p.institution, p.course, p.academicLevel,
+      p.field || (prefs.fields || []).length, (prefs.locations || []).length, (prefs.workModes || []).length];
+    const done = checks.filter((v) => v && String(v).trim()).length;
+    return Math.round((done / checks.length) * 100);
+  }
+  function renderStrength() {
+    const pct = profileStrength();
+    const label = pct >= 100 ? 'Complete' : pct >= 70 ? 'Good' : pct >= 40 ? 'Getting there' : 'Getting started';
+    $('pctLine').textContent = `${pct}% — ${label}`;
+    $('heroPct').textContent = `${pct}%`;
+    $('pctBar').style.width = `${pct}%`;
+    $('heroPctBar').style.width = `${pct}%`;
+  }
+
+  // filtering + sorting
+  const sortKey = (it) => { const d = UI.daysUntil(it.deadline); return d === null || d < 0 ? 999 : d; };
+
+  function filtered() {
+    const q = state.q.trim().toLowerCase();
+    const list = ALL.filter((it) => {
+      if (state.view === 'saved' && !Saved.has(it.id)) return false;
+      const d = UI.daysUntil(it.deadline);
+      if (!state.incClosed && d !== null && d < 0) return false;
+      if (state.field !== 'All fields' && it.field !== state.field) return false;
+      if (state.city !== 'All cities' && it.city !== state.city) return false;
+      if (state.modes.length && !state.modes.includes(it.workMode)) return false;
+      if (state.verOnly && !it.verified) return false;
+      if (q && !`${it.title} ${it.company} ${it.city} ${it.field}`.toLowerCase().includes(q)) return false;
+      return true;
+    });
+    if (state.sort === 'closing') list.sort((a, b) => sortKey(a) - sortKey(b));
+    else if (state.sort === 'az') list.sort((a, b) => (a.title || '').localeCompare(b.title || ''));
+    else list.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+    return list;
+  }
+
+  function fieldCounts() {
+    const counts = {};
+    ALL.forEach((it) => {
+      if (!it.field || !UI.isOpen(it)) return;
+      counts[it.field] = (counts[it.field] || 0) + 1;
+    });
+    const names = Object.keys(counts).sort((a, b) => counts[b] - counts[a] || a.localeCompare(b));
+    return { names, counts };
+  }
+
+  function renderChips() {
+    const { names, counts } = fieldCounts();
+    const open = ALL.filter((it) => UI.isOpen(it)).length;
+    const chips = [['All fields', open]].concat(names.map((n) => [n, counts[n]]));
+    $('chips').innerHTML = chips.map(([name, n]) =>
+      `<button type="button" class="chip${state.field === name ? ' is-on' : ''}" role="tab" aria-selected="${state.field === name}" data-chip="${UI.esc(name)}">${UI.esc(name)} <span class="n">${n}</span></button>`).join('');
+  }
+
+  function renderDiscover() {
+    const { names, counts } = fieldCounts();
+    const top = (names.length ? names : ['Software Engineering', 'Data & AI', 'Finance']).slice(0, 3);
+    $('qLinks').innerHTML = top.map((f) =>
+      `<button type="button" class="q-link" data-field="${UI.esc(f)}">${UI.esc(f)} <span>${counts[f] || 0}</span></button>`).join('');
+  }
+
+  function renderModes() {
+    const modes = (VOCAB.workModes || []).length ? VOCAB.workModes : Settings.DEFAULT.workModes;
+    $('modeRow').innerHTML = modes.map((m) =>
+      `<label class="chk-pill"><input type="checkbox" class="modeChk" value="${UI.esc(m)}"${state.modes.includes(m) ? ' checked' : ''}><span>${UI.esc(m)}</span></label>`).join('');
+  }
+
+  function renderCities() {
+    const cities = [...new Set(ALL.map((it) => it.city).filter(Boolean))].sort();
+    $('citySelect').innerHTML = ['All cities'].concat(cities)
+      .map((c) => `<option${c === state.city ? ' selected' : ''}>${UI.esc(c)}</option>`).join('');
+  }
+
+  function filterCount() {
+    return state.modes.length + (state.verOnly ? 1 : 0) + (state.incClosed ? 1 : 0) + (state.city !== 'All cities' ? 1 : 0);
+  }
+  function renderFCount() {
+    const n = filterCount();
+    $('fCount').hidden = !n;
+    $('fCount').textContent = n;
+  }
+
+  function render() {
+    const list = filtered();
+    grid.innerHTML = Rows.grid(list);
+
+    const none = !list.length;
+    const emptyEl = $('empty');
+    if (emptyEl) {
+      emptyEl.hidden = !none;
+      if (none) {
+        const emptyTitle = $('emptyTitle');
+        const emptyText = $('emptyText');
+        if (emptyTitle) emptyTitle.textContent = state.view === 'saved' ? 'No saved internships yet' : 'No internships match';
+        if (emptyText) emptyText.textContent = state.view === 'saved'
+          ? 'Save internships you like and this space will track their deadlines for you.'
+          : 'Try adjusting your search or filters — new verified roles are added regularly.';
+      }
+    }
+
+    const q = state.q.trim();
+    const resultsLabel = $('resultsLabel');
+    if (resultsLabel) {
+      resultsLabel.textContent = state.view === 'saved'
+        ? `${list.length} SAVED`
+        : `${list.length} OPEN ROLE${list.length === 1 ? '' : 'S'}${q ? ` · "${q.toUpperCase()}"` : ''}`;
+    }
+    
+    const viewNote = $('viewNote');
+    if (viewNote) viewNote.hidden = state.view !== 'saved';
+    
+    const savedPanel = $('savedPanel');
+    if (savedPanel) savedPanel.hidden = state.view === 'saved';
+
+    // Update view toggle buttons
+    const savedBtn = $('viewSavedBtn');
+    const allBtn = $('viewAllBtn');
+    if (savedBtn && allBtn) {
+      if (state.view === 'saved') {
+        savedBtn.className = 'btn btn-sm';
+        savedBtn.setAttribute('aria-pressed', 'true');
+        allBtn.className = 'btn btn-ghost btn-sm';
+        allBtn.setAttribute('aria-pressed', 'false');
+      } else {
+        savedBtn.className = 'btn btn-ghost btn-sm';
+        savedBtn.setAttribute('aria-pressed', 'false');
+        allBtn.className = 'btn btn-sm';
+        allBtn.setAttribute('aria-pressed', 'true');
+      }
+    }
+
+    const savedItems = ALL.filter((it) => Saved.has(it.id));
+    const savedCountEl = $('savedCount');
+    if (savedCountEl) savedCountEl.textContent = Saved.ids.size;
+    const closing = savedItems.filter((it) => { const d = UI.daysUntil(it.deadline); return d !== null && d >= 0 && d <= 7; }).length;
+    const sub = $('heroSub');
+    if (sub) {
+      if (!savedItems.length) sub.textContent = 'No deadlines on your radar yet — save internships to track them here.';
+      else if (closing) sub.textContent = `${closing} of your saved internship${closing > 1 ? 's' : ''} close${closing > 1 ? '' : 's'} within 7 days — review them below.`;
+      else sub.textContent = `You're tracking ${savedItems.length} internship${savedItems.length > 1 ? 's' : ''}. Nice pace — keep exploring.`;
+    }
+
+    Shell.syncSavedBadge();
+  }
+
+  function setView(view) {
+    state.view = view;
+    Shell.markNav(view === 'saved' ? 'saved' : 'dashboard');
+    const url = new URL(window.location.href);
+    if (view === 'saved') url.searchParams.set('view', 'saved'); else url.searchParams.delete('view');
+    history.replaceState(null, '', url);
+    render();
+  }
+
+  function resetFilters() {
+    state.q = ''; state.field = 'All fields'; state.modes = []; state.city = 'All cities';
+    state.verOnly = false; state.incClosed = false;
+    $('searchInput').value = ''; $('citySelect').value = 'All cities';
+    $('verOnly').checked = false; $('incClosed').checked = false;
+    document.querySelectorAll('.modeChk').forEach((c) => { c.checked = false; });
+    renderChips(); renderFCount(); render();
+  }
+
+  // control events
+  let deb;
+  $('searchInput').addEventListener('input', (e) => {
+    clearTimeout(deb);
+    deb = setTimeout(() => { state.q = e.target.value; render(); }, 160);
+  });
+  $('sortSelect').addEventListener('change', (e) => { state.sort = e.target.value; render(); });
+  $('viewSavedBtn').addEventListener('click', () => setView('saved'));
+  $('viewAllBtn').addEventListener('click', () => setView('all'));
+  $('chips').addEventListener('click', (e) => {
+    const c = e.target.closest('[data-chip]');
+    if (!c) return;
+    state.field = c.dataset.chip; renderChips(); render();
+  });
+  $('modeRow').addEventListener('change', () => {
+    state.modes = [...document.querySelectorAll('.modeChk:checked')].map((c) => c.value);
+    renderFCount(); render();
+  });
+  $('citySelect').addEventListener('change', (e) => { state.city = e.target.value; renderFCount(); render(); });
+  $('verOnly').addEventListener('change', (e) => { state.verOnly = e.target.checked; renderFCount(); render(); });
+  $('incClosed').addEventListener('change', (e) => { state.incClosed = e.target.checked; renderFCount(); render(); });
+  $('resetFilters').addEventListener('click', () => { resetFilters(); UI.toast('Filters reset'); });
+  $('emptyReset').addEventListener('click', resetFilters);
+  $('filterBtn').addEventListener('click', () => {
+    const open = $('filterPanel').classList.toggle('is-open');
+    $('filterBtn').setAttribute('aria-expanded', String(open));
+  });
+  $('clearView').addEventListener('click', () => setView('all'));
+  $('qLinks').addEventListener('click', (e) => {
+    const b = e.target.closest('[data-field]');
+    if (!b) return;
+    state.field = b.dataset.field;
+    renderChips(); render();
+    $('chips').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+
+  const savedBox = document.getElementById('savedBox');
+  const deadlineBox = document.getElementById('deadlineBox');
+  const prefBox = document.getElementById('prefBox');
+
+  function renderSavedPanel(saved) {
+    if (!saved.length) {
+      savedBox.innerHTML = `${Rows.empty('You haven\'t saved any internships yet.', 'Tap the bookmark on any role to track it here.')}
+        <div style="text-align:center;margin-top:-24px"><a class="btn btn-primary btn-sm" href="${H('student_pages/browse.html')}">Browse internships</a></div>`;
+      return;
+    }
+    savedBox.innerHTML = Rows.grid(saved.slice(0, 6));
+    if (saved.length > 6) savedBox.insertAdjacentHTML('beforeend',
+      `<p class="muted" style="margin-top:14px">Showing 6 of ${saved.length} saved. Bookmark changes save instantly.</p>`);
+  }
+
+  function renderDeadlines(saved) {
+    const soon = saved
+      .map((it) => ({ it, days: UI.daysUntil(it.deadline) }))
+      .filter((x) => x.days !== null && x.days >= 0 && x.days <= 14)
+      .sort((a, b) => a.days - b.days);
+    if (!soon.length) {
+      deadlineBox.innerHTML = `<p class="muted">No saved role closes in the next two weeks. Deadline alerts appear on your bell.</p>`;
+      return;
+    }
+    deadlineBox.innerHTML = soon.map(({ it, days }) => {
+      const cls = days <= 3 ? 'is-urgent' : '';
+      const label = days === 0 ? 'Closes today' : `${days} day${days === 1 ? '' : 's'} left`;
+      return `<a class="deadline-item" href="${Rows.detailHref(it.id)}">
+        <span class="dl-main"><span class="dl-title">${UI.esc(it.title)}</span>
+        <span class="dl-co">${UI.esc(it.company)}</span></span>
+        <span class="dl-days ${cls}">${label}</span></a>`;
+    }).join('');
+  }
+
+  function renderPrefs() {
+    const prefs = p.preferences || {};
+    const fields = prefs.fields || [], locs = prefs.locations || [], modes = prefs.workModes || [];
+    const empty = !fields.length && !locs.length && !modes.length;
+    if (empty) {
+      prefBox.innerHTML = `<p class="muted">Set your field and location to personalise what you see.</p>
+        <a class="btn btn-ghost btn-sm" style="margin-top:12px" href="${H('student_pages/account.html')}#preferences">Set preferences</a>`;
+      return;
+    }
+    const block = (title, arr) => arr.length
+      ? `<div class="lbl" style="margin-top:10px">${title}</div><div class="pref-line">${arr.map((v) => `<span class="pill">${UI.esc(v)}</span>`).join('')}</div>` : '';
+    prefBox.innerHTML = block('Fields', fields) + block('Locations', locs) + block('Work mode', modes);
+  }
+
+  async function renderNew() {
+    const mqTrack = $('mqTrack');
+    if (!mqTrack) return;
+    let items = [];
+    try { items = await Internships.whatsNew(24); } catch (_) { items = []; }
+    if (!items.length) {
+      mqTrack.outerHTML = Rows.marqueeEmpty('No new internships this week — new verified roles are added regularly.');
+      return;
+    }
+    mqTrack.innerHTML = Rows.darkStrip(items);
+    mqTrack.style.animationDuration = Math.max(60, items.length * 9) + 's';
+  }
+
+  async function loadPanels() {
+    let saved = [];
+    try { saved = await Saved.list(); } catch (_) { saved = []; }
+    renderSavedPanel(saved);
+    renderDeadlines(saved);
+  }
+
+  document.addEventListener('saved:changed', () => { render(); loadPanels(); });
+
+  async function boot() {
+    console.log('Dashboard boot: Starting...');
+    grid.innerHTML = Rows.skeleton(6);
+    savedBox.innerHTML = Rows.skeleton(3);
+    deadlineBox.innerHTML = UI.skeletonRows(2);
+    const mqTrack = $('mqTrack');
+    if (mqTrack) mqTrack.innerHTML = `<div class="mq-half">${'<div class="sk-dk"></div>'.repeat(4)}</div>`;
+    renderStrength();
+    renderPrefs();
+
+    console.log('Dashboard boot: Loading saved internships...');
+    if (!Saved.loaded) { try { await Saved.load(); } catch (err) { console.error('Dashboard boot: Saved.load error:', err); } }
+    console.log('Dashboard boot: Saved.loaded =', Saved.loaded, 'Saved.ids.size =', Saved.ids.size);
+    
+    try { VOCAB = (await Settings.load()) || Settings.DEFAULT; } catch (_) { VOCAB = Settings.DEFAULT; }
+    renderModes();
+
+    console.log('Dashboard boot: Loading all internships...');
+    try { ALL = (await Internships.published(200)) || []; }
+    catch (err) { console.error('Dashboard boot: Internships.published error:', err); grid.innerHTML = Rows.error(); return; }
+    console.log('Dashboard boot: Loaded', ALL.length, 'total internships');
+
+    renderCities(); renderChips(); renderDiscover(); renderFCount(); 
+    console.log('Dashboard boot: Rendering with view =', state.view);
+    render();
+    console.log('Dashboard boot: Rendered. Filtered count =', filtered().length);
+    
+    if (new URLSearchParams(window.location.search).get('view') === 'saved') setView('saved');
+    loadPanels();
+    renderNew();
+    console.log('Dashboard boot: Complete!');
+  }
+  boot();
+});
+</script>
+</body>
+</html>

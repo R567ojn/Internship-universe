@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Admin · Settings · InternHub</title>
+<meta name="robots" content="noindex">
+<link rel="icon" href="../favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/css/ui.css">
+<link rel="stylesheet" href="../assets/css/app.css">
+</head>
+<body data-app="admin" data-nav="settings">
+<div id="view">
+
+  <header class="ahead">
+    <div>
+      <nav class="breadcrumb" aria-label="Breadcrumb">
+        <a href="dashboard.html">Admin</a>
+        <svg width="12" height="12" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
+        <span>Settings</span>
+      </nav>
+      <h1>Platform settings</h1>
+      <p class="sub">These values are stored in Firestore and drive what students see across the whole site. Edits are saved for real.</p>
+    </div>
+    <div class="ahead-r"><span class="save-state" id="saveState">Loading…</span></div>
+  </header>
+
+  <div class="stabs" role="group" aria-label="Settings sections">
+    <button type="button" class="stab" data-tab="general" aria-pressed="true">General</button>
+    <button type="button" class="stab" data-tab="taxonomy" aria-pressed="false">Taxonomy<b id="vocabCount">0</b></button>
+    <button type="button" class="stab" data-tab="account" aria-pressed="false">Your account</button>
+  </div>
+
+  <div class="set-col">
+
+    <!-- ── general ─────────────────────────────────────────── -->
+    <section class="tab-panel" data-panel="general">
+      <form id="generalForm" novalidate>
+
+        <section class="fcard">
+          <div class="fhead" data-static><h3>Platform identity</h3><span class="opt">Copy used across the site</span></div>
+          <div class="fbody"><div>
+            <div class="fgrid">
+              <div class="field">
+                <label for="gName">Platform name</label>
+                <input class="input" id="gName" name="platformName" maxlength="40" autocomplete="off">
+                <span class="hint">Shown in the sidebar brand and page titles.</span>
+              </div>
+              <div class="field">
+                <label for="gEmail">Support email</label>
+                <input class="input" id="gEmail" name="supportEmail" type="email" autocomplete="off">
+                <span class="hint">Where students are pointed for help.</span>
+              </div>
+              <div class="field">
+                <label for="gRegion">Default region</label>
+                <input class="input" id="gRegion" name="defaultRegion" maxlength="40" autocomplete="off">
+                <span class="hint">Pre-selected for new accounts.</span>
+              </div>
+              <div class="field">
+                <label for="gNew">“New” window (hours)</label>
+                <input class="input" id="gNew" name="newWindowHours" type="number" min="6" max="168" step="1" style="max-width:160px">
+                <span class="hint">How long a freshly published listing is flagged as New. Listings are never deleted when this expires.</span>
+              </div>
+              <div class="field span2">
+                <label for="gDesc">Short description</label>
+                <textarea class="textarea" id="gDesc" name="platformDescription" style="min-height:70px" maxlength="180"></textarea>
+              </div>
+            </div>
+          </div></div>
+        </section>
+
+        <section class="fcard">
+          <div class="fhead" data-static><h3>Access &amp; notifications</h3><span class="opt">Applies platform-wide</span></div>
+          <div class="fbody"><div>
+            <label class="sw-row">
+              <span class="info"><b>Open registration</b><span>Allow new students to create accounts.</span></span>
+              <span class="switch"><input type="checkbox" name="registrationOpen"><span class="track"></span></span>
+            </label>
+            <label class="sw-row">
+              <span class="info"><b>Require verification before publish</b><span>Only show listings marked Verified in the public Browse feed.</span></span>
+              <span class="switch"><input type="checkbox" name="requireVerificationBeforePublish"><span class="track"></span></span>
+            </label>
+            <label class="sw-row">
+              <span class="info"><b>Deadline reminders</b><span>Default for new accounts.</span></span>
+              <span class="switch"><input type="checkbox" name="notifyDeadlineReminders"><span class="track"></span></span>
+            </label>
+            <label class="sw-row">
+              <span class="info"><b>Suggestion status updates</b><span>Default for new accounts.</span></span>
+              <span class="switch"><input type="checkbox" name="notifySuggestionStatus"><span class="track"></span></span>
+            </label>
+          </div></div>
+        </section>
+
+        <div class="savebar">
+          <div class="savebar-l"><span class="hint">Writes to <span class="mono">platform/config</span>. Students pick the change up on their next load.</span></div>
+          <button class="btn btn-primary" type="submit">Save settings</button>
+        </div>
+      </form>
+    </section>
+
+    <!-- ── taxonomy ────────────────────────────────────────── -->
+    <section class="tab-panel" data-panel="taxonomy">
+      <section class="fcard">
+        <div class="fhead" data-static><h3>Filter vocabulary</h3><span class="opt">Powers Browse filters and every listing form</span></div>
+        <div class="fbody"><div>
+          <p class="hint" style="margin-bottom:16px">Add values here and they appear in the filter rails, the suggestion form and the add/edit dropdowns. Removing a value never rewrites existing listings.</p>
+          <div class="vgroups" id="vocab"></div>
+        </div></div>
+      </section>
+    </section>
+
+    <!-- ── account ─────────────────────────────────────────── -->
+    <section class="tab-panel" data-panel="account">
+      <section class="fcard">
+        <div class="fhead" data-static><h3>Your profile</h3><span class="opt">Shown in the admin sidebar</span></div>
+        <div class="fbody"><div>
+          <div class="fgrid">
+            <div class="field">
+              <label for="acctName">Display name</label>
+              <input class="input" id="acctName" maxlength="80" autocomplete="name">
+            </div>
+            <div class="field">
+              <label for="acctEmail">Email</label>
+              <input class="input" id="acctEmail" disabled autocomplete="email">
+              <span class="hint">Your signing email can’t be changed here.</span>
+            </div>
+          </div>
+          <button class="btn btn-ghost btn-sm" type="button" id="acctSave">Save name</button>
+        </div></div>
+      </section>
+
+      <section class="fcard">
+        <div class="fhead" data-static><h3>Change password</h3><span class="opt">Re-authentication required</span></div>
+        <div class="fbody"><div>
+          <form id="pwForm" novalidate>
+            <div class="fgrid">
+              <div class="field span2">
+                <label for="curPw">Current password</label>
+                <input class="input" type="password" id="curPw" autocomplete="current-password">
+                <span class="field-err">Required.</span>
+              </div>
+              <div class="field">
+                <label for="newPw">New password</label>
+                <input class="input" type="password" id="newPw" autocomplete="new-password">
+                <span class="field-err">6+ characters.</span>
+              </div>
+              <div class="field">
+                <label for="confPw">Confirm</label>
+                <input class="input" type="password" id="confPw" autocomplete="new-password">
+                <span class="field-err">No match.</span>
+              </div>
+            </div>
+            <div class="actions">
+              <button class="btn btn-primary btn-sm" type="submit">Update password</button>
+              <span class="hint bad" id="pwMsg"></span>
+            </div>
+          </form>
+        </div></div>
+      </section>
+    </section>
+  </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+<script src="../assets/js/firebase-config.js"></script>
+<script src="../assets/js/lib/ui.js"></script>
+<script src="../assets/js/services/platform.js"></script>
+<script src="../assets/js/services/auth.js"></script>
+<script src="../assets/js/services/internships.js"></script>
+<script src="../assets/js/services/suggestions.js"></script>
+<script src="../assets/js/services/users.js"></script>
+<script src="../assets/js/services/notifications.js"></script>
+<script src="../assets/js/lib/notify-ui.js"></script>
+<script src="../assets/js/lib/shell.js"></script>
+<script>
+window.onReady(async function () {
+  if (!(await Auth.requireAdmin())) return;
+  const TABS = ['general', 'taxonomy', 'account'];
+  const $ = (s) => document.querySelector(s);
+  const tabs = [...document.querySelectorAll('.stab[data-tab]')];
+  const panels = [...document.querySelectorAll('.tab-panel')];
+  const stateEl = $('#saveState');
+
+  function setState(text, kind) {
+    stateEl.textContent = text;
+    stateEl.className = 'save-state' + (kind ? ' ' + kind : '');
+  }
+
+  function showTab(k) {
+    tabs.forEach((t) => {
+      const on = t.dataset.tab === k;
+      t.classList.toggle('is-on', on);
+      t.setAttribute('aria-pressed', String(on));
+    });
+    panels.forEach((p) => p.classList.toggle('is-on', p.dataset.panel === k));
+    history.replaceState(null, '', '?tab=' + k);
+  }
+  tabs.forEach((t) => t.addEventListener('click', () => showTab(t.dataset.tab)));
+  const init = new URLSearchParams(location.search).get('tab');
+  showTab(TABS.includes(init) ? init : 'general');
+
+  let cfg = {};
+  try { cfg = (await Settings.load()) || {}; } catch (_) {}
+  setState('Ready');
+
+  // ---- general ----
+  const gf = $('#generalForm');
+  const fields = [...gf.elements];
+  ['platformName', 'platformDescription', 'supportEmail', 'defaultRegion', 'newWindowHours'].forEach((n) => {
+    if (gf[n]) gf[n].value = cfg[n] ?? '';
+  });
+  ['registrationOpen', 'requireVerificationBeforePublish', 'notifyDeadlineReminders', 'notifySuggestionStatus'].forEach((n) => {
+    if (gf[n]) gf[n].checked = !!cfg[n];
+  });
+  fields.forEach((el) => el.addEventListener('input', () => setState('Unsaved changes', 'warn')));
+  gf.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    setState('Saving…');
+    const hours = Math.min(168, Math.max(6, parseInt(gf.newWindowHours.value, 10) || 48));
+    const res = await Settings.save({
+      platformName: gf.platformName.value.trim(), platformDescription: gf.platformDescription.value.trim(),
+      supportEmail: gf.supportEmail.value.trim(), defaultRegion: gf.defaultRegion.value.trim(), newWindowHours: hours,
+      registrationOpen: gf.registrationOpen.checked, requireVerificationBeforePublish: gf.requireVerificationBeforePublish.checked,
+      notifyDeadlineReminders: gf.notifyDeadlineReminders.checked, notifySuggestionStatus: gf.notifySuggestionStatus.checked
+    });
+    if (res.ok) {
+      setState('Saved ' + new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }), 'ok');
+      UI.toast('Settings saved');
+    } else {
+      setState(res.error || 'Could not save', 'warn');
+      UI.toast(res.error || 'Failed', 'error');
+    }
+  });
+
+  // ---- taxonomy ----
+  const VOCAB = [['fields', 'Fields', 'field'], ['categories', 'Categories', 'category'], ['locations', 'Locations', 'location']];
+  const vocabEl = $('#vocab');
+  function drawVocab() {
+    vocabEl.innerHTML = VOCAB.map(([kind, label, one]) => {
+      const list = cfg[kind] || [];
+      return `<div class="vgroup">
+        <p class="eyebrow">${label}<span class="vcount">${list.length}</span></p>
+        <div class="vx-list">${list.map((v) => `<span class="vx-chip">${UI.esc(v)}<button type="button" data-rm="${kind}" data-v="${UI.esc(v)}" aria-label="Remove ${UI.esc(v)}">×</button></span>`).join('') || '<span class="muted small">Nothing yet.</span>'}</div>
+        <form class="vocab-add" data-kind="${kind}"><input class="input" placeholder="Add a ${one}…" maxlength="60" aria-label="Add a ${one}"><button class="btn btn-ghost btn-sm" type="submit">Add</button></form>
+      </div>`;
+    }).join('');
+    $('#vocabCount').textContent = VOCAB.reduce((n, [kind]) => n + (cfg[kind] || []).length, 0);
+  }
+  drawVocab();
+  vocabEl.addEventListener('submit', async (e) => {
+    const form = e.target.closest('[data-kind]'); if (!form) return; e.preventDefault();
+    const kind = form.dataset.kind, val = form.querySelector('input').value.trim();
+    if (!val) return;
+    setState('Saving…');
+    const res = await Settings.addVocab(kind, val);
+    if (!res.ok) return setState(res.error || 'Failed', 'warn');
+    cfg = await Settings.load(); drawVocab(); UI.toast('Added'); setState('Saved', 'ok');
+  });
+  vocabEl.addEventListener('click', async (e) => {
+    const b = e.target.closest('[data-rm]'); if (!b) return;
+    const ok = await UI.confirm({ title: 'Remove value?', message: `"${b.dataset.v}" will no longer be offered in filters and forms. Existing listings keep it.`, confirmLabel: 'Remove', danger: true });
+    if (!ok) return;
+    setState('Saving…');
+    const res = await Settings.removeVocab(b.dataset.rm, b.dataset.v);
+    if (!res.ok) return setState(res.error || 'Failed', 'warn');
+    cfg = await Settings.load(); drawVocab(); setState('Saved', 'ok');
+  });
+
+  // ---- account ----
+  const p = Auth.profile;
+  $('#acctName').value = p.displayName || '';
+  $('#acctEmail').value = p.email || '';
+  $('#acctSave').addEventListener('click', async () => {
+    const res = await Auth.updateProfile({ displayName: $('#acctName').value.trim() });
+    UI.toast(res.ok ? 'Saved' : (res.error || 'Failed'), res.ok ? 'success' : 'error');
+  });
+  const inv = (el, on) => { const f = el.closest('.field'); if (f) f.classList.toggle('is-invalid', on); };
+  $('#pwForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const cur = $('#curPw'), np = $('#newPw'), cf = $('#confPw'), msg = $('#pwMsg');
+    inv(cur, !cur.value); inv(np, np.value.length < 6); inv(cf, cf.value !== np.value || !cf.value);
+    if (!cur.value || np.value.length < 6 || cf.value !== np.value) return;
+    msg.textContent = '';
+    const cred = firebase.auth.EmailAuthProvider.credential(firebase.auth.currentUser.email, cur.value);
+    const res = await Auth.changePassword(cred, np.value);
+    if (res.ok) { e.target.reset(); UI.toast('Password updated'); } else msg.textContent = res.error || 'Could not update';
+  });
+});
+</script>
+</body>
+</html>

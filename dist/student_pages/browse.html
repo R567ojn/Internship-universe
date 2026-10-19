@@ -1,0 +1,700 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Browse internships · InternHub</title>
+<meta name="description" content="Search and filter verified internships across Cameroon by field, city, category, work mode and deadline.">
+<meta name="robots" content="noindex">
+<link rel="icon" href="../favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/css/ui.css">
+<link rel="stylesheet" href="../assets/css/app.css">
+<style>
+.browse-more{display:flex;justify-content:center;margin-top:22px}
+.browse-more[hidden]{display:none}
+</style>
+</head>
+<body data-app="student" data-nav="browse">
+<div id="view">
+
+  <!-- ===== DARK DISCOVERY ZONE ===== -->
+  <section class="darkzone">
+    <p class="eyebrow">Opportunity discovery</p>
+    <h1>Find your next internship.</h1>
+    <p class="dz-sub" id="heroSub">Loading opportunities…</p>
+
+    <div class="searchwrap">
+      <div class="searchbar">
+        <span class="s-ico" id="searchIc"></span>
+        <input id="q" type="search" placeholder="Search role, company, city, field or work mode…" autocomplete="off" aria-label="Search internships">
+        <button type="button" class="s-clear" id="qClear" hidden aria-label="Clear search"></button>
+        <button type="button" class="btn btn-primary" id="qGo">Search</button>
+      </div>
+      <div class="sug" id="sug" role="listbox" aria-label="Search suggestions"></div>
+    </div>
+
+    <div class="popular" id="popular" hidden><span class="eyebrow">Popular:</span></div>
+
+    <div class="mq-head">
+      <h2>New this week</h2>
+      <span class="eyebrow">Flows continuously · hover to pause</span>
+    </div>
+    <div class="marquee" id="marquee"><div class="mq-track" id="mqTrack"></div></div>
+  </section>
+
+  <!-- ===== EXPLORE BY FIELD ===== -->
+  <section class="lsec" id="tilesSec" hidden>
+    <div class="sechead"><h2>Explore by field</h2><span class="eyebrow">Tap to filter</span></div>
+    <div class="tiles" id="tiles"></div>
+  </section>
+
+  <!-- ===== FEATURED ===== -->
+  <section class="lsec" id="featSec">
+    <div class="sechead"><h2>Featured opportunity</h2><span class="eyebrow">Hand-picked · verified</span></div>
+    <div id="featBox"></div>
+  </section>
+
+  <!-- ===== ALL INTERNSHIPS ===== -->
+  <section class="lsec" id="resultsTop">
+  <div class="sechead"><h2>All internships</h2><span class="eyebrow" id="gridNote">Searchable · filterable</span></div>
+
+  <div class="browse-layout" id="browseLayout">
+    <aside class="filters" id="filters" aria-label="Filters">
+      <div class="frail-head">
+        <h4 class="eyebrow">Filters</h4>
+        <button type="button" class="linklike" id="resetFilters">Reset all</button>
+        <button type="button" class="icon-btn frail-x" id="frailClose" aria-label="Close filters"></button>
+      </div>
+
+      <div class="fsec" id="fieldSec" hidden>
+        <span class="eyebrow">Field</span>
+        <div id="fieldList"></div>
+      </div>
+
+      <div class="fsec" id="categorySec" hidden>
+        <span class="eyebrow">Category</span>
+        <div id="categoryList"></div>
+      </div>
+
+      <div class="fsec" id="citySec" hidden>
+        <span class="eyebrow">City</span>
+        <select class="select" id="citySel" aria-label="City"></select>
+      </div>
+
+      <div class="fsec">
+        <span class="eyebrow">Work mode</span>
+        <div class="pillrow" id="modeRow"></div>
+      </div>
+
+      <div class="fsec">
+        <span class="eyebrow">Deadline</span>
+        <select class="select" id="dlSel" aria-label="Deadline">
+          <option value="any">Any deadline</option>
+          <option value="7">Closing ≤ 7 days</option>
+          <option value="14">Closing ≤ 14 days</option>
+        </select>
+      </div>
+
+      <div class="fsec">
+        <span class="eyebrow">Trust &amp; status</span>
+        <label class="switch"><input type="checkbox" id="verOnly"><span class="track"></span>Verified only</label>
+        <label class="switch"><input type="checkbox" id="newOnly"><span class="track"></span>New this week only</label>
+        <label class="switch"><input type="checkbox" id="incClosed"><span class="track"></span>Include closed</label>
+      </div>
+
+      <button type="button" class="btn btn-primary frail-apply" id="frailApply">Show results</button>
+    </aside>
+
+    <div class="browse-main">
+      <div class="rtoolbar">
+        <div>
+          <p class="eyebrow" id="countLabel" aria-live="polite">— open roles</p>
+          <div class="achips" id="activeChips"></div>
+        </div>
+        <div class="rt-right">
+          <button type="button" class="btn btn-ghost frail-open-btn" id="frailOpen">
+            <span id="frailOpenIc"></span>Filters <span class="fbadge" id="fBadge" hidden>0</span>
+          </button>
+          <select class="select rt-sort" id="sortSel" aria-label="Sort">
+            <option value="new">Newest first</option>
+            <option value="close">Closing soon</option>
+            <option value="az">A – Z</option>
+          </select>
+          <div class="viewtoggle" role="group" aria-label="Result layout">
+            <button type="button" id="viewGrid" class="on" aria-label="Grid view" aria-pressed="true"></button>
+            <button type="button" id="viewList" aria-label="List view" aria-pressed="false"></button>
+          </div>
+        </div>
+      </div>
+      <div id="cards"></div>
+      <div class="browse-more" id="moreWrap" hidden>
+        <button type="button" class="btn btn-ghost" id="loadMore">Load more internships</button>
+      </div>
+
+      <div class="empty" id="emptyBox" hidden>
+        <div class="e-ico" id="emptyIc"></div>
+        <h3 id="emptyTitle">No open internships yet</h3>
+        <p id="emptyText">New verified opportunities are added regularly. Check back soon — or suggest one you know about.</p>
+        <button type="button" class="btn btn-primary" id="emptyAction" data-act="suggest">Suggest an internship</button>
+      </div>
+
+      <div class="empty" id="errorBox" hidden>
+        <div class="e-ico" id="errorIc"></div>
+        <h3>Couldn't load internships</h3>
+        <p>There was a problem reaching the database.</p>
+        <button type="button" class="btn btn-ghost" onclick="location.reload()">Retry</button>
+      </div>
+    </div>
+  </div>
+  <div class="frail-scrim" id="frailScrim"></div>
+  </section>
+
+  <!-- ===== CLOSING SOON ===== -->
+  <section class="lsec" id="closeSec" hidden>
+    <div class="sechead"><h2>Closing soon</h2><span class="eyebrow">Deadlines within 14 days</span></div>
+    <div class="close-row" id="closeRow"></div>
+  </section>
+
+  <!-- ===== LOCATIONS ===== -->
+  <section class="lsec" id="locSec" hidden>
+    <div class="sechead"><h2>Where do you want to work?</h2><span class="eyebrow">Tap a city to filter</span></div>
+    <div class="loc-row" id="locRow"></div>
+  </section>
+
+  <section class="cta-slim">
+    <div>
+      <h3>Know an opening we're missing?</h3>
+      <p>Send it in with a link — signed-in students publish instantly.</p>
+    </div>
+    <a class="btn btn-primary" href="suggest.html">Suggest an internship</a>
+  </section>
+</div>
+
+<div data-side class="sb-card">
+  <h5>How InternHub works</h5>
+  <ol>
+    <li><b>1</b>Discover opportunities across Cameroon</li>
+    <li><b>2</b>Save the ones that fit you</li>
+    <li><b>3</b>Apply on the company's own site</li>
+  </ol>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+<script src="../assets/js/firebase-config.js"></script>
+<script src="../assets/js/lib/ui.js"></script>
+<script src="../assets/js/services/platform.js"></script>
+<script src="../assets/js/services/auth.js"></script>
+<script src="../assets/js/services/internships.js"></script>
+<script src="../assets/js/services/saved.js"></script>
+<script src="../assets/js/services/notifications.js"></script>
+<script src="../assets/js/lib/rows.js"></script>
+<script src="../assets/js/lib/notify-ui.js"></script>
+<script src="../assets/js/lib/shell.js"></script>
+<script>
+window.onReady(function () {
+  Rows.initSaveHandling();
+
+  const $ = (s) => document.querySelector(s);
+  const el = {
+    layout: $('#browseLayout'), heroSub: $('#heroSub'),
+    q: $('#q'), qClear: $('#qClear'), qGo: $('#qGo'),
+    sug: $('#sug'), popular: $('#popular'), mqTrack: $('#mqTrack'),
+    tilesSec: $('#tilesSec'), tiles: $('#tiles'), featBox: $('#featBox'),
+    resetFilters: $('#resetFilters'), frailClose: $('#frailClose'),
+    frailScrim: $('#frailScrim'), frailOpen: $('#frailOpen'),
+    fieldSec: $('#fieldSec'), fieldList: $('#fieldList'),
+    categorySec: $('#categorySec'), categoryList: $('#categoryList'),
+    citySec: $('#citySec'), citySel: $('#citySel'), modeRow: $('#modeRow'), dlSel: $('#dlSel'),
+    verOnly: $('#verOnly'), newOnly: $('#newOnly'), incClosed: $('#incClosed'), frailApply: $('#frailApply'),
+    countLabel: $('#countLabel'), activeChips: $('#activeChips'), fBadge: $('#fBadge'),
+    sortSel: $('#sortSel'), viewGrid: $('#viewGrid'), viewList: $('#viewList'),
+    cards: $('#cards'), moreWrap: $('#moreWrap'), loadMore: $('#loadMore'),
+    emptyBox: $('#emptyBox'), emptyTitle: $('#emptyTitle'), emptyText: $('#emptyText'), emptyAction: $('#emptyAction'),
+    errorBox: $('#errorBox'),
+    closeSec: $('#closeSec'), closeRow: $('#closeRow'),
+    locSec: $('#locSec'), locRow: $('#locRow')
+  };
+
+  $('#searchIc').innerHTML = UI.icon('search', 18);
+  el.qClear.innerHTML = UI.icon('x', 15);
+  el.frailClose.innerHTML = UI.icon('x', 16);
+  $('#frailOpenIc').innerHTML = UI.icon('filter', 15);
+  el.viewGrid.innerHTML = UI.icon('grid', 16);
+  el.viewList.innerHTML = UI.icon('list', 16);
+  $('#emptyIc').innerHTML = UI.icon('briefcase', 22);
+  $('#errorIc').innerHTML = UI.icon('alert', 22);
+
+  const PAGE = 12;
+  const ALL_CITIES = 'All cities';
+  let ALL = [];
+  let shown = PAGE;
+  let recents = [];
+  let sugItems = [];
+  let sugIdx = -1;
+
+  const state = {
+    q: '', fields: new Set(), categories: new Set(), city: ALL_CITIES, modes: new Set(),
+    dl: 'any', verOnly: false, newOnly: false, incClosed: false, sort: 'new', view: 'grid'
+  };
+
+  DetailModal.init(() => ALL);
+
+  // Everything below is derived from the real listings — no hardcoded vocab.
+  const daysLeft = (it) => UI.daysUntil(it.deadline);
+  const daysPosted = (it) => {
+    const d = UI.daysSince(it.publishedAt || it.createdAt);
+    return d === null ? Infinity : d;
+  };
+  const isOpen = (it) => UI.isOpen(it);
+  const newThisWeek = (it) => daysPosted(it) <= 7 && isOpen(it);
+  const openList = () => ALL.filter(isOpen);
+  const vocab = (key) => [...new Set(ALL.map((i) => i[key]).filter(Boolean))].sort((a, b) => a.localeCompare(b));
+  const modeVocab = () => vocab('workMode').length ? vocab('workMode') : (Settings.data.workModes || []);
+
+  function filtered() {
+    const L = ALL.filter((it) => {
+      if (!state.incClosed && !isOpen(it)) return false;
+      if (state.fields.size && !state.fields.has(it.field)) return false;
+      if (state.categories.size && !state.categories.has(it.category)) return false;
+      if (state.city !== ALL_CITIES && it.city !== state.city) return false;
+      if (state.modes.size && !state.modes.has(it.workMode)) return false;
+      if (state.verOnly && !it.verified) return false;
+      if (state.newOnly && !newThisWeek(it)) return false;
+      if (state.dl !== 'any') {
+        const d = daysLeft(it);
+        if (d === null || d < 0 || d > +state.dl) return false;
+      }
+      if (state.q) {
+        const hay = `${it.title} ${it.company} ${it.city} ${it.field} ${it.workMode} ${it.category}`.toLowerCase();
+        if (!hay.includes(state.q)) return false;
+      }
+      return true;
+    });
+    if (state.sort === 'new') L.sort((a, b) => daysPosted(a) - daysPosted(b));
+    if (state.sort === 'close') {
+      L.sort((a, b) => {
+        const da = daysLeft(a), db = daysLeft(b);
+        return (da === null ? 999 : da) - (db === null ? 999 : db);
+      });
+    }
+    if (state.sort === 'az') L.sort((a, b) => (a.title || '').localeCompare(b.title || ''));
+    return L;
+  }
+
+  function afCount() {
+    return state.fields.size + state.categories.size + state.modes.size +
+      (state.city !== ALL_CITIES ? 1 : 0) + (state.dl !== 'any' ? 1 : 0) +
+      (state.verOnly ? 1 : 0) + (state.newOnly ? 1 : 0) + (state.incClosed ? 1 : 0);
+  }
+
+  function renderHero() {
+    const open = openList();
+    const cities = new Set(open.map((i) => i.city).filter(Boolean)).size;
+    const added = open.filter(newThisWeek).length;
+    el.heroSub.textContent = `${open.length} open ${open.length === 1 ? 'role' : 'roles'} across ${cities} ${cities === 1 ? 'city' : 'cities'} · ${added} added this week · free for students, always.`;
+  }
+
+  function renderPopular() {
+    const tally = (key) => {
+      const m = new Map();
+      ALL.forEach((i) => { const v = i[key]; if (v) m.set(v, (m.get(v) || 0) + 1); });
+      return [...m.entries()].sort((a, b) => b[1] - a[1]).map((e) => e[0]);
+    };
+    const picks = [...new Set([...tally('field').slice(0, 3), ...tally('city').slice(0, 2)])].slice(0, 5);
+    el.popular.hidden = !picks.length;
+    if (!picks.length) return;
+    el.popular.innerHTML = '<span class="eyebrow">Popular:</span>' +
+      picks.map((p) => `<button type="button" data-q="${UI.esc(p)}">${UI.esc(p)}</button>`).join('');
+  }
+
+  function renderMarquee() {
+    if (!el.mqTrack) return;
+    const nw = ALL.filter(newThisWeek).sort((a, b) => daysPosted(a) - daysPosted(b));
+    if (!nw.length) {
+      el.mqTrack.outerHTML = Rows.marqueeEmpty('No new internships this week — new verified roles are added regularly.');
+      el.mqTrack = null;
+      return;
+    }
+    el.mqTrack.innerHTML = Rows.darkStrip(nw);
+    el.mqTrack.style.animationDuration = Math.max(60, nw.length * 9) + 's';
+  }
+
+  function renderTiles() {
+    const fields = vocab('field');
+    const open = openList();
+    el.tilesSec.hidden = !fields.length;
+    el.tiles.innerHTML = fields.map((fd) => {
+      const c = open.filter((i) => i.field === fd).length;
+      const on = state.fields.size === 1 && state.fields.has(fd);
+      return `<button type="button" class="tile${on ? ' is-on' : ''}" data-field="${UI.esc(fd)}" aria-pressed="${on}">
+        <span class="t-ico">${UI.icon(UI.fieldIcon(fd), 17)}</span>
+        <span class="t-txt"><b>${UI.esc(fd)}</b><span>${c} open</span></span>
+      </button>`;
+    }).join('');
+  }
+
+  function renderFeatured(item) {
+    el.featBox.innerHTML = item
+      ? Rows.featured(item)
+      : '<p class="feat-none">No featured opportunity right now — featured listings are hand-picked by the InternHub team.</p>';
+  }
+
+  function checkList(box, values, set, count) {
+    box.innerHTML = values.map((v) => `<label class="cbx">
+      <input type="checkbox" value="${UI.esc(v)}"${set.has(v) ? ' checked' : ''}>
+      <span class="box"></span><span class="txt">${UI.esc(v)}</span><span class="cnt">${count(v)}</span>
+    </label>`).join('');
+  }
+
+  function renderFacetLists() {
+    const open = openList();
+    const fields = vocab('field');
+    const categories = vocab('category');
+    const cities = vocab('city');
+
+    el.fieldSec.hidden = !fields.length;
+    checkList(el.fieldList, fields, state.fields, (fd) => open.filter((i) => i.field === fd).length);
+
+    el.categorySec.hidden = !categories.length;
+    checkList(el.categoryList, categories, state.categories, (ct) => open.filter((i) => i.category === ct).length);
+
+    if (state.city !== ALL_CITIES && !cities.includes(state.city)) state.city = ALL_CITIES;
+    el.citySec.hidden = !cities.length;
+    el.citySel.innerHTML = `<option value="${ALL_CITIES}">${ALL_CITIES}</option>` +
+      cities.map((c) => `<option value="${UI.esc(c)}"${state.city === c ? ' selected' : ''}>${UI.esc(c)}</option>`).join('');
+
+    el.modeRow.innerHTML = modeVocab().map((m) =>
+      `<button type="button" class="pill${state.modes.has(m) ? ' is-on' : ''}" data-mode="${UI.esc(m)}" aria-pressed="${state.modes.has(m)}">${UI.esc(m)}</button>`).join('');
+
+    el.locSec.hidden = !cities.length;
+    el.locRow.innerHTML = cities.map((c) => {
+      const n = open.filter((i) => i.city === c).length;
+      return `<button type="button" class="loc${state.city === c ? ' is-on' : ''}" data-city="${UI.esc(c)}" aria-pressed="${state.city === c}">
+        ${UI.icon('pin', 14)} ${UI.esc(c)}<span class="lc">${n}</span></button>`;
+    }).join('');
+  }
+
+  function resetPage() { shown = PAGE; }
+
+  function renderChips() {
+    const c = [];
+    state.fields.forEach((fd) => c.push(['field', fd, fd]));
+    state.categories.forEach((ct) => c.push(['category', ct, ct]));
+    state.modes.forEach((m) => c.push(['mode', m, m]));
+    if (state.city !== ALL_CITIES) c.push(['city', state.city, state.city]);
+    if (state.dl !== 'any') c.push(['dl', state.dl, `≤ ${state.dl} days`]);
+    if (state.verOnly) c.push(['ver', '1', 'Verified']);
+    if (state.newOnly) c.push(['new', '1', 'New only']);
+    if (state.incClosed) c.push(['closed', '1', 'Incl. closed']);
+
+    el.activeChips.innerHTML = c.map((x) =>
+      `<span class="achip">${UI.esc(x[2])}<button type="button" data-rm="${UI.esc(x[0])}:${UI.esc(x[1])}" aria-label="Remove ${UI.esc(x[2])} filter">${UI.icon('x', 10)}</button></span>`).join('') +
+      (c.length > 1 ? '<button type="button" class="achip is-clear" data-rm="*">Clear all</button>' : '');
+
+    const n = afCount();
+    el.fBadge.textContent = n;
+    el.fBadge.hidden = !n;
+  }
+
+  function renderResults() {
+    const L = filtered();
+    const slice = L.slice(0, shown);
+
+    el.cards.hidden = !slice.length;
+    el.cards.innerHTML = slice.length ? (state.view === 'list' ? Rows.rows(slice) : Rows.grid(slice)) : '';
+    el.moreWrap.hidden = shown >= L.length;
+
+    el.countLabel.textContent = `${L.length} open ${L.length === 1 ? 'role' : 'roles'}`;
+    el.emptyBox.hidden = L.length > 0;
+    if (!L.length) {
+      if (afCount() || state.q) {
+        el.emptyTitle.textContent = 'No internships match your filters';
+        el.emptyText.textContent = 'Try removing a filter or two — or search with a broader term.';
+        el.emptyAction.textContent = 'Clear all filters';
+        el.emptyAction.dataset.act = 'clear';
+      } else {
+        el.emptyTitle.textContent = 'No open internships yet';
+        el.emptyText.textContent = 'New verified opportunities are added regularly. Check back soon — or suggest one you know about.';
+        el.emptyAction.textContent = 'Suggest an internship';
+        el.emptyAction.dataset.act = 'suggest';
+      }
+    }
+    renderChips();
+    el.frailApply.textContent = `Show ${L.length} ${L.length === 1 ? 'role' : 'roles'}`;
+  }
+
+  function renderClosing() {
+    const L = ALL.filter((i) => { const d = daysLeft(i); return d !== null && d >= 0 && d <= 14; })
+      .sort((a, b) => daysLeft(a) - daysLeft(b));
+    el.closeSec.hidden = !L.length;
+    el.closeRow.innerHTML = L.map((i) => Rows.closeCard(i)).join('');
+  }
+
+  function resetFilters() {
+    state.fields.clear();
+    state.categories.clear();
+    state.modes.clear();
+    state.city = ALL_CITIES;
+    state.dl = 'any';
+    state.verOnly = state.newOnly = state.incClosed = false;
+    el.verOnly.checked = el.newOnly.checked = el.incClosed.checked = false;
+    el.dlSel.value = 'any';
+    renderFacetLists();
+    renderTiles();
+    resetPage();
+    renderResults();
+  }
+
+  /* ---------- search suggestions ---------- */
+  const SUG_ICON = { Role: 'search', Company: 'building', Field: 'briefcase', City: 'pin', Category: 'bookmark', Mode: 'globe', Recent: 'history' };
+
+  function sugPool() {
+    const out = [];
+    const seen = new Set();
+    const add = (type, v) => {
+      const s = String(v || '').trim();
+      if (!s || seen.has(s.toLowerCase())) return;
+      seen.add(s.toLowerCase());
+      out.push([s, type]);
+    };
+    ALL.forEach((i) => { add('Role', i.title); add('Company', i.company); });
+    vocab('field').forEach((fd) => add('Field', fd));
+    vocab('city').forEach((c) => add('City', c));
+    vocab('category').forEach((ct) => add('Category', ct));
+    modeVocab().forEach((m) => add('Mode', m));
+    return out;
+  }
+
+  function closeSug() {
+    el.sug.classList.remove('is-open');
+    el.sug.innerHTML = '';
+    sugItems = [];
+    sugIdx = -1;
+  }
+
+  function paintSug(items, head) {
+    if (!items.length) { closeSug(); return; }
+    sugItems = items;
+    sugIdx = -1;
+    el.sug.innerHTML = (head ? `<p class="sug-head">${UI.esc(head)}</p>` : '') + items.map(([v, t]) =>
+      `<button type="button" class="sug-it" role="option" aria-selected="false" data-sug="${UI.esc(v)}">
+        ${UI.icon(SUG_ICON[t] || 'search', 14)} ${UI.esc(v)}<span class="st">${UI.esc(t)}</span>
+      </button>`).join('');
+    el.sug.classList.add('is-open');
+  }
+
+  function showSug() {
+    const v = el.q.value.trim();
+    if (!v) {
+      if (recents.length) paintSug(recents.map((r) => [r, 'Recent']), 'Recent searches');
+      else closeSug();
+      return;
+    }
+    paintSug(sugPool().filter(([s]) => s.toLowerCase().includes(v.toLowerCase())).slice(0, 7), '');
+  }
+
+  function moveSug(step) {
+    if (!sugItems.length) return;
+    sugIdx = (sugIdx + step + sugItems.length) % sugItems.length;
+    el.sug.querySelectorAll('.sug-it').forEach((b, i) => {
+      b.classList.toggle('is-on', i === sugIdx);
+      b.setAttribute('aria-selected', String(i === sugIdx));
+    });
+  }
+
+  function commitSearch(txt) {
+    const v = String(txt || '').trim();
+    el.q.value = v;
+    state.q = v.toLowerCase();
+    el.qClear.hidden = !v;
+    closeSug();
+    if (v) recents = [v, ...recents.filter((r) => r !== v)].slice(0, 4);
+    resetPage();
+    renderResults();
+  }
+
+  function goToResults() { $('#resultsTop').scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+
+  /* ---------- filter drawer ---------- */
+  function openDrawer() { el.layout.classList.add('filters-open'); document.body.style.overflow = 'hidden'; }
+  function closeDrawer() { el.layout.classList.remove('filters-open'); document.body.style.overflow = ''; }
+
+  function setView(v) {
+    state.view = v;
+    el.viewGrid.classList.toggle('on', v === 'grid');
+    el.viewList.classList.toggle('on', v === 'list');
+    el.viewGrid.setAttribute('aria-pressed', String(v === 'grid'));
+    el.viewList.setAttribute('aria-pressed', String(v === 'list'));
+    renderResults();
+  }
+
+  /* ---------- events ---------- */
+  el.q.addEventListener('input', () => {
+    el.qClear.hidden = !el.q.value;
+    showSug();
+  });
+
+  el.q.addEventListener('focus', showSug);
+
+  el.q.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowDown') { e.preventDefault(); moveSug(1); return; }
+    if (e.key === 'ArrowUp') { e.preventDefault(); moveSug(-1); return; }
+    if (e.key === 'Escape') { closeSug(); return; }
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      commitSearch(sugIdx >= 0 && sugItems[sugIdx] ? sugItems[sugIdx][0] : el.q.value);
+      goToResults();
+    }
+  });
+
+  el.qGo.addEventListener('click', () => { commitSearch(el.q.value); goToResults(); });
+  el.qClear.addEventListener('click', () => { commitSearch(''); el.q.focus(); showSug(); });
+
+  el.sug.addEventListener('mousedown', (e) => {
+    const it = e.target.closest('[data-sug]');
+    if (!it) return;
+    e.preventDefault();
+    commitSearch(it.dataset.sug);
+    goToResults();
+  });
+
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('.searchwrap')) closeSug();
+    const pop = e.target.closest('[data-q]');
+    if (pop) { commitSearch(pop.dataset.q); goToResults(); }
+  });
+
+  el.fieldList.addEventListener('change', (e) => {
+    const box = e.target.closest('input[type="checkbox"]');
+    if (!box) return;
+    box.checked ? state.fields.add(box.value) : state.fields.delete(box.value);
+    renderTiles(); resetPage(); renderResults();
+  });
+
+  el.categoryList.addEventListener('change', (e) => {
+    const box = e.target.closest('input[type="checkbox"]');
+    if (!box) return;
+    box.checked ? state.categories.add(box.value) : state.categories.delete(box.value);
+    resetPage(); renderResults();
+  });
+
+  el.tiles.addEventListener('click', (e) => {
+    const t = e.target.closest('[data-field]');
+    if (!t) return;
+    const fd = t.dataset.field;
+    state.fields = state.fields.size === 1 && state.fields.has(fd) ? new Set() : new Set([fd]);
+    renderFacetLists(); renderTiles(); resetPage(); renderResults(); goToResults();
+  });
+
+  el.citySel.addEventListener('change', () => {
+    state.city = el.citySel.value;
+    renderFacetLists(); resetPage(); renderResults();
+  });
+
+  el.locRow.addEventListener('click', (e) => {
+    const b = e.target.closest('[data-city]');
+    if (!b) return;
+    state.city = state.city === b.dataset.city ? ALL_CITIES : b.dataset.city;
+    renderFacetLists(); resetPage(); renderResults(); goToResults();
+  });
+
+  el.modeRow.addEventListener('click', (e) => {
+    const p = e.target.closest('[data-mode]');
+    if (!p) return;
+    const m = p.dataset.mode;
+    state.modes.has(m) ? state.modes.delete(m) : state.modes.add(m);
+    p.classList.toggle('is-on', state.modes.has(m));
+    p.setAttribute('aria-pressed', String(state.modes.has(m)));
+    resetPage(); renderResults();
+  });
+
+  el.dlSel.addEventListener('change', () => { state.dl = el.dlSel.value; resetPage(); renderResults(); });
+  el.verOnly.addEventListener('change', () => { state.verOnly = el.verOnly.checked; resetPage(); renderResults(); });
+  el.newOnly.addEventListener('change', () => { state.newOnly = el.newOnly.checked; resetPage(); renderResults(); });
+  el.incClosed.addEventListener('change', () => {
+    state.incClosed = el.incClosed.checked;
+    resetPage(); renderResults(); renderClosing();
+  });
+  el.sortSel.addEventListener('change', () => { state.sort = el.sortSel.value; resetPage(); renderResults(); });
+
+  el.viewGrid.addEventListener('click', () => setView('grid'));
+  el.viewList.addEventListener('click', () => setView('list'));
+  el.loadMore.addEventListener('click', () => { shown += PAGE; renderResults(); });
+  el.resetFilters.addEventListener('click', resetFilters);
+
+  el.activeChips.addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-rm]');
+    if (!btn) return;
+    if (btn.dataset.rm === '*') { resetFilters(); return; }
+    const i = btn.dataset.rm.indexOf(':');
+    const kind = btn.dataset.rm.slice(0, i);
+    const val = btn.dataset.rm.slice(i + 1);
+    if (kind === 'field') { state.fields.delete(val); renderFacetLists(); renderTiles(); }
+    else if (kind === 'category') { state.categories.delete(val); renderFacetLists(); }
+    else if (kind === 'mode') { state.modes.delete(val); renderFacetLists(); }
+    else if (kind === 'city') { state.city = ALL_CITIES; renderFacetLists(); }
+    else if (kind === 'dl') { state.dl = 'any'; el.dlSel.value = 'any'; }
+    else if (kind === 'ver') { state.verOnly = false; el.verOnly.checked = false; }
+    else if (kind === 'new') { state.newOnly = false; el.newOnly.checked = false; }
+    else if (kind === 'closed') { state.incClosed = false; el.incClosed.checked = false; renderClosing(); }
+    resetPage(); renderResults();
+  });
+
+  el.emptyAction.addEventListener('click', () => {
+    if (el.emptyAction.dataset.act === 'clear') { resetFilters(); commitSearch(''); return; }
+    window.location.href = 'suggest.html';
+  });
+
+  el.frailOpen.addEventListener('click', openDrawer);
+  el.frailClose.addEventListener('click', closeDrawer);
+  el.frailScrim.addEventListener('click', closeDrawer);
+  el.frailApply.addEventListener('click', () => { closeDrawer(); goToResults(); });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeDrawer(); });
+
+  // ---- boot ----
+  async function boot() {
+    el.cards.innerHTML = Rows.skeleton(6);
+    el.mqTrack.innerHTML = `<div class="mq-half">${'<div class="sk-dk"></div>'.repeat(4)}</div>`;
+    el.featBox.innerHTML = '<div class="skel" style="height:230px;border-radius:16px"></div>';
+    renderFacetLists();
+
+    try { await Auth.ready; await Saved.load(); } catch (_) { /* browse stays public */ }
+
+    try {
+      ALL = (await Internships.published(200)) || [];
+    } catch (err) {
+      console.error('Browse: could not load internships', err);
+      el.cards.innerHTML = '';
+      el.cards.hidden = true;
+      el.moreWrap.hidden = true;
+      el.emptyBox.hidden = true;
+      el.errorBox.hidden = false;
+      el.heroSub.textContent = 'Opportunities could not be loaded right now.';
+      if (el.mqTrack) el.mqTrack.innerHTML = '';
+      renderFeatured(null);
+      return;
+    }
+
+    let feat = null;
+    try { feat = ((await Internships.featured(1)) || [])[0] || null; } catch (_) { feat = null; }
+    if (!feat) feat = ALL.filter((i) => i.verified).sort((a, b) => daysPosted(a) - daysPosted(b))[0] || null;
+
+    renderHero();
+    renderPopular();
+    renderMarquee();
+    renderFeatured(feat);
+    renderFacetLists();
+    renderTiles();
+    renderResults();
+    renderClosing();
+  }
+  boot();
+});
+</script>
+</body>
+</html>

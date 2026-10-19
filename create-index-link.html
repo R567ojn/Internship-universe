@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Fix Firestore Index - InternHub</title>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      max-width: 800px;
+      margin: 50px auto;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+    .container {
+      background: white;
+      padding: 40px;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    h1 { color: #d32f2f; margin-top: 0; }
+    .step {
+      background: #f0f7ff;
+      padding: 15px;
+      margin: 15px 0;
+      border-left: 4px solid #2196F3;
+      border-radius: 4px;
+    }
+    .btn {
+      display: inline-block;
+      background: #4CAF50;
+      color: white;
+      padding: 12px 24px;
+      text-decoration: none;
+      border-radius: 6px;
+      font-weight: 600;
+      margin: 10px 0;
+    }
+    .btn:hover { background: #45a049; }
+    code {
+      background: #f4f4f4;
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-family: monospace;
+    }
+    .warning {
+      background: #fff3cd;
+      border-left: 4px solid #ff9800;
+      padding: 15px;
+      margin: 20px 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🚨 Fix Required: Create Firestore Index</h1>
+    
+    <div class="warning">
+      <strong>Why nothing is showing:</strong><br>
+      Your 27 internships are in the database, but Firestore needs a "composite index" to query them efficiently. Without it, the Browse page can't load the data.
+    </div>
+
+    <h2>Click Below to Create the Index (2 minutes)</h2>
+
+    <div class="step">
+      <strong>Step 1:</strong> Click this button to open Firebase Console:
+      <br><br>
+      <a class="btn" href="https://console.firebase.google.com/project/internship-274f9/firestore/indexes" target="_blank">
+        Open Firebase Console →
+      </a>
+    </div>
+
+    <div class="step">
+      <strong>Step 2:</strong> Click the <strong>"Add Index"</strong> button (or "Create Index")
+    </div>
+
+    <div class="step">
+      <strong>Step 3:</strong> Fill in these exact values:
+      <ul>
+        <li><strong>Collection ID:</strong> <code>internships</code></li>
+        <li><strong>Field 1:</strong> <code>published</code> → <strong>Ascending</strong></li>
+        <li><strong>Field 2:</strong> <code>createdAt</code> → <strong>Descending</strong></li>
+        <li><strong>Query scope:</strong> Collection (default)</li>
+      </ul>
+    </div>
+
+    <div class="step">
+      <strong>Step 4:</strong> Click <strong>"Create"</strong>
+    </div>
+
+    <div class="step">
+      <strong>Step 5:</strong> Wait 2-5 minutes for the index to build<br>
+      <small>(You'll see a progress bar in Firebase Console)</small>
+    </div>
+
+    <div class="step">
+      <strong>Step 6:</strong> Refresh your InternHub Browse page<br>
+      ✅ All 27 internships should now appear!
+    </div>
+
+    <hr style="margin: 30px 0;">
+
+    <h3>Alternative: Auto-Create via URL</h3>
+    <p>Click this pre-filled link (may not work in all browsers):</p>
+    <a class="btn" href="https://console.firebase.google.com/project/internship-274f9/firestore/indexes?create_composite=ClRwcm9qZWN0cy9pbnRlcm5zaGlwLTI3NGY5L2RhdGFiYXNlcy8oZGVmYXVsdCkvY29sbGVjdGlvbkdyb3Vwcy9pbnRlcm5zaGlwcy9pbmRleGVzL18QARoLCgdwdWJsaXNoZWQQARoNCgljcmVhdGVkQXQQAhoMCghfX25hbWVfXxAC" target="_blank">
+      Try Auto-Create Link →
+    </a>
+
+    <hr style="margin: 30px 0;">
+
+    <h3>Verify Data Exists First</h3>
+    <p>Before creating the index, verify the 27 records were seeded:</p>
+    <a class="btn" style="background: #2196F3;" href="https://console.firebase.google.com/project/internship-274f9/firestore/data/~2Finternships" target="_blank">
+      Check Firestore Data →
+    </a>
+    <p><small>You should see documents: R01, R02, R03... R27</small></p>
+  </div>
+
+  <script>
+    // Auto-open the indexes page
+    if (confirm('Open Firebase Console to create the index now?')) {
+      window.open('https://console.firebase.google.com/project/internship-274f9/firestore/indexes', '_blank');
+    }
+  </script>
+</body>
+</html>

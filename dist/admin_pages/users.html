@@ -1,0 +1,915 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Admin · Manage users · InternHub</title>
+<meta name="robots" content="noindex">
+<link rel="icon" href="../favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/css/ui.css">
+<link rel="stylesheet" href="../assets/css/app.css">
+</head>
+<body data-app="admin" data-nav="users">
+<div id="view">
+
+  <header class="ahead">
+    <div>
+      <nav class="breadcrumb" aria-label="Breadcrumb">
+        <a href="dashboard.html">Admin</a>
+        <svg width="12" height="12" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
+        <span>Users</span>
+      </nav>
+      <h1>Manage users</h1>
+      <p class="sub">Review registered students and moderate their access.<span class="mono" id="userLine"></span></p>
+    </div>
+    <div class="ahead-r">
+      <a class="btn btn-ghost btn-sm" href="../index.html" target="_blank" rel="noopener noreferrer">
+        <svg width="15" height="15" viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12Z"/><circle cx="12" cy="12" r="3"/></svg>View site</a>
+    </div>
+  </header>
+
+  <div class="a-note">
+    <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 8v5m0 3.5v.01M10.3 3.9 1.9 18.4a2 2 0 0 0 1.7 3h16.8a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/></svg>
+    <div><b>How admin access works.</b> Administrator rights come from a secure Firebase custom claim set on the server (see <code>tools/setAdminClaim.js</code>) — never from this screen, and changing a student's role here does not grant admin. Disabling or deleting a signed-in user's Firebase <i>Auth</i> record requires the Admin SDK, so this console manages the Firestore profile only. Suspension signs a student straight out on their next load.</div>
+  </div>
+
+  <section class="stats" id="stats" aria-label="Student totals"></section>
+
+  <div class="toolbar">
+    <div class="searchbox">
+      <svg width="15" height="15" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <input id="searchInput" type="search" placeholder="Search name, email, institution or field… (press /)" autocomplete="off" aria-label="Search students">
+      <button type="button" class="s-clear" id="sClear" hidden aria-label="Clear search">
+        <svg width="11" height="11" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>
+      </button>
+    </div>
+    <div class="sortwrap">
+      <button type="button" class="sort" id="sortBtn" aria-haspopup="true" aria-expanded="false">
+        <svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18M6 12h12M10 18h4"/></svg>
+        <span id="sortLbl">Recently active</span>
+        <svg width="13" height="13" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+      </button>
+      <div class="sort-menu" id="sortMenu" role="menu" hidden></div>
+    </div>
+    <button type="button" class="icon-btn filter-btn" id="filterBtn" aria-haspopup="dialog" aria-controls="filterDrawer" aria-label="Open filters">
+      <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M7 12h10M10 18h4"/></svg>
+      <span class="fbadge" id="fBadge" hidden>0</span>
+    </button>
+  </div>
+
+  <div class="achips" id="activeChips"></div>
+
+  <section class="card utable" aria-label="Students">
+    <div class="ut-head">
+      <span class="ut-cav"></span>
+      <span>Student</span>
+      <span>Institution</span>
+      <span>Field</span>
+      <span>Location</span>
+      <button type="button" class="sortable" data-sort="lastActive">Last activity
+        <svg width="11" height="11" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
+      <button type="button" class="sortable" data-sort="createdAt">Joined
+        <svg width="11" height="11" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
+      <span class="ut-cact">Actions</span>
+    </div>
+    <div id="tbody"></div>
+  </section>
+
+  <div class="ucards" id="ucards"></div>
+  <div class="pager" id="pager"></div>
+
+  <!-- filter drawer -->
+  <div class="drawer-backdrop" id="fdScrim" hidden></div>
+  <aside class="drawer drawer--filters" id="filterDrawer" role="dialog" aria-modal="true" aria-labelledby="fdTitle" hidden>
+    <div class="drawer-head">
+      <h2 id="fdTitle">Filters</h2>
+      <div style="display:flex;gap:8px;align-items:center">
+        <button type="button" class="btn btn-ghost btn-sm" id="resetFilters">Reset all</button>
+        <button type="button" class="icon-btn" data-fd-close aria-label="Close filters">
+          <svg width="15" height="15" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>
+        </button>
+      </div>
+    </div>
+    <div class="drawer-body">
+      <div class="fsec"><span class="eyebrow">Account status</span><div class="pillrow">
+        <button type="button" class="pill" data-stat="active">Active</button>
+        <button type="button" class="pill" data-stat="pending">Pending</button>
+        <button type="button" class="pill" data-stat="suspended">Suspended</button>
+      </div></div>
+      <div class="fsec"><span class="eyebrow">Institution</span><div class="pillrow" id="fInst"></div></div>
+      <div class="fsec"><span class="eyebrow">Field / course</span><div class="pillrow" id="fField"></div></div>
+      <div class="fsec"><span class="eyebrow">Preferred location</span><div class="pillrow" id="fLoc"></div></div>
+      <div class="fsec"><span class="eyebrow">Joined</span><div class="pillrow">
+        <button type="button" class="pill" data-joined="7d">Last 7 days</button>
+        <button type="button" class="pill" data-joined="30d">Last 30 days</button>
+        <button type="button" class="pill" data-joined="90d">Last 90 days</button>
+        <button type="button" class="pill" data-joined="older">Older</button>
+      </div></div>
+    </div>
+    <div class="drawer-foot">
+      <button type="button" class="btn btn-ghost" data-fd-close>Close</button>
+      <button type="button" class="btn btn-primary" id="applyFilters">Apply filters</button>
+    </div>
+  </aside>
+
+  <!-- edit drawer -->
+  <div class="drawer-backdrop" id="edScrim" hidden></div>
+  <aside class="drawer drawer--form" id="editDrawer" role="dialog" aria-modal="true" aria-labelledby="edTitle" hidden>
+    <div class="drawer-head">
+      <h2 id="edTitle">Edit user</h2>
+      <button type="button" class="icon-btn" data-ed-close aria-label="Close">
+        <svg width="15" height="15" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>
+      </button>
+    </div>
+    <div class="drawer-body">
+      <div class="fsec"><span class="eyebrow">Profile information</span>
+        <div class="field"><label for="eName">Full name</label><input class="input" id="eName" autocomplete="off"></div>
+        <div class="field"><label for="eEmail">Email</label><input class="input" id="eEmail" disabled>
+          <span class="hint">Students change their own sign-in email from their Account page.</span></div>
+        <div class="field"><label for="ePhone">Phone</label><input class="input" id="ePhone" placeholder="+237 …" autocomplete="off"></div>
+        <div class="grid-2">
+          <div class="field"><label for="eInst">Institution</label><input class="input" id="eInst" autocomplete="off"></div>
+          <div class="field"><label for="eLevel">Academic level</label><select class="select" id="eLevel"></select></div>
+        </div>
+        <div class="grid-2">
+          <div class="field"><label for="eField">Field</label><select class="select" id="eField"></select></div>
+          <div class="field"><label for="eCourse">Course / programme</label><input class="input" id="eCourse" autocomplete="off"></div>
+        </div>
+        <div class="field"><label for="eBio">Bio</label><textarea class="textarea" id="eBio" placeholder="Short student description"></textarea></div>
+      </div>
+      <div class="fsec"><span class="eyebrow">Account status</span>
+        <p class="hint" id="stHint">Changing status takes effect the next time the student loads InternHub.</p>
+        <div class="st-opts" id="stCtrl">
+          <label class="st-opt st-active" data-st="active"><input type="radio" name="ustatus" value="active"><span class="rad"></span><span class="tx"><b>Active</b><span>Student can sign in and use InternHub.</span></span></label>
+          <label class="st-opt st-pending" data-st="pending"><input type="radio" name="ustatus" value="pending"><span class="rad"></span><span class="tx"><b>Pending</b><span>Held for review before full access.</span></span></label>
+          <label class="st-opt st-suspended" data-st="suspended"><input type="radio" name="ustatus" value="suspended"><span class="rad"></span><span class="tx"><b>Suspended</b><span>Access blocked; the student is signed out.</span></span></label>
+        </div>
+      </div>
+    </div>
+    <div class="drawer-foot">
+      <button type="button" class="btn btn-ghost" data-ed-close>Cancel</button>
+      <button type="button" class="btn btn-primary" id="eSave">Save changes</button>
+    </div>
+  </aside>
+
+  <!-- profile modal -->
+  <div class="modal-backdrop" id="profileModal" hidden>
+    <div class="modal modal-lg modal--profile" role="dialog" aria-modal="true" aria-labelledby="pmName">
+      <button type="button" class="dm-x" data-close aria-label="Close"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+      <div class="pm-head">
+        <div class="pm-av" id="pmAv"></div>
+        <div class="pm-id">
+          <h3 id="pmName"></h3>
+          <p id="pmEmail"></p>
+          <span class="mono" id="pmUid"></span>
+        </div>
+      </div>
+      <dl class="pm-grid" id="pmGrid"></dl>
+      <div class="pm-stats" id="pmStats"></div>
+      <div class="pm-act">
+        <span class="eyebrow">Account history</span>
+        <ul id="pmActivity"></ul>
+      </div>
+      <div class="m-foot pm-foot">
+        <button type="button" class="btn btn-ghost" data-close>Close</button>
+        <button type="button" class="btn btn-primary" id="pmEdit">Edit user</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- suspend modal -->
+  <div class="modal-backdrop" id="suspendModal" hidden>
+    <div class="modal modal-sm" role="dialog" aria-modal="true" aria-labelledby="susTitle">
+      <h3 class="modal-title" id="susTitle">Suspend account?</h3>
+      <p class="modal-msg" id="susDesc"></p>
+      <div class="field"><label for="susReason">Reason (stored on the profile, admin only)</label>
+        <textarea class="textarea" id="susReason" placeholder="e.g. Repeated spam submissions"></textarea></div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-ghost" data-close>Cancel</button>
+        <button type="button" class="btn btn-amber" id="susConfirm">Suspend account</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- reactivate modal -->
+  <div class="modal-backdrop" id="reactivateModal" hidden>
+    <div class="modal modal-sm" role="dialog" aria-modal="true" aria-labelledby="reaTitle">
+      <h3 class="modal-title" id="reaTitle">Reactivate account?</h3>
+      <p class="modal-msg" id="reaDesc"></p>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-ghost" data-close>Cancel</button>
+        <button type="button" class="btn btn-lime" id="reaConfirm">Reactivate</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- delete modal -->
+  <div class="modal-backdrop" id="deleteModal" hidden>
+    <div class="modal modal-sm" role="dialog" aria-modal="true" aria-labelledby="dmTitle">
+      <h3 class="modal-title" id="dmTitle">Delete this profile?</h3>
+      <p class="modal-msg" id="dmDesc"></p>
+      <div class="field"><label>Type <b id="dmType"></b> to confirm</label>
+        <input class="input" id="dmInput" autocomplete="off"></div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-ghost" data-close>Cancel</button>
+        <button type="button" class="btn btn-coral" id="dmConfirm" disabled>Delete profile</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+<script src="../assets/js/firebase-config.js"></script>
+<script src="../assets/js/lib/ui.js"></script>
+<script src="../assets/js/services/platform.js"></script>
+<script src="../assets/js/services/auth.js"></script>
+<script src="../assets/js/services/internships.js"></script>
+<script src="../assets/js/services/suggestions.js"></script>
+<script src="../assets/js/services/users.js"></script>
+<script src="../assets/js/services/notifications.js"></script>
+<script src="../assets/js/lib/notify-ui.js"></script>
+<script src="../assets/js/lib/shell.js"></script>
+<script>
+window.onReady(async function () {
+  if (!(await Auth.requireAdmin())) return;
+
+  const $ = (sel) => document.querySelector(sel);
+  const statsEl = $('#stats'), tbody = $('#tbody'), cardsEl = $('#ucards');
+  const pagerEl = $('#pager'), chipsEl = $('#activeChips');
+  const PER_PAGE = 10;
+  const LEVELS = ['Year 1', 'Year 2', 'Year 3', 'Year 4', "Master's", 'Graduate'];
+  const SORTS = [
+    { key: 'lastActive', dir: 'desc', label: 'Recently active' },
+    { key: 'createdAt', dir: 'desc', label: 'Recently joined' },
+    { key: 'createdAt', dir: 'asc', label: 'Earliest joined' },
+    { key: 'name', dir: 'asc', label: 'Name A – Z' },
+    { key: 'suggestions', dir: 'desc', label: 'Most suggestions' }
+  ];
+  const st = {
+    tab: 'all', q: '', page: 1, busy: false,
+    sort: 'lastActive', dir: 'desc',
+    statuses: new Set(), insts: new Set(), fields: new Set(), locs: new Set(), joined: null
+  };
+  let USERS = [], SUGG = null, ACTS = null, loadError = '';
+  const me = Auth.profile.uid;
+
+  const locsOf = (u) => (u.preferences && u.preferences.locations) || [];
+  const isSuspended = (u) => u.status === 'suspended';
+  const suggOf = (u) => (SUGG ? (SUGG[u.uid] || 0) : null);
+  const dash = (v) => (v === null || v === undefined || v === '' ? '—' : v);
+  const emptyState = (icon, cls, title, msg, cta = '') =>
+    `<div class="empty"><span class="e-ico${cls ? ' ' + cls : ''}">${UI.icon(icon, 22)}</span><h3>${title}</h3><p>${msg}</p>${cta}</div>`;
+
+  /* ---------- totals ---------- */
+  function counts() {
+    const c = { all: USERS.length, active: 0, suspended: 0, admin: 0 };
+    USERS.forEach((u) => {
+      if (isSuspended(u)) c.suspended++; else c.active++;
+      if (u.isAdmin) c.admin++;
+    });
+    return c;
+  }
+
+  function renderStats() {
+    if (!USERS.length) { statsEl.innerHTML = ''; return; }
+    const c = counts();
+    const card = (key, label, value, cls, dl) =>
+      `<button type="button" class="stat card ${cls}${st.tab === key ? ' is-on' : ''}" data-tab="${key}" aria-pressed="${st.tab === key}">
+        <span class="lb">${label}</span>
+        <span class="vl"><b>${value}</b>${dl ? `<span class="dl ${dl.cls}">${dl.text}</span>` : ''}</span>
+      </button>`;
+    const share = c.all ? { cls: 'up', text: `${Math.round((c.active / c.all) * 100)}% of students` } : null;
+    statsEl.innerHTML =
+      card('all', 'Total students', c.all, 'total', null) +
+      card('active', 'Active', c.active, 'active', c.all ? share : null) +
+      card('suspended', 'Suspended', c.suspended, 'suspended', c.suspended ? { cls: 'warn', text: 'needs review' } : null) +
+      card('admin', 'Admin profiles', c.admin, 'admin', null);
+  }
+
+  /* ---------- filters ---------- */
+  function union(cfgKey, values) {
+    return [...new Set([...(Settings.data[cfgKey] || []), ...values.filter(Boolean)])];
+  }
+  function renderFilterOptions() {
+    const pills = (attr, list) => list.map((v) =>
+      `<button type="button" class="pill" data-${attr}="${UI.esc(v)}">${UI.esc(v)}</button>`).join('');
+    $('#fInst').innerHTML = pills('inst', [...new Set(USERS.map((u) => u.institution).filter(Boolean))].sort());
+    $('#fField').innerHTML = pills('field', union('fields', USERS.map((u) => u.field)));
+    $('#fLoc').innerHTML = pills('loc', union('locations', USERS.flatMap(locsOf)));
+    syncPills();
+  }
+  const sets = { stat: 'statuses', inst: 'insts', field: 'fields', loc: 'locs' };
+  function syncPills() {
+    Object.keys(sets).forEach((k) => {
+      document.querySelectorAll(`[data-${k}]`).forEach((b) => {
+        b.classList.toggle('is-on', st[sets[k]].has(b.dataset[k]));
+      });
+    });
+    document.querySelectorAll('[data-joined]').forEach((b) => b.classList.toggle('is-on', st.joined === b.dataset.joined));
+  }
+  const activeCount = () => Object.values(sets).reduce((n, k) => n + st[k].size, 0) + (st.joined ? 1 : 0);
+
+  const JOINED_LABELS = { '7d': 'Last 7 days', '30d': 'Last 30 days', '90d': 'Last 90 days', older: 'Older' };
+  function renderChips() {
+    const chips = [];
+    if (st.tab !== 'all') {
+      const label = st.tab === 'admin' ? 'Admin profiles' : `Status: ${st.tab}`;
+      chips.push(`<span class="achip">${label}<button type="button" data-rm="tab:all" aria-label="Remove filter">${UI.icon('x', 10)}</button></span>`);
+    }
+    Object.keys(sets).forEach((k) => {
+      st[sets[k]].forEach((v) => {
+        chips.push(`<span class="achip">${UI.esc(v)}<button type="button" data-rm="${k}:${UI.esc(v)}" aria-label="Remove filter">${UI.icon('x', 10)}</button></span>`);
+      });
+    });
+    if (st.joined) {
+      chips.push(`<span class="achip">${JOINED_LABELS[st.joined]}<button type="button" data-rm="joined:" aria-label="Remove filter">${UI.icon('x', 10)}</button></span>`);
+    }
+    chipsEl.innerHTML = chips.join('') + (chips.length > 1 ? '<span class="achip is-clear" data-clear>Clear all</span>' : '');
+    const badge = $('#fBadge');
+    badge.textContent = activeCount();
+    badge.hidden = !activeCount();
+  }
+
+  function daysAgo(date) {
+    const d = UI.toDate(date);
+    return d ? Math.floor((Date.now() - d.getTime()) / 86400000) : null;
+  }
+  function passJoined(u) {
+    if (!st.joined) return true;
+    const days = daysAgo(u.createdAt);
+    if (days === null) return false;
+    if (st.joined === 'older') return days > 90;
+    return days <= Number(st.joined.replace('d', ''));
+  }
+  function filtered() {
+    const q = st.q;
+    const out = USERS.filter((u) => {
+      if (st.tab === 'active' && (u.status || 'active') !== 'active') return false;
+      if (st.tab === 'suspended' && !isSuspended(u)) return false;
+      if (st.tab === 'admin' && !u.isAdmin) return false;
+      if (st.statuses.size && !st.statuses.has(u.status || 'active')) return false;
+      if (st.insts.size && !st.insts.has(u.institution)) return false;
+      if (st.fields.size && !st.fields.has(u.field)) return false;
+      if (st.locs.size && !locsOf(u).some((l) => st.locs.has(l))) return false;
+      if (!passJoined(u)) return false;
+      if (q && !`${u.displayName} ${u.email} ${u.institution} ${u.field} ${u.course} ${locsOf(u).join(' ')}`.toLowerCase().includes(q)) return false;
+      return true;
+    });
+    const ms = (v) => { const d = UI.toDate(v); return d ? d.getTime() : 0; };
+    const sign = st.dir === 'asc' ? 1 : -1;
+    if (st.sort === 'name') out.sort((a, b) => sign * `${a.displayName}`.localeCompare(`${b.displayName}`));
+    else if (st.sort === 'suggestions') out.sort((a, b) => sign * ((suggOf(a) || 0) - (suggOf(b) || 0)));
+    else out.sort((a, b) => sign * (ms(a[st.sort]) - ms(b[st.sort])));
+    return out;
+  }
+
+  /* ---------- rows ---------- */
+  function menu(u) {
+    const self = u.uid === me;
+    return `<div class="u-menu" data-menu="${UI.esc(u.uid)}">
+      <button type="button" class="u-menu-btn" aria-haspopup="true" aria-label="Actions for ${UI.esc(u.displayName)}">${UI.icon('more', 15, true)}</button>
+      <div class="u-menu-pop">
+        <button type="button" class="u-menu-item" data-act="view">${UI.icon('eye', 14)}View profile</button>
+        <button type="button" class="u-menu-item" data-act="edit">${UI.icon('pencil', 14)}Edit user</button>
+        ${self ? `<hr class="u-menu-sep"><p class="u-menu-note">This is your own account.</p>` : `
+        <hr class="u-menu-sep">
+        ${isSuspended(u)
+          ? `<button type="button" class="u-menu-item" data-act="reactivate">${UI.icon('refresh', 14)}Reactivate</button>`
+          : `<button type="button" class="u-menu-item warn" data-act="suspend">${UI.icon('ban', 14)}Suspend account</button>`}
+        <button type="button" class="u-menu-item danger" data-act="delete">${UI.icon('trash', 14)}Delete profile</button>`}
+      </div>
+    </div>`;
+  }
+
+  function rowHTML(u, i) {
+    const status = u.status || 'active';
+    const sugg = suggOf(u);
+    return `<div class="urow${isSuspended(u) ? ' is-suspended' : ''}" data-uid="${UI.esc(u.uid)}" style="animation-delay:${Math.min(i, 8) * 35}ms">
+      <span class="uav">${UI.esc(UI.initials(u.displayName || u.email))}<span class="dot st-${UI.esc(status)}"></span></span>
+      <div class="ubio"><b>${UI.esc(u.displayName || 'Student')}</b>
+        <span class="em">${UI.esc(u.email)}${u.isAdmin ? ' <span class="tag">admin</span>' : ''}</span></div>
+      <div class="u-cell" title="${UI.esc(dash(u.institution))}">${UI.esc(dash(u.institution))}</div>
+      <div class="u-cell"><span class="inst">${UI.esc(dash(u.field))}</span>
+        <span class="sub">${UI.esc(dash(u.academicLevel || u.course))}</span></div>
+      <div class="u-cell" title="${UI.esc(locsOf(u).join(', ') || '—')}">${UI.esc(locsOf(u).join(', ') || '—')}</div>
+      <div class="u-cell"><span class="u-date">${UI.esc(UI.timeAgo(u.lastActive) || '—')}</span></div>
+      <div class="u-cell"><span class="u-date">${UI.esc(UI.fmtDate(u.createdAt, false))}</span>
+        <span class="sub">${sugg === null ? '' : `${sugg} suggestion${sugg === 1 ? '' : 's'}`}</span></div>
+      <div class="ut-cact">${menu(u)}</div>
+    </div>`;
+  }
+
+  function cardHTML(u, i) {
+    const status = u.status || 'active';
+    const sugg = suggOf(u);
+    const self = u.uid === me;
+    const line = (dt, dd) => dd ? `<dt>${dt}</dt><dd>${UI.esc(dd)}</dd>` : '';
+    return `<div class="ucard${isSuspended(u) ? ' is-suspended' : ''}" data-uid="${UI.esc(u.uid)}" style="animation-delay:${Math.min(i, 8) * 35}ms">
+      <div class="ucard-head">
+        <span class="uav">${UI.esc(UI.initials(u.displayName || u.email))}<span class="dot st-${UI.esc(status)}"></span></span>
+        <div class="ubio"><b>${UI.esc(u.displayName || 'Student')}</b><span class="em">${UI.esc(u.email)}</span></div>
+        <span class="status st-${UI.esc(status)}">${UI.esc(status)}</span>
+      </div>
+      <dl class="ucard-body">
+        ${line('Institution', u.institution)}
+        ${line('Field', [u.field, u.academicLevel].filter(Boolean).join(' · '))}
+        ${line('Location', locsOf(u).join(', '))}
+        ${line('Joined', UI.fmtDate(u.createdAt))}
+        ${line('Last seen', UI.timeAgo(u.lastActive))}
+        ${line('Suggestions', sugg === null ? '' : String(sugg))}
+      </dl>
+      ${u.suspendReason ? `<p class="ucard-note">${UI.esc(u.suspendReason)}</p>` : ''}
+      <div class="ucard-foot">
+        <button type="button" class="btn btn-ghost btn-sm" data-act="view">${UI.icon('eye', 13)}View</button>
+        <button type="button" class="btn btn-ghost btn-sm" data-act="edit">${UI.icon('pencil', 13)}Edit</button>
+        ${self ? '' : (isSuspended(u)
+          ? `<button type="button" class="btn btn-lime btn-sm" data-act="reactivate">Reactivate</button>`
+          : `<button type="button" class="btn btn-amber btn-sm" data-act="suspend">Suspend</button>`)}
+      </div>
+    </div>`;
+  }
+
+  function pageWindow(cur, total) {
+    if (total <= 7) return Array.from({ length: total }, (_, n) => n + 1);
+    const from = Math.max(1, Math.min(cur - 2, total - 4));
+    return Array.from({ length: Math.min(5, total) }, (_, n) => from + n);
+  }
+
+  function renderPager(total) {
+    const pages = Math.ceil(total / PER_PAGE);
+    if (!total) { pagerEl.innerHTML = ''; return; }
+    if (pages < 2) {
+      pagerEl.innerHTML = `<p class="pager-info">Showing <b>${total}</b> student${total === 1 ? '' : 's'}</p>`;
+      return;
+    }
+    const start = (st.page - 1) * PER_PAGE + 1;
+    const end = Math.min(st.page * PER_PAGE, total);
+    const btns = pageWindow(st.page, pages)
+      .map((p) => `<button type="button" class="pbtn${p === st.page ? ' is-on' : ''}" data-page="${p}" aria-label="Page ${p}">${p}</button>`).join('');
+    pagerEl.innerHTML = `<p class="pager-info">Showing <b>${start}–${end}</b> of <b>${total}</b> students</p>
+      <div class="pager-btns">
+        <button type="button" class="pbtn" data-page="${st.page - 1}" ${st.page === 1 ? 'disabled' : ''} aria-label="Previous page">${UI.icon('arrow-left', 14)}</button>
+        ${btns}
+        <button type="button" class="pbtn" data-page="${st.page + 1}" ${st.page === pages ? 'disabled' : ''} aria-label="Next page">${UI.icon('arrow-right', 14)}</button>
+      </div>`;
+  }
+
+  function renderTable() {
+    renderChips();
+    $('#userLine').textContent = USERS.length ? `${USERS.length} registered` : '';
+    if (loadError) {
+      tbody.innerHTML = emptyState('alert', 'err', 'Couldn’t load students', UI.esc(loadError));
+      cardsEl.innerHTML = ''; pagerEl.innerHTML = ''; renderStats(); return;
+    }
+    if (!USERS.length) {
+      tbody.innerHTML = emptyState('users', '', 'No students yet', 'Registered accounts appear here as students sign up for InternHub.');
+      cardsEl.innerHTML = ''; pagerEl.innerHTML = ''; renderStats(); return;
+    }
+    const list = filtered();
+    const pages = Math.max(1, Math.ceil(list.length / PER_PAGE));
+    if (st.page > pages) st.page = pages;
+    renderStats();
+    if (!list.length) {
+      const msg = 'Try clearing the status cards, filters or search to widen the results.';
+      tbody.innerHTML = emptyState('search', 'warn', 'No students match your filters', msg,
+        '<button type="button" class="btn btn-ghost btn-sm" data-clear>Clear all filters</button>');
+      cardsEl.innerHTML = emptyState('search', 'warn', 'No students match', msg,
+        '<button type="button" class="btn btn-ghost btn-sm" data-clear>Clear all</button>');
+      pagerEl.innerHTML = '';
+      return;
+    }
+    const start = (st.page - 1) * PER_PAGE;
+    const slice = list.slice(start, start + PER_PAGE);
+    tbody.innerHTML = slice.map(rowHTML).join('');
+    cardsEl.innerHTML = slice.map(cardHTML).join('');
+    renderPager(list.length);
+  }
+
+  /* ---------- data ---------- */
+  async function refresh() {
+    const r = await Users.all(1000);
+    loadError = r.ok ? '' : (r.error || 'You don’t have permission to read user profiles.');
+    USERS = r.items || [];
+    renderFilterOptions();
+    renderTable();
+  }
+
+  async function loadSuggestionCounts() {
+    try {
+      const list = await Suggestions.list(null, 500);
+      if (!Array.isArray(list)) return;
+      SUGG = {};
+      list.forEach((s) => { if (s.submittedBy) SUGG[s.submittedBy] = (SUGG[s.submittedBy] || 0) + 1; });
+    } catch (err) { console.error('Suggestion counts failed:', err); return; }
+    renderTable();
+  }
+
+  /* ---------- profile modal ---------- */
+  const profileModal = $('#profileModal');
+  let profileUid = null;
+
+  async function recentFor(uid) {
+    if (!ACTS) { try { ACTS = await Activity.recent(60); } catch (_) { ACTS = []; } }
+    return (ACTS || []).filter((a) => a.targetId === uid).slice(0, 5);
+  }
+
+  async function openProfile(u) {
+    profileUid = u.uid;
+    $('#pmAv').innerHTML = `${UI.esc(UI.initials(u.displayName || u.email))}<span class="dot st-${UI.esc(u.status || 'active')}"></span>`;
+    $('#pmName').textContent = u.displayName || 'Student';
+    $('#pmEmail').innerHTML = `${UI.esc(u.email)} <span class="status st-${UI.esc(u.status || 'active')}">${UI.esc(u.status || 'active')}</span>`;
+    $('#pmUid').textContent = `UID · ${u.uid}`;
+    const item = (dt, dd) => dd ? `<div><dt>${dt}</dt><dd>${UI.esc(dd)}</dd></div>` : '';
+    $('#pmGrid').innerHTML = [
+      item('Institution', u.institution),
+      item('Field', u.field),
+      item('Course', u.course),
+      item('Academic level', u.academicLevel),
+      item('Phone', u.phone),
+      item('Preferred locations', locsOf(u).join(', ')),
+      item('Username', u.username),
+      item('Preferred fields', ((u.preferences || {}).fields || []).join(', ')),
+      `<div class="span2"><dt>Bio</dt><dd>${UI.esc(u.bio || 'No bio on file.')}</dd></div>`
+    ].join('');
+    const sugg = suggOf(u);
+    $('#pmStats').innerHTML = [
+      `<div class="pm-stat"><span class="lb">Suggestions submitted</span><b>${sugg === null ? '—' : sugg}</b></div>`,
+      `<div class="pm-stat"><span class="lb">Last seen</span><b class="sm">${UI.esc(UI.timeAgo(u.lastActive) || '—')}</b></div>`,
+      `<div class="pm-stat"><span class="lb">Member for</span><b class="sm">${UI.esc(memberFor(u))}</b></div>`
+    ].join('');
+    $('#pmActivity').innerHTML = '<li class="none">Loading…</li>';
+    openLayer(profileModal);
+    const acts = await recentFor(u.uid);
+    if (profileUid !== u.uid) return;
+    $('#pmActivity').innerHTML = acts.length
+      ? acts.map((a) => `<li>${UI.icon(a.action && a.action.indexOf('user.') === 0 ? 'lock' : 'check', 13)}
+          ${UI.esc(describeAct(a))}<time>${UI.esc(UI.timeAgo(a.createdAt))}</time></li>`).join('')
+      : `<li class="none">No admin actions recorded for this account yet. Student sign-ins and saves aren’t visible to admins.</li>`;
+  }
+
+  function memberFor(u) {
+    const days = daysAgo(u.createdAt);
+    if (days === null) return '—';
+    if (days < 1) return 'today';
+    if (days < 30) return `${days} day${days === 1 ? '' : 's'}`;
+    if (days < 365) return `${Math.round(days / 30)} month${Math.round(days / 30) === 1 ? '' : 's'}`;
+    return `${(days / 365).toFixed(1)} years`;
+  }
+  const ACT_LABELS = {
+    'user.suspended': 'Suspended by admin', 'user.reactivated': 'Reactivated by admin',
+    'user.updated': 'Profile edited by admin', 'user.deleted': 'Profile deleted',
+    'suggestion.approved': 'Suggestion approved', 'suggestion.verified': 'Suggestion verified',
+    'suggestion.rejected': 'Suggestion rejected', 'suggestion.declined': 'Suggestion declined'
+  };
+  function describeAct(a) {
+    return ACT_LABELS[a.action] || (a.action || 'Activity').replace(/[._-]/g, ' ');
+  }
+
+  /* ---------- edit drawer ---------- */
+  const editDrawer = $('#editDrawer'), edScrim = $('#edScrim');
+  let editUid = null;
+
+  function buildSelect(sel, options, current) {
+    const list = [...new Set([...options, ...(current ? [current] : [])].filter(Boolean))];
+    sel.innerHTML = `<option value="">Not set</option>` + list.map((o) =>
+      `<option value="${UI.esc(o)}"${o === current ? ' selected' : ''}>${UI.esc(o)}</option>`).join('');
+  }
+
+  function openEdit(u) {
+    editUid = u.uid;
+    $('#edTitle').textContent = `Edit ${u.displayName || 'student'}`;
+    $('#eName').value = u.displayName || '';
+    $('#eEmail').value = u.email || '';
+    $('#ePhone').value = u.phone || '';
+    $('#eInst').value = u.institution || '';
+    $('#eCourse').value = u.course || '';
+    $('#eBio').value = u.bio || '';
+    buildSelect($('#eLevel'), LEVELS, u.academicLevel);
+    buildSelect($('#eField'), Settings.data.fields || [], u.field);
+    setStatusOptions(u.status || 'active', u.uid === me);
+    openLayer(editDrawer);
+  }
+
+  function setStatusOptions(status, isSelf) {
+    document.querySelectorAll('#stCtrl .st-opt').forEach((o) => {
+      const on = o.dataset.st === status;
+      const input = o.querySelector('input');
+      input.checked = on;
+      input.disabled = isSelf && !on;
+      o.classList.toggle('is-on', on);
+    });
+    $('#stHint').textContent = isSelf
+      ? 'You can’t suspend or change the status of your own account.'
+      : 'Changing status takes effect the next time the student loads InternHub.';
+  }
+  const chosenStatus = () => {
+    const on = document.querySelector('#stCtrl input:checked');
+    return on ? on.value : 'active';
+  };
+
+  async function saveEdit() {
+    if (st.busy || !editUid) return;
+    const u = USERS.find((x) => x.uid === editUid);
+    if (!u) return;
+    const patch = {
+      displayName: $('#eName').value.trim(),
+      phone: $('#ePhone').value.trim(),
+      institution: $('#eInst').value.trim(),
+      course: $('#eCourse').value.trim(),
+      academicLevel: $('#eLevel').value,
+      field: $('#eField').value,
+      bio: $('#eBio').value.trim()
+    };
+    if (!patch.displayName) { UI.toast('A student needs a name.', 'error'); $('#eName').focus(); return; }
+    const nextStatus = chosenStatus();
+    st.busy = true;
+    $('#eSave').classList.add('is-loading');
+    let res = await Users.update(editUid, patch);
+    if (res.ok && nextStatus !== (u.status || 'active')) {
+      res = await Users.setStatus(editUid, nextStatus, nextStatus === 'suspended' ? (u.suspendReason || '') : '');
+    }
+    st.busy = false;
+    $('#eSave').classList.remove('is-loading');
+    if (!res.ok) { UI.toast(res.error || 'Update failed', 'error'); return; }
+    closeLayer(editDrawer);
+    UI.toast(`${patch.displayName}’s profile updated.`);
+    await refresh();
+  }
+
+  /* ---------- suspend / reactivate / delete ---------- */
+  const suspendModal = $('#suspendModal'), reactivateModal = $('#reactivateModal'), deleteModal = $('#deleteModal');
+  let actionUid = null, deleteName = '';
+
+  function openSuspend(u) {
+    actionUid = u.uid;
+    $('#susDesc').innerHTML = `<b>${UI.esc(u.displayName || u.email)}</b> will be blocked from InternHub and signed out on their next load. You can reactivate them later.`;
+    $('#susReason').value = u.suspendReason || '';
+    openLayer(suspendModal);
+  }
+  async function confirmSuspend() {
+    const reason = $('#susReason').value.trim();
+    const res = await Users.setStatus(actionUid, 'suspended', reason);
+    if (!res.ok) return UI.toast(res.error || 'Update failed', 'error');
+    closeLayer(suspendModal);
+    UI.toast('Account suspended.');
+    await refresh();
+  }
+
+  function openReactivate(u) {
+    actionUid = u.uid;
+    $('#reaDesc').innerHTML = `Restore access for <b>${UI.esc(u.displayName || u.email)}</b>. They can sign in again immediately.`;
+    openLayer(reactivateModal);
+  }
+  async function confirmReactivate() {
+    const res = await Users.setStatus(actionUid, 'active');
+    if (!res.ok) return UI.toast(res.error || 'Update failed', 'error');
+    closeLayer(reactivateModal);
+    UI.toast('Account reactivated.');
+    await refresh();
+  }
+
+  function openDelete(u) {
+    actionUid = u.uid;
+    deleteName = u.displayName || u.email;
+    $('#dmDesc').innerHTML = `This removes <b>${UI.esc(deleteName)}</b>’s Firestore profile, saved internships and notifications. The Firebase sign-in record itself must be deleted server-side with the Admin SDK, so this cannot fully close the account. This cannot be undone.`;
+    $('#dmType').textContent = deleteName;
+    $('#dmInput').value = '';
+    $('#dmInput').placeholder = `Type “${deleteName}”`;
+    $('#dmConfirm').disabled = true;
+    openLayer(deleteModal);
+    setTimeout(() => $('#dmInput').focus(), 240);
+  }
+  async function confirmDelete() {
+    const res = await Users.deleteProfile(actionUid);
+    if (!res.ok) return UI.toast(res.error || 'Delete failed', 'error');
+    closeLayer(deleteModal);
+    UI.toast('Profile deleted.');
+    await refresh();
+  }
+
+  /* ---------- layers (drawers + modals share one open/close shape) ---------- */
+  const LAYERS = [];
+  function registerLayer(el, scrim) {
+    LAYERS.push({ el, scrim: scrim || null });
+    el.addEventListener('click', (e) => {
+      if (el.classList.contains('modal-backdrop') && (e.target === el || e.target.closest('[data-close]'))) closeLayer(el);
+    });
+    return el;
+  }
+  const scrimOf = (el) => (LAYERS.find((l) => l.el === el) || {}).scrim || null;
+
+  function openLayer(el) {
+    LAYERS.forEach((l) => { if (l.el !== el && l.el.classList.contains('is-open')) closeLayer(l.el); });
+    const s = scrimOf(el);
+    if (s) { s.hidden = false; requestAnimationFrame(() => s.classList.add('is-open')); }
+    el.hidden = false;
+    requestAnimationFrame(() => el.classList.add('is-open'));
+    document.body.style.overflow = 'hidden';
+  }
+  function closeLayer(el) {
+    el.classList.remove('is-open');
+    const s = scrimOf(el);
+    if (s) {
+      s.classList.remove('is-open');
+      setTimeout(() => { if (!s.classList.contains('is-open')) s.hidden = true; }, 300);
+    }
+    setTimeout(() => { if (!el.classList.contains('is-open')) el.hidden = true; }, 240);
+    if (!document.querySelector('.modal-backdrop.is-open, .drawer.is-open')) document.body.style.overflow = '';
+  }
+  registerLayer($('#filterDrawer'), $('#fdScrim'));
+  registerLayer(editDrawer, edScrim);
+  registerLayer(profileModal);
+  registerLayer(suspendModal);
+  registerLayer(reactivateModal);
+  registerLayer(deleteModal);
+
+  /* ---------- routing row actions ---------- */
+  function handleAction(e) {
+    const menuBtn = e.target.closest('.u-menu-btn');
+    if (menuBtn) {
+      const m = menuBtn.closest('.u-menu');
+      const wasOpen = m.classList.contains('is-open');
+      document.querySelectorAll('.u-menu.is-open').forEach((x) => x.classList.remove('is-open'));
+      if (!wasOpen) m.classList.add('is-open');
+      e.stopPropagation();
+      return;
+    }
+    if (e.target.closest('[data-clear]')) { resetAll(); renderTable(); return; }
+    const b = e.target.closest('[data-act]');
+    if (!b) return;
+    const holder = b.closest('[data-uid]') || b.closest('.u-menu');
+    const uid = holder && (holder.dataset.uid || holder.dataset.menu);
+    const u = USERS.find((x) => x.uid === uid);
+    if (!u) return;
+    document.querySelectorAll('.u-menu.is-open').forEach((x) => x.classList.remove('is-open'));
+    if (b.dataset.act === 'view') openProfile(u);
+    if (b.dataset.act === 'edit') openEdit(u);
+    if (b.dataset.act === 'suspend') openSuspend(u);
+    if (b.dataset.act === 'reactivate') openReactivate(u);
+    if (b.dataset.act === 'delete') openDelete(u);
+  }
+
+  function resetAll() {
+    Object.values(sets).forEach((k) => st[k].clear());
+    st.joined = null; st.tab = 'all'; st.q = ''; st.page = 1;
+    $('#searchInput').value = ''; $('#sClear').hidden = true;
+    syncPills();
+  }
+
+  function sortLabel() {
+    const hit = SORTS.find((s) => s.key === st.sort && s.dir === st.dir);
+    if (hit) return hit.label;
+    return st.sort === 'name' ? 'Name A – Z' : (st.dir === 'asc' ? 'Earliest' : 'Most recent');
+  }
+  function renderSort() {
+    $('#sortLbl').textContent = sortLabel();
+    document.querySelectorAll('.ut-head .sortable').forEach((h) => {
+      const on = h.dataset.sort === st.sort;
+      h.classList.toggle('is-on', on);
+      h.classList.toggle('is-asc', on && st.dir === 'asc');
+      h.setAttribute('aria-sort', on ? (st.dir === 'asc' ? 'ascending' : 'descending') : 'none');
+    });
+  }
+
+  /* ---------- wiring ---------- */
+  statsEl.addEventListener('click', (e) => {
+    const b = e.target.closest('[data-tab]');
+    if (!b || b.dataset.tab === st.tab) return;
+    st.tab = b.dataset.tab; st.page = 1; renderTable();
+  });
+  tbody.addEventListener('click', handleAction);
+  cardsEl.addEventListener('click', handleAction);
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('.u-menu')) document.querySelectorAll('.u-menu.is-open').forEach((m) => m.classList.remove('is-open'));
+    if (!e.target.closest('.sortwrap')) closeSortMenu();
+  });
+
+  pagerEl.addEventListener('click', (e) => {
+    const b = e.target.closest('[data-page]');
+    if (!b || b.disabled) return;
+    st.page = Math.max(1, Number(b.dataset.page));
+    renderTable();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+  document.querySelectorAll('.ut-head .sortable').forEach((h) => h.addEventListener('click', () => {
+    const key = h.dataset.sort;
+    if (st.sort === key) st.dir = st.dir === 'asc' ? 'desc' : 'asc';
+    else { st.sort = key; st.dir = key === 'name' ? 'asc' : 'desc'; }
+    st.page = 1; renderSort(); renderTable();
+  }));
+
+  function closeSortMenu() {
+    const menu = $('#sortMenu');
+    menu.classList.remove('is-open');
+    $('#sortBtn').setAttribute('aria-expanded', 'false');
+    setTimeout(() => { if (!menu.classList.contains('is-open')) menu.hidden = true; }, 160);
+  }
+  $('#sortMenu').innerHTML = SORTS.map((s) =>
+    `<button type="button" class="u-menu-item" role="menuitemradio" data-key="${s.key}" data-dir="${s.dir}">${UI.esc(s.label)}</button>`).join('');
+  $('#sortBtn').addEventListener('click', (e) => {
+    e.stopPropagation();
+    const menu = $('#sortMenu');
+    const opening = menu.hidden;
+    if (opening) {
+      menu.hidden = false;
+      requestAnimationFrame(() => menu.classList.add('is-open'));
+    } else { closeSortMenu(); }
+    $('#sortBtn').setAttribute('aria-expanded', String(opening));
+  });
+  $('#sortMenu').addEventListener('click', (e) => {
+    const b = e.target.closest('[data-key]');
+    if (!b) return;
+    st.sort = b.dataset.key; st.dir = b.dataset.dir; st.page = 1;
+    closeSortMenu(); renderSort(); renderTable();
+  });
+
+  chipsEl.addEventListener('click', (e) => {
+    if (e.target.closest('[data-clear]')) { resetAll(); renderTable(); return; }
+    const rm = e.target.closest('[data-rm]');
+    if (!rm) return;
+    const i = rm.dataset.rm.indexOf(':');
+    const key = rm.dataset.rm.slice(0, i), value = rm.dataset.rm.slice(i + 1);
+    if (key === 'tab') st.tab = 'all';
+    else if (key === 'joined') st.joined = null;
+    else st[sets[key]].delete(value);
+    st.page = 1; syncPills(); renderTable();
+  });
+
+  $('#filterDrawer').addEventListener('click', (e) => {
+    const b = e.target.closest('[data-stat],[data-inst],[data-field],[data-loc],[data-joined]');
+    if (!b) return;
+    if (b.dataset.joined !== undefined) {
+      st.joined = st.joined === b.dataset.joined ? null : b.dataset.joined;
+    } else {
+      Object.keys(sets).forEach((k) => {
+        if (b.dataset[k] === undefined) return;
+        const set = st[sets[k]];
+        if (set.has(b.dataset[k])) set.delete(b.dataset[k]); else set.add(b.dataset[k]);
+      });
+    }
+    st.page = 1; syncPills(); renderTable();
+  });
+  const filterDrawer = $('#filterDrawer');
+  $('#applyFilters').addEventListener('click', () => closeLayer(filterDrawer));
+  $('#resetFilters').addEventListener('click', () => { resetAll(); renderTable(); });
+  $('#filterBtn').addEventListener('click', () => openLayer(filterDrawer));
+  $('#fdScrim').addEventListener('click', () => closeLayer(filterDrawer));
+  filterDrawer.querySelectorAll('[data-fd-close]').forEach((b) => b.addEventListener('click', () => closeLayer(filterDrawer)));
+
+  $('#edScrim').addEventListener('click', () => closeLayer(editDrawer));
+  editDrawer.querySelectorAll('[data-ed-close]').forEach((b) => b.addEventListener('click', () => closeLayer(editDrawer)));
+  $('#eSave').addEventListener('click', saveEdit);
+  $('#stCtrl').addEventListener('change', (e) => {
+    if (!e.target.matches('input[name="ustatus"]')) return;
+    document.querySelectorAll('#stCtrl .st-opt').forEach((o) => o.classList.toggle('is-on', o.querySelector('input').checked));
+  });
+
+  $('#pmEdit').addEventListener('click', () => {
+    const u = USERS.find((x) => x.uid === profileUid);
+    closeLayer(profileModal);
+    if (u) openEdit(u);
+  });
+  $('#susConfirm').addEventListener('click', confirmSuspend);
+  $('#reaConfirm').addEventListener('click', confirmReactivate);
+  $('#dmConfirm').addEventListener('click', confirmDelete);
+  $('#dmInput').addEventListener('input', (e) => {
+    $('#dmConfirm').disabled = e.target.value.trim() !== deleteName;
+  });
+
+  const search = $('#searchInput'), clearBtn = $('#sClear');
+  search.addEventListener('input', () => {
+    st.q = search.value.trim().toLowerCase();
+    clearBtn.hidden = !st.q;
+    st.page = 1; renderTable();
+  });
+  clearBtn.addEventListener('click', () => {
+    search.value = ''; st.q = ''; clearBtn.hidden = true; st.page = 1; renderTable(); search.focus();
+  });
+
+  document.addEventListener('keydown', (e) => {
+    const tag = (document.activeElement || {}).tagName;
+    const typing = tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT';
+    if (e.key === 'Escape') {
+      document.querySelectorAll('.u-menu.is-open').forEach((m) => m.classList.remove('is-open'));
+      closeSortMenu();
+      const open = document.querySelector('.modal-backdrop.is-open, .drawer.is-open');
+      if (open) closeLayer(open);
+      return;
+    }
+    if (e.key === '/' && !typing) { e.preventDefault(); search.focus(); }
+  });
+
+  tbody.innerHTML = '<div class="row-sk"><div class="skel" style="width:36px;height:36px;flex:none;border-radius:50%"></div><div class="skel" style="height:14px;width:34%"></div><div class="skel" style="height:14px;width:16%"></div><div class="skel" style="height:14px;width:12%"></div></div>'.repeat(5);
+  renderSort();
+  await Settings.load();
+  await refresh();
+  loadSuggestionCounts();
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Test Verification Pipeline</title>
+</head>
+<body>
+<h1>Test Verification Pipeline</h1>
+<div id="output"></div>
+
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+<script src="assets/js/firebase-config.js"></script>
+<script src="assets/js/lib/ui.js"></script>
+<script src="assets/js/services/platform.js"></script>
+<script src="assets/js/services/auth.js"></script>
+<script src="assets/js/services/internships.js"></script>
+<script src="assets/js/services/suggestions.js"></script>
+<script src="assets/js/services/notifications.js"></script>
+
+<script>
+async function testPipeline() {
+  const output = document.getElementById('output');
+  const log = (msg, color = 'black') => {
+    output.innerHTML += `<p style="color: ${color}">${msg}</p>`;
+    console.log(msg);
+  };
+
+  try {
+    log('=== VERIFICATION PIPELINE TEST ===', 'blue');
+    
+    // Wait for auth
+    await Auth.ready;
+    log(`✓ Auth ready. User: ${Auth.profile ? Auth.profile.email : 'Not signed in'}`, 'green');
+    
+    if (!Auth.profile || !Auth.profile.isAdmin) {
+      log('❌ You must be signed in as an admin to test verification', 'red');
+      return;
+    }
+    
+    // Get all suggestions
+    log('Fetching suggestions...', 'blue');
+    const suggestions = await Suggestions.list();
+    log(`✓ Found ${suggestions.length} total suggestions`, 'green');
+    
+    // Find a pending suggestion
+    const pending = suggestions.find(s => s.status === 'pending');
+    if (!pending) {
+      log('❌ No pending suggestions found. Create one from the student Suggest page first.', 'red');
+      return;
+    }
+    
+    log(`✓ Found pending suggestion: "${pending.title}" by ${pending.company}`, 'green');
+    log(`  ID: ${pending.id}`, 'gray');
+    log(`  Status: ${pending.status}`, 'gray');
+    log(`  Submitted by: ${pending.submittedByName || pending.submittedBy}`, 'gray');
+    
+    // Count internships before
+    log('Counting internships before verification...', 'blue');
+    const beforeCount = (await Internships.published(500)).length;
+    log(`✓ ${beforeCount} published internships currently exist`, 'green');
+    
+    // Verify and publish
+    log('Calling Suggestions.verifyAndPublish()...', 'blue');
+    const result = await Suggestions.verifyAndPublish(pending.id, {});
+    
+    if (!result.ok) {
+      log(`❌ verifyAndPublish failed: ${result.error}`, 'red');
+      return;
+    }
+    
+    log(`✓ verifyAndPublish succeeded! Created internship ID: ${result.id}`, 'green');
+    
+    // Check the created internship
+    log('Fetching the created internship...', 'blue');
+    const internship = await Internships.getAny(result.id);
+    
+    if (!internship) {
+      log('❌ Created internship not found!', 'red');
+      return;
+    }
+    
+    log(`✓ Internship found: "${internship.title}"`, 'green');
+    log(`  Published: ${internship.published}`, internship.published ? 'green' : 'red');
+    log(`  Verified: ${internship.verified}`, internship.verified ? 'green' : 'red');
+    log(`  Status: ${internship.status}`, 'gray');
+    
+    // Check updated suggestion
+    log('Checking updated suggestion status...', 'blue');
+    const updatedSuggestion = await Suggestions.get(pending.id);
+    log(`✓ Suggestion status: ${updatedSuggestion.status}`, 'green');
+    log(`  Linked internship ID: ${updatedSuggestion.internshipId}`, 'gray');
+    
+    // Count internships after
+    log('Counting internships after verification...', 'blue');
+    const afterCount = (await Internships.published(500)).length;
+    log(`✓ ${afterCount} published internships now exist (was ${beforeCount})`, afterCount > beforeCount ? 'green' : 'orange');
+    
+    // Check if visible in Browse query
+    log('Checking if internship appears in Browse query...', 'blue');
+    const browseList = await Internships.published(500);
+    const inBrowse = browseList.find(i => i.id === result.id);
+    
+    if (inBrowse) {
+      log(`✓ SUCCESS! Internship IS visible in Browse query`, 'green');
+    } else {
+      log(`❌ PROBLEM! Internship NOT visible in Browse query despite published: true`, 'red');
+      log(`  Debug: published=${internship.published}, status=${internship.status}`, 'gray');
+    }
+    
+    log('=== TEST COMPLETE ===', 'blue');
+    
+  } catch (err) {
+    log(`❌ ERROR: ${err.message}`, 'red');
+    console.error('Full error:', err);
+  }
+}
+
+// Run test when ready
+window.addEventListener('load', testPipeline);
+</script>
+</body>
+</html>

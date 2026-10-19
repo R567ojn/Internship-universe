@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Check Firestore Data</title>
+  <style>
+    body { font-family: system-ui; max-width: 800px; margin: 50px auto; padding: 20px; }
+    .success { color: green; font-weight: bold; }
+    .error { color: red; font-weight: bold; }
+    .loading { color: orange; }
+    pre { background: #f4f4f4; padding: 15px; border-radius: 5px; overflow-x: auto; }
+  </style>
+</head>
+<body>
+  <h1>Firestore Data Check</h1>
+  <div id="status" class="loading">⏳ Checking Firestore...</div>
+  <div id="results"></div>
+
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+  
+  <script>
+    // Initialize Firebase directly here since path is wrong
+    const firebaseConfig = {
+      apiKey: "AIzaSyANDOKLaxq85j3FIrOgvquJ2Xayie0C_Yc",
+      authDomain: "internship-274f9.firebaseapp.com",
+      projectId: "internship-274f9",
+      storageBucket: "internship-274f9.firebasestorage.app",
+      messagingSenderId: "604637845238",
+      appId: "1:604637845238:web:69b96b6a47cd8eaed1fed7",
+      measurementId: "G-PV09MLBH71"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const firebaseDB = firebase.firestore();
+  </script>
+  
+  <script>
+    const status = document.getElementById('status');
+    const results = document.getElementById('results');
+
+    async function checkData() {
+      try {
+        // Query published internships
+        const snapshot = await firebaseDB.collection('internships')
+          .where('published', '==', true)
+          .orderBy('createdAt', 'desc')
+          .get();
+
+        const count = snapshot.size;
+        const docs = snapshot.docs.map(doc => ({
+          id: doc.id,
+          title: doc.data().title,
+          company: doc.data().company,
+          image: doc.data().image ? '✅ Has image' : '❌ No image',
+          published: doc.data().published
+        }));
+
+        if (count > 0) {
+          status.className = 'success';
+          status.innerHTML = `✅ SUCCESS! Found ${count} published internships`;
+          
+          results.innerHTML = `
+            <h2>Data Preview:</h2>
+            <pre>${JSON.stringify(docs.slice(0, 5), null, 2)}</pre>
+            <p><strong>All ${count} records are in Firestore and queryable!</strong></p>
+            <p>🎉 Your Browse page should now work. Refresh it!</p>
+          `;
+        } else {
+          status.className = 'error';
+          status.innerHTML = '❌ No published internships found';
+          results.innerHTML = '<p>The seed script may not have run successfully.</p>';
+        }
+
+      } catch (error) {
+        status.className = 'error';
+        status.innerHTML = '❌ Query failed: ' + error.message;
+        results.innerHTML = `<pre>${error.stack}</pre>`;
+      }
+    }
+
+    checkData();
+  </script>
+</body>
+</html>

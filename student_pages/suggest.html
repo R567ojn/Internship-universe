@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Suggest an internship · InternHub</title>
+<meta name="description" content="Spotted an internship we should list? Send it to the InternHub team for verification.">
+<meta name="robots" content="noindex">
+<link rel="icon" href="../favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/css/ui.css">
+<link rel="stylesheet" href="../assets/css/app.css">
+</head>
+<body data-app="student" data-nav="suggest">
+<div id="view">
+  <section class="darkzone">
+    <svg class="orbits" viewBox="0 0 340 200" aria-hidden="true">
+      <circle class="o-ring-a" cx="252" cy="100" r="72"/>
+      <circle class="o-ring-b" cx="252" cy="100" r="42"/>
+      <path class="o-sig" d="M14 158 C 92 128, 148 52, 252 100"/>
+      <circle class="o-dot" cx="14" cy="158" r="4"/>
+      <circle class="o-dot2" cx="150" cy="86" r="3"/>
+      <circle class="o-core" cx="252" cy="100" r="5"/>
+    </svg>
+    <p class="eyebrow">Community submissions</p>
+    <h1>Know an internship? Help another student discover it.</h1>
+    <p class="dz-sub">Send in opportunities you've found — online or in real life. Every suggestion is reviewed, verified and published so the whole student community can benefit.</p>
+    <p class="stat-line" id="statLine">Loading live counts…</p>
+  </section>
+
+  <div class="suggest-grid">
+    <div class="form-col" id="formCol">
+      <form id="suggestForm" novalidate>
+        <div class="fcard">
+          <div class="fhead"><span class="fstep">01</span><h3>The opportunity</h3></div>
+          <div class="fgrid">
+            <div class="field span2" id="wTitle">
+              <label for="fTitle">Internship title <span class="req">*</span></label>
+              <input class="input" id="fTitle" placeholder="e.g. Software Engineering Intern" maxlength="80" autocomplete="off">
+              <span class="field-err">Please add the internship title.</span>
+            </div>
+            <div class="field span2" id="wCompany">
+              <label for="fCompany">Company / organisation <span class="req">*</span></label>
+              <input class="input" id="fCompany" placeholder="e.g. Afrimax Technologies" maxlength="120" autocomplete="organization">
+              <span class="field-err">Please add the company or organisation name.</span>
+            </div>
+            <div class="field span2" id="wField">
+              <label>Field <span class="req">*</span></label>
+              <div class="fchips" id="fieldChips"></div>
+              <span class="field-err">Choose the closest field for this internship.</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="fcard">
+          <div class="fhead"><span class="fstep">02</span><h3>Location &amp; work mode</h3></div>
+          <div class="fgrid">
+            <div class="field span2" id="wCity">
+              <label>City <span class="req">*</span></label>
+              <div class="fchips" id="cityChips"></div>
+              <span class="field-err">Pick a city — or “Other” to type one in.</span>
+            </div>
+            <div class="field span2" id="cityOtherWrap" hidden>
+              <label for="fCityOther">Your city</label>
+              <input class="input" id="fCityOther" maxlength="80" placeholder="e.g. Kribi" autocomplete="off">
+            </div>
+            <div class="field">
+              <label for="fArea">Area <span class="opt-label">(optional)</span></label>
+              <input class="input" id="fArea" maxlength="80" placeholder="e.g. Mile 17, Bonapriso…" autocomplete="off">
+            </div>
+            <div class="field" id="wMode">
+              <label>Work mode <span class="req">*</span></label>
+              <div class="mode-seg" id="modeSeg"></div>
+              <span class="field-err">Select how the intern will work.</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="fcard">
+          <div class="fhead"><span class="fstep">03</span><h3>Links</h3><span class="opt">Where you found it</span></div>
+          <div class="fgrid">
+            <div class="field span2" id="wSource">
+              <label for="fSource">Source link <span class="req">*</span></label>
+              <input class="input" id="fSource" type="url" maxlength="500" placeholder="https://… the page where you found this opportunity" autocomplete="off">
+              <span class="hint" id="sourceHint">Paste the page where you discovered it — a company career page, LinkedIn post, flyer site…</span>
+              <span class="field-err">A valid source link (https://…) is required so we can review it.</span>
+            </div>
+            <div class="field span2" id="wApply">
+              <label for="fApply">Application link <span class="opt-label">(optional, if different)</span></label>
+              <input class="input" id="fApply" type="url" maxlength="500" placeholder="https://… direct application URL" autocomplete="off">
+              <span class="hint" id="applyHint">If applications happen on a different page, add it here.</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="fcard">
+          <div class="fhead"><span class="fstep">04</span><h3>Details</h3><span class="opt">Everything helps</span></div>
+          <div class="fgrid">
+            <div class="field span2">
+              <label for="fDesc">Description <span class="count" id="descCount">0 / 600</span></label>
+              <textarea class="textarea" id="fDesc" maxlength="600" placeholder="What will the intern do? Requirements? Anything a student should know before applying…"></textarea>
+            </div>
+            <div class="field">
+              <label for="fDur">Duration</label>
+              <select class="select" id="fDur">
+                <option value="">Not sure yet</option>
+                <option>1 – 2 months</option>
+                <option>3 months</option>
+                <option>4 – 5 months</option>
+                <option>6 months</option>
+                <option>6+ months</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="fDeadline">Application deadline</label>
+              <input class="input" id="fDeadline" type="date">
+            </div>
+            <div class="field span2">
+              <label for="fContact">Contact info <span class="opt-label">(optional)</span></label>
+              <input class="input" id="fContact" maxlength="120" placeholder="e.g. careers@company.cm · +237 6XX XX XX XX" autocomplete="off">
+              <span class="hint">Only share contact details that are publicly available.</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="fcard">
+          <div class="fhead"><span class="fstep">05</span><h3>Cover image</h3><span class="opt">Optional</span></div>
+          <div class="field" id="wImg">
+            <label for="fImg">Image URL</label>
+            <input class="input" id="fImg" type="url" maxlength="500" placeholder="https://…/image.jpg" autocomplete="off">
+            <span class="hint" id="imgHint">Paste a direct link to a company or office image. No image? We'll generate a clean cover automatically.</span>
+          </div>
+        </div>
+
+        <div class="submit-row">
+          <button class="btn btn-primary btn-lg" id="submitBtn" type="submit">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 3 10.5 13.5M21 3l-7 18-3.5-7.5L3 10l18-7Z"/></svg>
+            Submit for review
+          </button>
+          <p class="submit-note">Required fields marked <span class="req">*</span> · Reviewed before publishing</p>
+        </div>
+      </form>
+
+      <div class="done" id="doneOverlay" role="status" aria-live="polite">
+        <div class="done-card">
+          <svg class="done-check" viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32" r="26.5"/><path d="M21 33l8 8 15-16"/></svg>
+          <h3>Suggestion submitted.</h3>
+          <p>Thank you for helping another student discover an opportunity. Our team will review it shortly — track its status in your submission history below.</p>
+          <div class="done-actions">
+            <button class="btn btn-primary" id="againBtn" type="button">Suggest another</button>
+            <a class="btn btn-ghost" href="browse.html">Browse internships</a>
+            <a class="btn btn-ghost" href="dashboard.html">View dashboard</a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <aside class="pv-col">
+      <p class="eyebrow pv-label"><span class="dot"></span>Live preview</p>
+      <article class="pv-card" id="pvCard"></article>
+      <div class="wf">
+        <h4>What happens next?</h4>
+        <div class="wf-step">
+          <span class="wf-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 3 10.5 13.5M21 3l-7 18-3.5-7.5L3 10l18-7Z"/></svg></span>
+          <div><b>You suggest</b><span>Share the opportunity with a link and details.</span></div>
+        </div>
+        <div class="wf-step">
+          <span class="wf-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg></span>
+          <div><b>We review</b><span>Our team checks, edits and verifies the listing.</span></div>
+        </div>
+        <div class="wf-step">
+          <span class="wf-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m4.5 12.5 5 5 10-11"/></svg></span>
+          <div><b>Students discover</b><span>It goes live in Browse for the whole community.</span></div>
+        </div>
+      </div>
+    </aside>
+  </div>
+
+  <section class="history">
+    <div class="sechead"><h2>Your suggestions</h2><span class="eyebrow" id="histCount"></span></div>
+    <div id="histList"></div>
+  </section>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+<script src="../assets/js/firebase-config.js"></script>
+<script src="../assets/js/lib/ui.js"></script>
+<script src="../assets/js/services/platform.js"></script>
+<script src="../assets/js/services/auth.js"></script>
+<script src="../assets/js/services/internships.js"></script>
+<script src="../assets/js/services/suggestions.js"></script>
+<script src="../assets/js/services/notifications.js"></script>
+<script src="../assets/js/lib/notify-ui.js"></script>
+<script src="../assets/js/lib/shell.js"></script>
+<script src="../assets/js/lib/router.js"></script>
+<script>
+(async function () {
+  await new Promise(resolve => {
+    if (window.__shellReady) resolve();
+    else document.addEventListener('shell:ready', resolve, { once: true });
+  });
+  
+  const $ = (s) => document.querySelector(s);
+  const el = {
+    form: $('#suggestForm'), btn: $('#submitBtn'), done: $('#doneOverlay'), again: $('#againBtn'),
+    formCol: $('#formCol'), stat: $('#statLine'), pv: $('#pvCard'),
+    title: $('#fTitle'), company: $('#fCompany'), fieldChips: $('#fieldChips'),
+    cityChips: $('#cityChips'), cityOtherWrap: $('#cityOtherWrap'), cityOther: $('#fCityOther'),
+    area: $('#fArea'), modeSeg: $('#modeSeg'),
+    source: $('#fSource'), sourceHint: $('#sourceHint'), apply: $('#fApply'), applyHint: $('#applyHint'),
+    desc: $('#fDesc'), descCount: $('#descCount'), dur: $('#fDur'), deadline: $('#fDeadline'),
+    contact: $('#fContact'), img: $('#fImg'), imgHint: $('#imgHint'),
+    hist: $('#histList'), histCount: $('#histCount')
+  };
+  const F = { title: '', company: '', field: '', city: '', area: '', workMode: '',
+    source: '', apply: '', desc: '', dur: '', deadline: '', contact: '', img: '' };
+  const MODE_ICONS = { 'On-site': 'building', 'Hybrid': 'users', 'Remote': 'globe' };
+  const URL_RE = /^https?:\/\/.+\..+/;
+  const REQUIRED = ['wTitle', 'wCompany', 'wField', 'wCity', 'wMode', 'wSource'];
+  let KNOWN_CITIES = [];
+  let imgOk = false;
+  let signed = false;
+  let mine = [];
+
+  el.sourceHint.dataset.orig = el.sourceHint.textContent;
+  el.applyHint.dataset.orig = el.applyHint.textContent;
+  el.imgHint.dataset.orig = el.imgHint.textContent;
+  el.deadline.min = new Date().toISOString().split('T')[0];
+
+  /* ---------- live preview ---------- */
+  function preview() {
+    const media = (F.img && imgOk)
+      ? `<img src="${UI.esc(F.img)}" alt="">`
+      : `<div class="noimg">${UI.esc(UI.initials(F.company || 'InternHub'))}</div>`;
+    const loc = [F.city, F.area].filter(Boolean).join(' · ');
+    const meta = [
+      F.field ? `<li>${UI.icon(UI.fieldIcon(F.field), 13)}${UI.esc(F.field)}</li>`
+              : `<li class="ph">${UI.icon('briefcase', 13)}Field</li>`,
+      loc ? `<li>${UI.icon('pin', 13)}${UI.esc(loc)}</li>`
+          : `<li class="ph">${UI.icon('pin', 13)}City</li>`,
+      F.workMode ? `<li>${UI.icon('globe', 13)}${UI.esc(F.workMode)}</li>`
+                 : `<li class="ph">${UI.icon('globe', 13)}Work mode</li>`,
+      F.dur ? `<li>${UI.icon('clock', 13)}${UI.esc(F.dur)}</li>` : ''
+    ].filter(Boolean).join('');
+    el.pv.innerHTML = `<div class="pv-media">${media}
+        <div class="ic-badges"><span class="bdg bdg-pend">Pending verification</span></div>
+        <span class="mono-av">${UI.esc(UI.initials(F.company || 'IH'))}</span></div>
+      <div class="pv-body">
+        <h3 class="${F.title ? '' : 'ph'}">${UI.esc(F.title || 'Internship title')}</h3>
+        <p class="pv-co ${F.company ? '' : 'ph'}">${UI.icon('building', 13)}${UI.esc(F.company || 'Company name')}</p>
+        <ul class="pv-meta">${meta}</ul>
+      </div>
+      <div class="pv-foot"><span>${UI.esc(F.deadline ? 'Closes ' + UI.fmtDate(F.deadline) : 'Deadline —')}</span>
+        <span class="mono">Community suggestion</span></div>`;
+  }
+
+  /* ---------- controls from the live taxonomy ---------- */
+  function buildControls(cfg) {
+    el.fieldChips.innerHTML = (cfg.fields || []).map((f) =>
+      `<button type="button" class="fchip" data-f="${UI.esc(f)}">${UI.icon(UI.fieldIcon(f), 14)}${UI.esc(f)}</button>`).join('');
+    KNOWN_CITIES = (cfg.locations || []).slice();
+    el.cityChips.innerHTML = KNOWN_CITIES.map((c) =>
+      `<button type="button" class="cchip" data-c="${UI.esc(c)}">${UI.esc(c)}</button>`).join('')
+      + '<button type="button" class="cchip" data-c="__other">Other</button>';
+    el.modeSeg.innerHTML = (cfg.workModes || []).map((m) =>
+      `<button type="button" data-m="${UI.esc(m)}">${UI.icon(MODE_ICONS[m] || 'briefcase', 14)}${UI.esc(m)}</button>`).join('');
+  }
+
+  function syncChips() {
+    el.fieldChips.querySelectorAll('.fchip').forEach((b) => b.classList.toggle('is-on', b.dataset.f === F.field));
+    const other = !!F.city && !KNOWN_CITIES.includes(F.city);
+    el.cityChips.querySelectorAll('.cchip').forEach((b) => {
+      b.classList.toggle('is-on', b.dataset.c === '__other' ? other : F.city === b.dataset.c);
+    });
+    el.modeSeg.querySelectorAll('button').forEach((b) => b.classList.toggle('is-on', b.dataset.m === F.workMode));
+  }
+
+  /* ---------- validation ---------- */
+  function urlHint(node, val) {
+    node.classList.remove('good', 'bad');
+    if (!val) { node.textContent = node.dataset.orig; return; }
+    if (URL_RE.test(val)) { node.textContent = 'Link looks good.'; node.classList.add('good'); }
+    else { node.textContent = 'Hmm — a link should start with http:// or https://'; node.classList.add('bad'); }
+  }
+  function setErr(id) {
+    const w = document.getElementById(id);
+    w.classList.remove('is-invalid');
+    void w.offsetWidth;
+    w.classList.add('is-invalid');
+  }
+  function clearErr(id) { document.getElementById(id).classList.remove('is-invalid'); }
+  function validate() {
+    const errs = [];
+    if (!F.title.trim()) errs.push('wTitle');
+    if (!F.company.trim()) errs.push('wCompany');
+    if (!F.field) errs.push('wField');
+    if (!F.city) errs.push('wCity');
+    if (!F.workMode) errs.push('wMode');
+    if (!URL_RE.test(F.source.trim())) errs.push('wSource');
+    if (!errs.length) return true;
+    errs.forEach(setErr);
+    UI.toast('A few required fields need attention.', 'error');
+    document.getElementById(errs[0]).scrollIntoView({ behavior: 'smooth', block: 'center' });
+    return false;
+  }
+
+  /* ---------- submission history (real documents) ---------- */
+  const ST = {
+    pending: ['Pending review', 'st-pending'],
+    approved: ['In review', 'st-pending'],
+    'needs-changes': ['Needs changes', 'st-needs'],
+    duplicate: ['Duplicate', 'st-rejected'],
+    rejected: ['Rejected', 'st-rejected'],
+    verified: ['Verified', 'st-verified']
+  };
+  const statusOf = (s) => (s.status === 'verified' && s.internshipId
+    ? ['Published', 'st-published'] : (ST[s.status] || ST.pending));
+
+  function renderHistory() {
+    if (!mine.length) {
+      el.histCount.innerHTML = signed ? ''
+        : `<a href="${H('signin.html')}" style="color:var(--green)">Sign in</a> to track your submissions`;
+      el.hist.innerHTML = `<div class="h-empty"><div class="e-ico">${UI.icon('send', 20)}</div>
+        <h3>You haven't suggested an opportunity yet.</h3>
+        <p>Sharing even one internship can help dozens of students discover a path they'd never find alone.</p></div>`;
+      return;
+    }
+    el.histCount.textContent = `${mine.length} submission${mine.length === 1 ? '' : 's'}`;
+    el.hist.innerHTML = mine.map((s) => {
+      const st = statusOf(s);
+      const when = s.createdAt ? UI.fmtDate(s.createdAt) : 'just now';
+      return `<div class="hrow${s.fresh ? ' is-new' : ''}"><span class="h-ico">${UI.icon('send', 16)}</span>
+        <div class="h-main"><b>${UI.esc(s.title || 'Untitled')}</b>
+        <span>${UI.esc(s.company || '—')} · submitted ${UI.esc(when)}</span></div>
+        <span class="status ${st[1]}">${st[0]}</span></div>`;
+    }).join('');
+    mine.forEach((s) => { s.fresh = false; });
+  }
+
+  /* ---------- intro stat line: counts that really exist ---------- */
+  async function loadStats() {
+    let items = [];
+    try { items = (await Internships.published(200)) || []; } catch (_) { items = []; }
+    const cities = new Set(items.map((i) => i.city).filter(Boolean));
+    const bits = [`${items.length} published internship${items.length === 1 ? '' : 's'}`,
+      `${cities.size} ${cities.size === 1 ? 'city' : 'cities'}`];
+    if (signed) bits.push(`${mine.length} suggestion${mine.length === 1 ? '' : 's'} from you`);
+    el.stat.textContent = bits.join(' · ');
+  }
+
+  /* ---------- events ---------- */
+  el.fieldChips.addEventListener('click', (e) => {
+    const b = e.target.closest('[data-f]'); if (!b) return;
+    F.field = F.field === b.dataset.f ? '' : b.dataset.f;
+    clearErr('wField'); syncChips(); preview();
+  });
+  el.cityChips.addEventListener('click', (e) => {
+    const b = e.target.closest('[data-c]'); if (!b) return;
+    if (b.dataset.c === '__other') {
+      el.cityOtherWrap.hidden = false;
+      F.city = el.cityOther.value.trim();
+      el.cityOther.focus();
+    } else {
+      el.cityOtherWrap.hidden = true;
+      el.cityOther.value = '';
+      F.city = F.city === b.dataset.c ? '' : b.dataset.c;
+    }
+    clearErr('wCity'); syncChips(); preview();
+  });
+  el.cityOther.addEventListener('input', (e) => {
+    F.city = e.target.value.trim(); clearErr('wCity'); preview();
+  });
+  el.modeSeg.addEventListener('click', (e) => {
+    const b = e.target.closest('[data-m]'); if (!b) return;
+    F.workMode = b.dataset.m; clearErr('wMode'); syncChips(); preview();
+  });
+
+  const bind = (node, key, after) => node.addEventListener('input', (e) => {
+    F[key] = e.target.value; if (after) after(); preview();
+  });
+  bind(el.title, 'title', () => clearErr('wTitle'));
+  bind(el.company, 'company', () => clearErr('wCompany'));
+  bind(el.area, 'area'); bind(el.dur, 'dur'); bind(el.deadline, 'deadline'); bind(el.contact, 'contact');
+  bind(el.apply, 'apply', () => urlHint(el.applyHint, F.apply));
+  bind(el.source, 'source', () => { urlHint(el.sourceHint, F.source); clearErr('wSource'); });
+  el.desc.addEventListener('input', () => {
+    F.desc = el.desc.value;
+    el.descCount.textContent = `${F.desc.length} / 600`;
+    preview();
+  });
+
+  let imgT;
+  el.img.addEventListener('input', () => {
+    F.img = el.img.value.trim();
+    clearTimeout(imgT);
+    imgT = setTimeout(() => {
+      el.imgHint.classList.remove('good', 'bad');
+      if (!F.img) { imgOk = false; el.imgHint.textContent = el.imgHint.dataset.orig; preview(); return; }
+      const probe = new Image();
+      probe.onload = () => {
+        imgOk = true; el.imgHint.textContent = 'Image loaded — see the preview.';
+        el.imgHint.classList.add('good'); preview();
+      };
+      probe.onerror = () => {
+        imgOk = false; el.imgHint.textContent = "We couldn't load that image — we'll use a clean fallback cover instead.";
+        el.imgHint.classList.add('bad'); preview();
+      };
+      probe.src = F.img;
+    }, 450);
+    preview();
+  });
+
+  function resetForm() {
+    Object.keys(F).forEach((k) => { F[k] = ''; });
+    imgOk = false;
+    [el.title, el.company, el.area, el.source, el.apply, el.desc, el.contact, el.img, el.cityOther]
+      .forEach((n) => { n.value = ''; });
+    el.dur.value = ''; el.deadline.value = '';
+    el.descCount.textContent = '0 / 600';
+    el.cityOtherWrap.hidden = true;
+    [el.sourceHint, el.applyHint, el.imgHint].forEach((n) => {
+      n.textContent = n.dataset.orig; n.classList.remove('good', 'bad');
+    });
+    REQUIRED.forEach(clearErr);
+    syncChips(); preview();
+  }
+
+  el.form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    if (!validate()) return;
+    
+    el.btn.classList.add('is-loading'); 
+    el.btn.disabled = true;
+    
+    const contact = F.contact.trim();
+    const isMail = contact.includes('@');
+    const payload = {
+      title: F.title.trim(), 
+      company: F.company.trim(), 
+      field: F.field, 
+      city: F.city,
+      area: F.area.trim(), 
+      workMode: F.workMode, 
+      sourceUrl: F.source.trim(),
+      applicationUrl: F.apply.trim(), 
+      notes: F.desc.trim(), 
+      duration: F.dur,
+      deadline: F.deadline ? new Date(F.deadline + 'T00:00').toISOString() : '',
+      image: F.img.trim(),
+      contactEmail: isMail ? contact : '', 
+      contactPhone: isMail ? '' : contact
+    };
+    
+    const res = await Suggestions.submit(payload);
+    el.btn.classList.remove('is-loading'); 
+    el.btn.disabled = false;
+    
+    if (!res.ok) { 
+      UI.toast(res.error || "We couldn't send that. Please try again.", 'error'); 
+      return; 
+    }
+    
+    mine.unshift({ 
+      title: payload.title, 
+      company: payload.company, 
+      status: 'pending', 
+      createdAt: new Date(), 
+      fresh: true 
+    });
+    renderHistory();
+    resetForm();
+    el.done.classList.add('show');
+    el.done.querySelector('.done-card').scrollIntoView({ behavior: 'smooth', block: 'center' });
+  });
+
+  el.again.addEventListener('click', () => {
+    el.done.classList.remove('show');
+    resetForm();
+    el.formCol.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+
+  /* ---------- boot ---------- */
+  preview();
+  try { await Auth.ready; } catch (_) {}
+  signed = !!Auth.profile;
+  let cfg = {};
+  try { cfg = (await Settings.load()) || {}; } catch (_) {}
+  buildControls(cfg);
+  syncChips();
+  preview();
+  if (signed) { try { mine = await Suggestions.mine(); } catch (_) { mine = []; } }
+  renderHistory();
+  loadStats();
+})();
+</script>
+</body>
+</html>

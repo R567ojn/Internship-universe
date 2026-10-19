@@ -1,0 +1,6 @@
+# InternHub · Netlify redirects
+# Every page is a real static file, so direct routes and browser refreshes
+# already resolve. This only catches genuinely unknown paths and returns the
+# branded 404 with a proper 404 status (real files are always matched first).
+
+/*    /404.html    404

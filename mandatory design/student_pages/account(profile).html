@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>InternHub — Profile</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f4f4f1; --surface:#fbfbfa; --ink:#0d1b12; --ink2:#3f4a44; --muted:#6b7570;
+  --line:#e3e5df; --line2:#d6dad2;
+  --green:#0e6b3f; --green-ink:#0a5232; --green-deep:#0a3d26;
+  --mint:#dcefe2; --mint2:#eaf5ee;
+  --amber:#b45309; --amber-bg:#fdf3e3;
+  --coral:#b3543f; --coral-bg:#f6ded9;
+  --sage:#eceee8; --sage-ink:#5c6660;
+  --r:14px;
+  --sh1:0 1px 2px rgba(13,27,18,.05),0 8px 24px -12px rgba(13,27,18,.12);
+  --sh2:0 2px 6px rgba(13,27,18,.06),0 18px 36px -18px rgba(13,27,18,.20);
+  --fd:"Fraunces",Georgia,serif; --fs:"Inter",-apple-system,"Segoe UI",sans-serif; --fm:"JetBrains Mono",ui-monospace,monospace;
+  --ease:cubic-bezier(.4,0,.2,1);
+  --sb-width:260px;
+  --sb-collapsed:76px;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--ink);font:14.5px/1.55 var(--fs);-webkit-font-smoothing:antialiased}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+input,select,textarea{font:inherit}
+img{display:block}
+svg{display:block;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+::selection{background:var(--mint)}
+:focus-visible{outline:2px solid var(--green);outline-offset:2px;border-radius:6px}
+.eyebrow{font:500 11px var(--fm);letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.display{font-family:var(--fd);font-weight:600;letter-spacing:-.01em}
+.sechead{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-bottom:14px}
+.sechead h2{font-size:20px}
+
+/* ============ TOPBAR ============ */
+.topbar{position:sticky;top:0;z-index:100;height:64px;display:flex;align-items:center;gap:14px;padding:0 20px;background:rgba(244,244,241,.86);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+.icon-btn{width:38px;height:38px;border-radius:10px;display:grid;place-items:center;color:var(--ink2);transition:.2s}
+.icon-btn:hover{background:var(--mint2);color:var(--green-ink)}
+.icon-btn svg{width:18px;height:18px}
+.brand{display:flex;align-items:center;gap:10px;font-weight:700;font-size:16.5px;color:var(--ink);text-decoration:none;margin-right:6px}
+.logo{width:28px;height:28px;border-radius:8px;background:var(--green);display:grid;place-items:center;color:#fff;flex:none}
+.logo svg{width:14px;height:14px;stroke-width:2.4}
+.top-nav{display:flex;gap:4px}
+.top-nav a{padding:8px 13px;border-radius:9px;font-size:13.5px;font-weight:500;color:var(--ink2);text-decoration:none;transition:.2s}
+.top-nav a:hover{color:var(--green-ink);background:var(--mint2)}
+.top-nav a.on{color:var(--ink);font-weight:600;background:#eceee8}
+.tb-right{margin-left:auto;display:flex;align-items:center;gap:6px}
+.bell-dot{position:relative}
+.bell-dot::after{content:"";position:absolute;top:9px;right:10px;width:7px;height:7px;border-radius:50%;background:var(--green);border:2px solid var(--bg)}
+.menu{position:absolute;right:0;top:calc(100% + 8px);min-width:190px;background:var(--surface);border:1px solid var(--line);border-radius:12px;box-shadow:var(--sh2);padding:6px;opacity:0;transform:translateY(-6px) scale(.98);pointer-events:none;transition:.22s var(--ease)}
+.menu.open{opacity:1;transform:none;pointer-events:auto}
+.menu button{display:flex;width:100%;align-items:center;gap:9px;padding:9px 11px;border-radius:8px;font-size:13.5px;color:var(--ink2);transition:.15s}
+.menu button:hover{background:var(--mint2);color:var(--green-ink)}
+.menu svg{width:15px;height:15px}
+.menu hr{border:0;border-top:1px solid var(--line);margin:5px 4px}
+
+/* ============ SIDEBAR ============ */
+.shell{display:flex;min-height:calc(100vh - 64px)}
+.sidebar{width:var(--sb-width);flex:none;background:#f7f8f6;border-right:1px solid var(--line);position:sticky;top:64px;height:calc(100vh - 64px);overflow:hidden;transition:width .35s var(--ease);display:flex;flex-direction:column}
+body.sb-collapsed .sidebar{width:var(--sb-collapsed)}
+.sb-scroll{flex:1;overflow-y:auto;overflow-x:hidden;padding:18px 14px;scrollbar-width:none;display:flex;flex-direction:column;gap:4px}
+.sb-label{padding:4px 12px 8px;transition:opacity .2s}
+body.sb-collapsed .sb-label{opacity:0}
+.nav-btn{position:relative;display:flex;align-items:center;gap:12px;width:100%;padding:10px 12px;border-radius:10px;color:var(--ink2);font-size:14px;font-weight:500;transition:.2s;text-align:left}
+.nav-btn:hover{background:var(--mint2);color:var(--green-ink)}
+.nav-btn.on{background:var(--mint);color:var(--green-ink);font-weight:600}
+.nav-btn .ico{flex:none;width:20px;height:20px;display:grid;place-items:center}
+.nav-btn .ico svg{width:18px;height:18px}
+.nav-btn .txt{white-space:nowrap;max-width:180px;transition:max-width .3s var(--ease),opacity .2s}
+body.sb-collapsed .txt{max-width:0;opacity:0;overflow:hidden}
+body.sb-collapsed .nav-btn{justify-content:center;padding:10px}
+.nbadge{position:absolute;right:10px;top:50%;transform:translateY(-50%);min-width:20px;height:20px;padding:0 6px;border-radius:999px;background:var(--green);color:#fff;font:600 11px/20px var(--fs);text-align:center}
+.nbadge.fresh{background:var(--green-ink)}
+body.sb-collapsed .nbadge{right:6px;top:6px;transform:none;min-width:16px;height:16px;font-size:9.5px;line-height:16px;padding:0 4px}
+.sb-spacer{flex:1}
+/* account area */
+.sb-account{margin-top:auto;padding:12px;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:8px}
+.sb-user{display:flex;align-items:center;gap:10px;padding:10px;border-radius:12px;cursor:pointer;transition:.2s}
+.sb-user:hover{background:var(--mint2)}
+.sb-user .av{width:38px;height:38px;flex:none;border-radius:50%;background:var(--green);color:#fff;display:grid;place-items:center;font:600 15px var(--fs)}
+.sb-user .info{flex:1;min-width:0;overflow:hidden}
+.sb-user .name{font-size:13.5px;font-weight:600;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sb-user .email{font-size:11.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+body.sb-collapsed .sb-user .info{display:none}
+body.sb-collapsed .sb-user{justify-content:center;padding:10px}
+.sb-logout{display:flex;align-items:center;gap:10px;width:100%;padding:9px 12px;border-radius:10px;color:var(--ink2);font-size:13px;font-weight:500;transition:.2s}
+.sb-logout:hover{background:var(--coral-bg);color:var(--coral)}
+.sb-logout .ico{flex:none;width:20px;height:20px;display:grid;place-items:center}
+.sb-logout .ico svg{width:16px;height:16px}
+.sb-logout .txt{white-space:nowrap;transition:max-width .3s var(--ease),opacity .2s}
+body.sb-collapsed .sb-logout .txt{max-width:0;opacity:0;overflow:hidden}
+body.sb-collapsed .sb-logout{justify-content:center;padding:9px}
+/* tooltips */
+.sb-tooltip{position:absolute;left:calc(100% + 8px);top:50%;transform:translateY(-50%);background:var(--ink);color:#fff;font-size:12px;padding:5px 10px;border-radius:7px;white-space:nowrap;pointer-events:none;opacity:0;transition:opacity .2s;z-index:1000}
+body.sb-collapsed .nav-btn:hover .sb-tooltip,body.sb-collapsed .sb-user:hover .sb-tooltip,body.sb-collapsed .sb-logout:hover .sb-tooltip{opacity:1}
+.backdrop{position:fixed;inset:0;top:64px;background:rgba(10,20,14,.4);opacity:0;pointer-events:none;transition:opacity .3s;z-index:90}
+body.sb-open .backdrop{opacity:1;pointer-events:auto}
+
+/* ============ MAIN ============ */
+.main{flex:1;min-width:0;padding:24px clamp(14px,2.6vw,32px) 40px;transition:margin-left .35s var(--ease)}
+body.sb-collapsed .main{margin-left:0}
+
+/* profile header */
+.profile-header{display:flex;align-items:center;gap:20px;flex-wrap:wrap;margin-bottom:28px}
+.profile-avatar{width:88px;height:88px;flex:none;border-radius:50%;background:var(--green);color:#fff;display:grid;place-items:center;font:600 32px var(--fs);box-shadow:var(--sh1)}
+.profile-info{flex:1;min-width:200px}
+.profile-info h1{font-size:clamp(24px,3vw,30px);margin-bottom:4px}
+.profile-info p{color:var(--muted);font-size:14px}
+.profile-info .mono{font:500 11px var(--fm);letter-spacing:.1em;color:var(--green-ink);background:var(--mint);border-radius:6px;padding:3px 9px;display:inline-block;margin-top:8px}
+
+/* cards */
+.pcard{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:22px;margin-bottom:16px}
+.pcard-head{display:flex;align-items:baseline;gap:10px;margin-bottom:18px}
+.pcard-head h3{font-size:15.5px;font-weight:600}
+.pcard-head .eyebrow{margin-left:auto}
+.field-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px}
+.field label{display:block;font-size:12.5px;font-weight:600;margin-bottom:7px;color:var(--ink2)}
+.field input,.field select,.field textarea{width:100%;background:#fff;border:1px solid var(--line2);border-radius:10px;padding:10px 13px;font-size:13.5px;color:var(--ink);transition:border-color .2s,box-shadow .2s;outline:none}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--green);box-shadow:0 0 0 3px var(--mint)}
+.field textarea{resize:vertical;min-height:80px}
+.field input:disabled,.field select:disabled{background:var(--sage);color:var(--sage-ink);cursor:not-allowed}
+.hint{font-size:11.5px;color:var(--muted);margin-top:5px}
+/* chips */
+.pref-chips{display:flex;flex-wrap:wrap;gap:8px}
+.pref-chip{border:1px solid var(--line2);background:#fff;border-radius:999px;padding:8px 15px;font-size:13px;color:var(--ink2);transition:.18s}
+.pref-chip:hover{border-color:var(--green);color:var(--green-ink)}
+.pref-chip.on{background:var(--mint);border-color:var(--green);color:var(--green-ink);font-weight:600}
+/* segmented */
+.seg{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;background:var(--sage);border-radius:12px;padding:4px}
+.seg button{display:flex;align-items:center;justify-content:center;gap:8px;border-radius:9px;padding:10px;font-size:13px;font-weight:600;color:var(--ink2);transition:.2s var(--ease)}
+.seg button svg{width:14px;height:14px}
+.seg button.on{background:var(--surface);color:var(--green-ink);box-shadow:var(--sh1)}
+/* switches */
+.switch-group{display:flex;flex-direction:column;gap:12px}
+.switch{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 13px;background:#fff;border:1px solid var(--line2);border-radius:10px;cursor:pointer;transition:.2s}
+.switch:hover{border-color:var(--green)}
+.switch .sw-label{flex:1;min-width:0}
+.switch .sw-label b{display:block;font-size:13.5px;font-weight:600;margin-bottom:2px}
+.switch .sw-label span{font-size:12px;color:var(--muted)}
+.switch input{position:absolute;opacity:0;pointer-events:none}
+.switch .track{width:40px;height:22px;flex:none;border-radius:999px;background:#d8dcd6;position:relative;transition:.25s}
+.switch .track::after{content:"";position:absolute;top:2px;left:2px;width:18px;height:18px;border-radius:50%;background:#fff;transition:left .25s var(--ease);box-shadow:0 1px 2px rgba(0,0,0,.2)}
+.switch input:checked+.track{background:var(--green)}
+.switch input:checked+.track::after{left:18px}
+/* actions */
+.actions{display:flex;gap:12px;flex-wrap:wrap;margin-top:20px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border-radius:10px;font-weight:600;font-size:13.5px;padding:10px 16px;transition:.2s var(--ease);white-space:nowrap}
+.btn svg{width:15px;height:15px}
+.btn.primary{background:var(--green);color:#fff}
+.btn.primary:hover{background:var(--green-ink);transform:translateY(-1px)}
+.btn.ghost{background:var(--surface);border:1px solid var(--line2);color:var(--ink2)}
+.btn.ghost:hover{border-color:var(--green);color:var(--green-ink)}
+.btn.danger{background:var(--coral-bg);border:1px solid var(--coral);color:var(--coral)}
+.btn.danger:hover{background:var(--coral);color:#fff}
+.btn.sm{padding:7px 12px;font-size:12.5px;border-radius:9px}
+.account-actions{display:flex;gap:10px;flex-wrap:wrap;padding-top:16px;border-top:1px solid var(--line);margin-top:20px}
+.foot{margin-top:34px;text-align:center;font:500 11px var(--fm);letter-spacing:.1em;color:var(--muted);text-transform:uppercase}
+.toast{position:fixed;left:50%;bottom:26px;transform:translate(-50%,16px);z-index:300;background:rgba(13,27,18,.94);color:#eafff3;border-radius:999px;padding:10px 18px;font-size:13px;opacity:0;pointer-events:none;transition:.3s var(--ease);box-shadow:var(--sh2)}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+/* modal */
+.modal{position:fixed;inset:0;z-index:200;display:grid;place-items:center;padding:18px;visibility:hidden;opacity:0;transition:.28s var(--ease)}
+.modal.open{visibility:visible;opacity:1}
+.modal-bk{position:absolute;inset:0;background:rgba(8,18,12,.5);backdrop-filter:blur(3px)}
+.modal-card{position:relative;width:min(440px,100%);background:var(--surface);border-radius:18px;box-shadow:var(--sh2);transform:translateY(14px) scale(.98);transition:.3s var(--ease)}
+.modal.open .modal-card{transform:none}
+.modal-card h3{font-size:18px;margin-bottom:10px}
+.modal-card p{color:var(--muted);font-size:13.5px;margin-bottom:18px}
+.modal-body{padding:24px}
+.modal-foot{display:flex;gap:10px;justify-content:flex-end}
+.modal-x{position:absolute;top:12px;right:12px;width:34px;height:34px;border-radius:50%;background:var(--sage);display:grid;place-items:center;color:var(--ink2)}
+.modal-x svg{width:15px;height:15px}
+
+/* ============ RESPONSIVE ============ */
+@media (max-width:960px){
+  :root{--sb-width:280px}
+  .top-nav{display:none}
+  .sidebar{position:fixed;left:0;top:64px;z-index:140;transform:translateX(-105%);transition:transform .35s var(--ease);box-shadow:var(--sh2);width:var(--sb-width) !important}
+  body.sb-open .sidebar{transform:none}
+  body.sb-collapsed .sidebar{width:var(--sb-width) !important}
+  body.sb-collapsed .txt,body.sb-collapsed .sb-user .info,body.sb-collapsed .sb-logout .txt{max-width:180px;opacity:1}
+  body.sb-collapsed .nav-btn,body.sb-collapsed .sb-user,body.sb-collapsed .sb-logout{justify-content:flex-start;padding:10px 12px}
+  .sb-tooltip{display:none !important}
+}
+@media (max-width:640px){
+  .profile-header{flex-direction:column;text-align:center}
+  .profile-avatar{margin:0 auto}
+  .field-grid{grid-template-columns:1fr}
+  .seg{grid-template-columns:1fr}
+}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{transition-duration:.01ms !important;animation-duration:.01ms !important}}
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <button class="icon-btn" id="sbToggle" aria-label="Toggle navigation"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M9 4v16"/></svg></button>
+  <a class="brand" href="#"><span class="logo"><svg viewBox="0 0 24 24"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg></span>InternHub</a>
+  <nav class="top-nav">
+    <a href="#" data-toast="Dashboard prototype — separate file.">Dashboard</a>
+    <a href="#" data-toast="Browse prototype — separate file.">Internships</a>
+    <a href="#" data-toast="Suggest prototype — separate file.">Suggest</a>
+  </nav>
+  <div class="tb-right">
+    <button class="icon-btn bell-dot" aria-label="Notifications"><svg viewBox="0 0 24 24"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg></button>
+  </div>
+</header>
+
+<div class="shell">
+  <aside class="sidebar">
+    <div class="sb-scroll">
+      <p class="eyebrow sb-label">Navigation</p>
+      <button class="nav-btn" data-toast="Dashboard prototype — separate file.">
+        <span class="ico"><svg viewBox="0 0 24 24"><path d="M3 10.5L12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/></svg></span>
+        <span class="txt">Dashboard</span>
+        <span class="sb-tooltip">Dashboard</span>
+      </button>
+      <button class="nav-btn" data-toast="Browse prototype — separate file.">
+        <span class="ico"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg></span>
+        <span class="txt">Browse internships</span>
+        <span class="sb-tooltip">Browse internships</span>
+      </button>
+      <button class="nav-btn" data-toast="What's New prototype — separate file.">
+        <span class="ico"><svg viewBox="0 0 24 24"><path d="M12 2l2.4 7.6L22 12l-7.6 2.4L12 22l-2.4-7.6L2 12l7.6-2.4z"/></svg></span>
+        <span class="txt">What's New</span>
+        <span class="nbadge fresh">12</span>
+        <span class="sb-tooltip">What's New</span>
+      </button>
+      <button class="nav-btn" data-toast="Suggest prototype — separate file.">
+        <span class="ico"><svg viewBox="0 0 24 24"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4z"/></svg></span>
+        <span class="txt">Suggest internship</span>
+        <span class="sb-tooltip">Suggest internship</span>
+      </button>
+      <button class="nav-btn" data-toast="No saved internships yet — tap the bookmark on any card.">
+        <span class="ico"><svg viewBox="0 0 24 24"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg></span>
+        <span class="txt">Saved</span>
+        <span class="nbadge">3</span>
+        <span class="sb-tooltip">Saved internships</span>
+      </button>
+    </div>
+    
+    <div class="sb-account">
+      <button class="sb-user" id="profileBtn">
+        <span class="av">TK</span>
+        <span class="info">
+          <span class="name">Track Kumasi</span>
+          <span class="email">track.kumasi@internhub.cm</span>
+        </span>
+        <span class="sb-tooltip">View Profile</span>
+      </button>
+      <button class="sb-logout" id="logoutBtn">
+        <span class="ico"><svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5M21 12H9"/></svg></span>
+        <span class="txt">Logout</span>
+        <span class="sb-tooltip">Logout</span>
+      </button>
+    </div>
+  </aside>
+  <div class="backdrop" id="backdrop"></div>
+
+  <main class="main">
+    <!-- ===== PROFILE HEADER ===== -->
+    <div class="profile-header">
+      <div class="profile-avatar">TK</div>
+      <div class="profile-info">
+        <h1 class="display">Track Kumasi</h1>
+        <p>Computer Engineering student · University of Buea</p>
+        <span class="mono">Member since August 2026</span>
+      </div>
+    </div>
+
+    <!-- ===== PERSONAL INFO ===== -->
+    <section class="pcard">
+      <div class="pcard-head">
+        <h3 class="display">Personal information</h3>
+        <span class="eyebrow">Your details</span>
+      </div>
+      <form id="personalForm">
+        <div class="field-grid">
+          <div class="field">
+            <label for="fName">Full name</label>
+            <input id="fName" value="Track Kumasi">
+          </div>
+          <div class="field">
+            <label for="fEmail">Email</label>
+            <input id="fEmail" value="track.kumasi@internhub.cm" disabled>
+            <p class="hint">Email cannot be changed</p>
+          </div>
+          <div class="field">
+            <label for="fPhone">Phone number</label>
+            <input id="fPhone" value="+237 670 123 456">
+          </div>
+          <div class="field">
+            <label for="fInst">Institution</label>
+            <input id="fInst" value="University of Buea">
+          </div>
+          <div class="field">
+            <label for="fCourse">Course / field</label>
+            <input id="fCourse" value="Computer Engineering">
+          </div>
+          <div class="field">
+            <label for="fLevel">Level</label>
+            <select id="fLevel">
+              <option>Year 1</option><option>Year 2</option><option selected>Year 3</option><option>Year 4</option><option>Master's</option><option>Graduate</option>
+            </select>
+          </div>
+          <div class="field" style="grid-column:1/-1">
+            <label for="fBio">Bio <span style="font-weight:500;color:var(--muted)">(optional)</span></label>
+            <textarea id="fBio" placeholder="Tell companies a bit about yourself, your interests, or what you're looking for…"></textarea>
+          </div>
+        </div>
+        <div class="actions">
+          <button class="btn primary" type="submit">Save changes</button>
+          <button class="btn ghost" type="reset">Reset</button>
+        </div>
+      </form>
+    </section>
+
+    <!-- ===== PREFERENCES ===== -->
+    <section class="pcard">
+      <div class="pcard-head">
+        <h3 class="display">Internship preferences</h3>
+        <span class="eyebrow">Help us match you better</span>
+      </div>
+      <div class="field-grid">
+        <div class="field" style="grid-column:1/-1">
+          <label>Preferred fields</label>
+          <div class="pref-chips" id="prefFields"></div>
+          <p class="hint">Select the fields you're most interested in</p>
+        </div>
+        <div class="field" style="grid-column:1/-1">
+          <label>Preferred locations</label>
+          <div class="pref-chips" id="prefLocs"></div>
+          <p class="hint">Where would you like to work?</p>
+        </div>
+        <div class="field" style="grid-column:1/-1">
+          <label>Preferred work mode</label>
+          <div class="seg" id="prefMode">
+            <button type="button" data-mode="On-site"><svg viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M9 7h2m2 0h2M9 11h2m2 0h2M9 15h2m2 0h2"/></svg>On-site</button>
+            <button type="button" data-mode="Hybrid" class="on"><svg viewBox="0 0 24 24"><path d="M12 3v6m0 0a4 4 0 1 0 4 4"/><circle cx="12" cy="9" r="0"/><path d="M5 21a7 7 0 0 1 14 0"/></svg>Hybrid</button>
+            <button type="button" data-mode="Remote"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></svg>Remote</button>
+          </div>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="btn primary" id="savePrefs">Save preferences</button>
+      </div>
+    </section>
+
+    <!-- ===== NOTIFICATIONS ===== -->
+    <section class="pcard">
+      <div class="pcard-head">
+        <h3 class="display">Notifications</h3>
+        <span class="eyebrow">Stay updated</span>
+      </div>
+      <div class="switch-group">
+        <label class="switch">
+          <div class="sw-label">
+            <b>New internships</b>
+            <span>Get notified when new opportunities match your preferences</span>
+          </div>
+          <input type="checkbox" checked>
+          <span class="track"></span>
+        </label>
+        <label class="switch">
+          <div class="sw-label">
+            <b>Closing soon</b>
+            <span>Reminders for internships with deadlines in 3 days</span>
+          </div>
+          <input type="checkbox" checked>
+          <span class="track"></span>
+        </label>
+        <label class="switch">
+          <div class="sw-label">
+            <b>Application status</b>
+            <span>Updates when companies respond to your applications</span>
+          </div>
+          <input type="checkbox">
+          <span class="track"></span>
+        </label>
+        <label class="switch">
+          <div class="sw-label">
+            <b>Weekly digest</b>
+            <span>Summary of new opportunities every Monday</span>
+          </div>
+          <input type="checkbox" checked>
+          <span class="track"></span>
+        </label>
+      </div>
+      <div class="actions">
+        <button class="btn primary" id="saveNotifs">Save notifications</button>
+      </div>
+    </section>
+
+    <!-- ===== ACCOUNT ===== -->
+    <section class="pcard">
+      <div class="pcard-head">
+        <h3 class="display">Account</h3>
+        <span class="eyebrow">Security & data</span>
+      </div>
+      <div class="account-actions">
+        <button class="btn ghost" id="changePwBtn">Change password</button>
+        <button class="btn ghost" data-toast="Export feature coming soon.">Export my data</button>
+        <button class="btn danger" id="deleteAccBtn">Delete account</button>
+      </div>
+    </section>
+
+    <footer class="foot">© 2026 InternHub · Verified opportunities across Cameroon</footer>
+  </main>
+</div>
+
+<!-- modal -->
+<div class="modal" id="modal" aria-hidden="true">
+  <div class="modal-bk" data-close></div>
+  <div class="modal-card" role="dialog" aria-modal="true">
+    <button class="modal-x" data-close aria-label="Close"><svg viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
+    <div class="modal-body">
+      <h3 id="mTitle"></h3>
+      <p id="mDesc"></p>
+      <div class="modal-foot">
+        <button class="btn ghost" data-close>Cancel</button>
+        <button class="btn primary" id="mConfirm">Confirm</button>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+const $=s=>document.querySelector(s);
+const FIELDS=["Software Engineering","Data & AI","Design","Finance","Agriculture","Engineering","Health","Marketing"];
+const LOCATIONS=["Douala","Yaoundé","Buea","Limbe","Remote"];
+let prefs={fields:new Set(["Software Engineering","Data & AI"]),locs:new Set(["Douala","Remote"]),mode:"Hybrid"};
+
+/* chips */
+$("#prefFields").innerHTML=FIELDS.map(f=>'<button type="button" class="pref-chip'+(prefs.fields.has(f)?" on":"")+'" data-f="'+f+'">'+f+"</button>").join("");
+$("#prefLocs").innerHTML=LOCATIONS.map(l=>'<button type="button" class="pref-chip'+(prefs.locs.has(l)?" on":"")+'" data-l="'+l+'">'+l+"</button>").join("");
+$("#prefFields").addEventListener("click",e=>{const b=e.target.closest("[data-f]");if(!b)return;const f=b.dataset.f;prefs.fields.has(f)?prefs.fields.delete(f):prefs.fields.add(f);b.classList.toggle("on");});
+$("#prefLocs").addEventListener("click",e=>{const b=e.target.closest("[data-l]");if(!b)return;const l=b.dataset.l;prefs.locs.has(l)?prefs.locs.delete(l):prefs.locs.add(l);b.classList.toggle("on");});
+$("#prefMode").addEventListener("click",e=>{const b=e.target.closest("[data-mode]");if(!b)return;prefs.mode=b.dataset.mode;document.querySelectorAll("#prefMode button").forEach(x=>x.classList.toggle("on",x===b));});
+
+/* sidebar */
+const mqMob=matchMedia("(max-width:960px)");
+$("#sbToggle").addEventListener("click",()=>{mqMob.matches?document.body.classList.toggle("sb-open"):document.body.classList.toggle("sb-collapsed");});
+$("#backdrop").addEventListener("click",()=>document.body.classList.remove("sb-open"));
+document.querySelectorAll("[data-toast]").forEach(b=>b.addEventListener("click",()=>{closeModal();toast(b.dataset.toast);}));
+
+/* profile btn */
+$("#profileBtn").addEventListener("click",()=>{if(mqMob.matches)document.body.classList.remove("sb-open");toast("You're already viewing your profile.");});
+
+/* logout */
+$("#logoutBtn").addEventListener("click",()=>{openModal("Logout","Are you sure you want to sign out? You'll need to log back in to access your saved internships and preferences.","Logout",()=>{closeModal();toast("Signed out (demo). Redirecting to login…");});});
+
+/* forms */
+$("#personalForm").addEventListener("submit",e=>{e.preventDefault();toast("Personal information saved.");});
+$("#personalForm").addEventListener("reset",()=>setTimeout(()=>toast("Changes reset."),100));
+$("#savePrefs").addEventListener("click",()=>toast("Preferences saved. We'll match you with "+prefs.fields.size+" field(s) in "+prefs.locs.size+" location(s)."));
+$("#saveNotifs").addEventListener("click",()=>toast("Notification preferences saved."));
+
+/* account actions */
+$("#changePwBtn").addEventListener("click",()=>{openModal("Change password","You'll receive an email with instructions to set a new password. Current password: ••••••••","Send reset email",()=>{closeModal();toast("Password reset email sent to track.kumasi@internhub.cm");});});
+$("#deleteAccBtn").addEventListener("click",()=>{openModal("Delete account","This action cannot be undone. All your data, saved internships, and preferences will be permanently removed.","Delete my account",()=>{closeModal();toast("Account deletion requested. You'll receive a confirmation email.");});});
+
+/* toast / modal */
+let toastT;function toast(m){const t=$("#toast");t.textContent=m;t.classList.add("show");clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove("show"),2800);}
+let modalConfirm=null;
+function openModal(title,desc,confirm,cb){$("#mTitle").textContent=title;$("#mDesc").textContent=desc;$("#mConfirm").textContent=confirm;modalConfirm=cb;$("#modal").classList.add("open");$("#modal").setAttribute("aria-hidden","false");document.body.style.overflow="hidden";}
+function closeModal(){$("#modal").classList.remove("open");$("#modal").setAttribute("aria-hidden","true");document.body.style.overflow="";}
+document.querySelectorAll("[data-close]").forEach(el=>el.addEventListener("click",closeModal));
+$("#mConfirm").addEventListener("click",()=>{if(modalConfirm)modalConfirm();});
+document.addEventListener("keydown",e=>{if(e.key==="Escape"){closeModal();document.body.classList.remove("sb-open");}});
+</script>
+</body>
+</html>

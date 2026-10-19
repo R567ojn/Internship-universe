@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Admin · Dashboard · InternHub</title>
+<meta name="robots" content="noindex">
+<link rel="icon" href="../favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/css/ui.css">
+<link rel="stylesheet" href="../assets/css/app.css">
+</head>
+<body data-app="admin" data-nav="dashboard">
+<div id="view">
+
+  <header class="ahead">
+    <div>
+      <h1 id="greet">Loading…</h1>
+      <p class="sub">Live counts from Firestore.<span class="mono" id="dateLine"></span></p>
+    </div>
+    <div class="ahead-r">
+      <div class="searchbox">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+        <input id="adminSearch" type="search" placeholder="Search queue &amp; listings…" autocomplete="off" aria-label="Search suggestions and internships">
+        <button type="button" class="s-clear" id="searchClear" hidden aria-label="Clear search">
+          <svg viewBox="0 0 24 24" width="11" height="11" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>
+        </button>
+      </div>
+      <a class="btn btn-primary btn-sm" href="internship-editor.html"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Add internship</a>
+    </div>
+  </header>
+
+  <div class="qbar">
+    <a class="btn btn-ghost btn-sm" href="suggestions.html" id="qaReview">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2l7 4v6c0 5-3.5 8.5-7 10-3.5-1.5-7-5-7-10V6z"/><path d="m9 12 2 2 4-4"/></svg>
+      Review suggestions <span class="badge-count warn" id="qaBadge">0</span>
+    </a>
+    <a class="btn btn-ghost btn-sm" href="internships.html"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M9 7V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2"/></svg>Manage internships</a>
+    <a class="btn btn-ghost btn-sm" href="users.html"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>Manage users</a>
+    <a class="btn btn-ghost btn-sm" href="analytics.html"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-8M22 20H2"/></svg>Analytics</a>
+    <div class="seg" id="rangeSeg" role="group" aria-label="Time range" style="margin-left:auto">
+      <button type="button" data-range="7">7 days</button>
+      <button type="button" data-range="30" class="is-on">30 days</button>
+      <button type="button" data-range="90">90 days</button>
+      <button type="button" data-range="all">All time</button>
+    </div>
+  </div>
+
+  <section class="stats" id="stats" aria-label="Platform totals"></section>
+
+  <section class="row1">
+    <div class="card">
+      <div class="card-h">
+        <h2>Pending verification</h2>
+        <span class="note" id="qCount"></span>
+        <a class="linklike" href="suggestions.html">Open queue →</a>
+      </div>
+      <div id="queue"></div>
+    </div>
+    <div class="card">
+      <div class="card-h"><h2>Recent activity</h2><span class="note">Admin log</span></div>
+      <div class="act" id="activity"></div>
+    </div>
+  </section>
+
+  <section class="row2">
+    <div class="card">
+      <div class="card-h">
+        <h2>Additions vs verifications</h2>
+        <div class="legend" style="margin-left:auto">
+          <span><i style="background:var(--green-soft);border:1px solid var(--green)"></i>Added</span>
+          <span><i style="background:var(--green-deep)"></i>Verified</span>
+        </div>
+      </div>
+      <div class="chart-body" id="chartBody"><div class="skel"></div></div>
+    </div>
+    <div class="card">
+      <div class="card-h"><h2>Recently added</h2><span class="note">Latest listings</span><a class="linklike" href="internships.html">Manage all →</a></div>
+      <div id="recent"></div>
+    </div>
+  </section>
+
+  <!-- review modal -->
+  <div class="modal-backdrop" id="reviewModal" hidden>
+    <div class="modal modal-lg" role="dialog" aria-modal="true" aria-labelledby="mTitle">
+      <button type="button" class="dm-x" data-close aria-label="Close"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+      <div class="m-body">
+        <p class="eyebrow">Review suggestion</p>
+        <h3 id="mTitle"></h3>
+        <p class="m-co" id="mCo"></p>
+        <div class="m-meta" id="mMeta"></div>
+        <div class="m-info" id="mInfo"></div>
+        <div class="m-foot">
+          <button type="button" class="btn btn-coral" id="mReject">Reject</button>
+          <button type="button" class="btn btn-amber" id="mChanges">Request changes</button>
+          <button type="button" class="btn btn-primary" id="mVerify"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verify &amp; publish</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+<script src="../assets/js/firebase-config.js"></script>
+<script src="../assets/js/lib/ui.js"></script>
+<script src="../assets/js/services/platform.js"></script>
+<script src="../assets/js/services/auth.js"></script>
+<script src="../assets/js/services/internships.js"></script>
+<script src="../assets/js/services/suggestions.js"></script>
+<script src="../assets/js/services/users.js"></script>
+<script src="../assets/js/services/notifications.js"></script>
+<script src="../assets/js/lib/notify-ui.js"></script>
+<script src="../assets/js/lib/shell.js"></script>
+<script src="../assets/js/lib/router.js"></script>
+<script>
+window.onReady(async function () {
+  if (!(await Auth.requireAdmin())) return;
+
+  const $ = (sel) => document.querySelector(sel);
+  const statsEl = $('#stats'), queueEl = $('#queue'), actEl = $('#activity'),
+        recentEl = $('#recent'), qCountEl = $('#qCount');
+
+  let range = '30';
+  let query = '';
+  let data = { ints: [], users: [], sugg: [], pending: [], activity: [] };
+  let reviewId = null;
+
+  /* ---------- header ---------- */
+  const now = new Date();
+  const hr = now.getHours();
+  const first = (Auth.profile.displayName || 'Admin').split(' ')[0];
+  $('#greet').textContent = `${hr < 12 ? 'Good morning' : hr < 18 ? 'Good afternoon' : 'Good evening'}, ${first}`;
+  $('#dateLine').textContent = now.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+
+  /* ---------- helpers ---------- */
+  const DAY = 86400000;
+  const rangeFrom = () => range === 'all' ? null : new Date(Date.now() - (range === '7' ? 7 : range === '30' ? 30 : 90) * DAY);
+  const inRange = (d) => { const from = rangeFrom(); if (!from) return true; const x = UI.toDate(d); return !!x && x >= from; };
+  const num = (n) => (n || 0).toLocaleString();
+  const initials = (s) => UI.initials(s);
+
+  /** Last n weeks (Monday-start, oldest first) with real per-week counts. */
+  function weekBuckets(items, dateOf, n = 8) {
+    const thisMonday = new Date(now); thisMonday.setHours(0, 0, 0, 0);
+    thisMonday.setDate(thisMonday.getDate() - ((thisMonday.getDay() + 6) % 7));
+    const buckets = Array.from({ length: n }, (_, i) => {
+      const start = new Date(thisMonday.getTime() - (n - 1 - i) * 7 * DAY);
+      return { start, end: new Date(start.getTime() + 7 * DAY), count: 0 };
+    });
+    items.forEach((it) => {
+      const d = UI.toDate(dateOf(it));
+      if (!d) return;
+      const b = buckets.find((x) => d >= x.start && d < x.end);
+      if (b) b.count++;
+    });
+    return buckets;
+  }
+
+  /** Real weekly series → an 86×30 sparkline path. Returns '' when all zero. */
+  function sparkPath(buckets, color) {
+    const vals = buckets.map((b) => b.count);
+    if (!vals.some((v) => v)) return '';
+    const max = Math.max(...vals);
+    const pts = vals.map((v, i) => {
+      const x = 2 + (i * (82 / (vals.length - 1)));
+      const y = 26 - (v / max) * 22;
+      return `${x.toFixed(1)} ${y.toFixed(1)}`;
+    });
+    return `<svg class="sp" width="86" height="30" viewBox="0 0 86 30" aria-hidden="true"><path d="M${pts.join(' L')}" stroke="${color}" stroke-width="2" fill="none"/></svg>`;
+  }
+
+  /* ---------- stats ---------- */
+  function renderStats() {
+    const { ints, users, pending } = data;
+    const verified = ints.filter((i) => i.verified);
+    const total = ints.length;
+    const pct = total ? Math.round((verified.length / total) * 100) : 0;
+    const newInts = ints.filter((i) => inRange(i.createdAt)).length;
+    const newUsers = users.filter((u) => inRange(u.createdAt)).length;
+    const stale = pending.filter((s) => { const d = UI.toDate(s.createdAt); return d && Date.now() - d.getTime() > 7 * DAY; }).length;
+    const added = weekBuckets(ints, (i) => i.createdAt);
+    const joined = weekBuckets(users, (u) => u.createdAt);
+    const rangeLabel = range === 'all' ? 'all time' : `${range}d`;
+
+    statsEl.innerHTML = `
+      <div class="stat card"><span class="lb">Total internships</span>
+        <div class="vl"><b>${num(total)}</b><span class="dl up">+${num(newInts)} ${rangeLabel}</span></div>
+        ${sparkPath(added, 'var(--green)')}</div>
+      <div class="stat card"><span class="lb">Verified</span>
+        <div class="vl"><b>${num(verified.length)}</b><span class="dl up">${pct}%</span></div>
+        <svg class="ring" width="42" height="42" viewBox="0 0 42 42" aria-hidden="true">
+          <circle cx="21" cy="21" r="16" stroke="var(--line)" stroke-width="4" fill="none"/>
+          <circle cx="21" cy="21" r="16" stroke="var(--green)" stroke-width="4" fill="none" stroke-linecap="round"
+            stroke-dasharray="${(pct * 100.5) / 100} 100.5" transform="rotate(-90 21 21)"/></svg></div>
+      <div class="stat card${pending.length ? ' attn' : ''}"><span class="lb">Pending verification</span>
+        <div class="vl"><b>${num(pending.length)}</b>${stale ? `<span class="dl warn">${num(stale)} over 7 days</span>` : '<span class="dl up">queue clear</span>'}</div></div>
+      <div class="stat card"><span class="lb">Students</span>
+        <div class="vl"><b>${num(users.length)}</b><span class="dl up">+${num(newUsers)} ${rangeLabel}</span></div>
+        ${sparkPath(joined, 'var(--green-deep)')}</div>`;
+  }
+
+  /* ---------- review queue ---------- */
+  const matches = (q, ...vals) => !q || vals.join(' ').toLowerCase().includes(q);
+  const emptyState = (icon, title, msg) => `<div class="empty"><span class="e-ico">${UI.icon(icon, 20)}</span><h3>${title}</h3><p>${msg}</p></div>`;
+
+  function renderQueue() {
+    const q = query;
+    const list = data.pending.filter((s) => matches(q, s.title, s.company, s.field, s.city, s.submittedByName));
+    qCountEl.textContent = `${data.pending.length} awaiting review`;
+    if (!list.length) {
+      queueEl.innerHTML = q
+        ? emptyState('search', 'No matching suggestions', 'No pending suggestion matches your search.')
+        : emptyState('shield', 'Queue clear', 'No suggestions waiting for verification. New student submissions appear here.');
+      return;
+    }
+    queueEl.innerHTML = list.slice(0, 6).map((s, i) => `
+      <div class="qrow" style="animation-delay:${i * 50}ms">
+        <span class="row-av">${UI.esc(initials(s.company))}</span>
+        <div class="qmain"><b>${UI.esc(s.title)}</b>
+          <div class="chips"><span class="mchip">${UI.esc(s.field || '—')}</span><span class="mchip">${UI.esc(s.city || '—')}</span></div></div>
+        <div class="qmeta"><b>${UI.esc(s.submittedByName || 'Student')}</b>${UI.esc(UI.timeAgo(s.createdAt))}</div>
+        <span class="status st-pending">Pending</span>
+        <button type="button" class="btn btn-primary btn-sm" data-review="${UI.esc(s.id)}">Review</button>
+      </div>`).join('');
+  }
+
+  /* ---------- activity ---------- */
+  const ACT_KINDS = [
+    [/verif/i, 'ver', 'check'],
+    [/reject|declin|duplicate/i, 'rem', 'ban'],
+    [/delet|remov/i, 'rem', 'trash'],
+    [/publish/i, 'pub', 'send'],
+    [/needs-changes|chang/i, 'edit', 'pencil'],
+    [/suggestion|submit/i, 'sub', 'send'],
+    [/user|student|suspend|reactiv/i, 'user', 'users'],
+    [/updat|edit/i, 'edit', 'pencil']
+  ];
+  function actKind(action) {
+    const a = String(action || '');
+    return ACT_KINDS.find(([re]) => re.test(a)) || [/other/i, 'sub', 'history'];
+  }
+  function renderActivity() {
+    if (!data.activity.length) {
+      actEl.innerHTML = emptyState('history', 'No recent activity', 'Platform events appear here as listings are published and suggestions reviewed.');
+      return;
+    }
+    actEl.innerHTML = data.activity.slice(0, 6).map((a) => {
+      const [, kind, icon] = actKind(a.action);
+      const verb = String(a.action || '').split('.').pop().replace(/[-_]/g, ' ');
+      return `<div class="act-it"><span class="act-ico t-${kind}">${UI.icon(icon, 13)}</span>
+        <div class="act-tx">${UI.esc(a.actor || 'Admin')} ${UI.esc(verb)}${a.targetTitle ? ` <b>${UI.esc(a.targetTitle)}</b>` : ''}
+        <time>${UI.esc(UI.timeAgo(a.createdAt))}</time></div></div>`;
+    }).join('');
+  }
+
+  /* ---------- recently added ---------- */
+  function renderRecent() {
+    const q = query;
+    const list = data.ints.filter((i) => matches(q, i.title, i.company, i.field, i.city));
+    if (!list.length) {
+      recentEl.innerHTML = q
+        ? emptyState('search', 'No matching internships', 'Try a different search term.')
+        : emptyState('briefcase', 'No listings yet', 'Publish your first internship to see it here.');
+      return;
+    }
+    recentEl.innerHTML = list.slice(0, 6).map((i) => `
+      <div class="rrow">
+        <span class="row-av">${UI.esc(initials(i.company))}</span>
+        <div class="rmain"><b>${UI.esc(i.title)}</b><span>${UI.esc(i.company)} · ${UI.esc(i.city || '—')}</span></div>
+        <span class="rdate">${UI.esc(UI.timeAgo(i.createdAt))}</span>
+        <div class="rpills">
+          <span class="status ${i.verified ? 'st-verified' : 'st-pending'}">${i.verified ? 'Verified' : 'Pending'}</span>
+          <span class="status ${i.published ? 'st-published' : 'st-draft'}">${i.published ? 'Live' : 'Draft'}</span>
+        </div>
+        <a class="btn btn-ghost btn-sm" href="${H('admin_pages/internship-editor.html')}?id=${encodeURIComponent(i.id)}">Manage</a>
+      </div>`).join('');
+  }
+
+  /* ---------- chart ---------- */
+  const chartBody = $('#chartBody');
+  function renderChart() {
+    const added = weekBuckets(data.ints, (i) => i.createdAt);
+    const verified = weekBuckets(data.ints.filter((i) => i.verifiedAt), (i) => i.verifiedAt);
+    const max = Math.max(1, ...added.map((b) => b.count), ...verified.map((b) => b.count));
+    if (!added.some((b) => b.count) && !verified.some((b) => b.count)) {
+      chartBody.innerHTML = emptyState('chart', 'No additions yet', 'Weekly bars appear once internships are created or verified.');
+      return;
+    }
+    const W = 560, H = 220, PL = 30, PB = 26, PT = 12, n = added.length;
+    const gw = (W - PL - 10) / n;
+    let s = '';
+    for (let g = 0; g <= 4; g++) {
+      const y = PT + (H - PT - PB) * g / 4;
+      s += `<line class="grid" x1="${PL}" y1="${y}" x2="${W - 6}" y2="${y}"/><text x="4" y="${y + 3}">${Math.round(max - max * g / 4)}</text>`;
+    }
+    added.forEach((b, i) => {
+      const x = PL + i * gw + gw / 2;
+      const hA = (H - PT - PB) * b.count / max;
+      const hV = (H - PT - PB) * verified[i].count / max;
+      s += `<g class="wk"><title>Week of ${b.start.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}: ${b.count} added · ${verified[i].count} verified</title>
+        <rect x="${x - 13}" y="${H - PB - hA}" width="11" height="${hA}" rx="3" fill="var(--green)"/>
+        <rect x="${x + 2}" y="${H - PB - hV}" width="11" height="${hV}" rx="3" fill="var(--green-deep)"/>
+        <text x="${x}" y="${H - 8}" text-anchor="middle">W${i + 1}</text></g>`;
+    });
+    chartBody.innerHTML = `<svg class="chart-svg" viewBox="0 0 560 220" role="img" aria-label="Weekly additions and verifications">${s}</svg>`;
+  }
+
+  /* ---------- review modal ---------- */
+  const modal = $('#reviewModal');
+  function openReview(id) {
+    const s = data.pending.find((x) => x.id === id) || data.sugg.find((x) => x.id === id);
+    if (!s) return;
+    reviewId = id;
+    $('#mTitle').textContent = s.title || 'Untitled suggestion';
+    $('#mCo').textContent = s.company || '';
+    $('#mMeta').innerHTML = `<span class="mchip">${UI.esc(s.field || '—')}</span><span class="mchip">${UI.esc(s.city || '—')}</span>
+      <span class="mchip">${UI.esc(s.workMode || '—')}</span><span class="status st-pending">Pending</span>`;
+    $('#mInfo').innerHTML = [
+      `<span>Submitted by <b>${UI.esc(s.submittedByName || 'Student')}</b>${s.submittedByEmail ? ` · ${UI.esc(s.submittedByEmail)}` : ''} · ${UI.esc(UI.timeAgo(s.createdAt))}</span>`,
+      s.deadline ? `<span>Deadline: <b>${UI.esc(UI.fmtDate(s.deadline))}</b></span>` : '',
+      s.stipend ? `<span>Stipend: <b>${UI.esc(s.stipend)}</b></span>` : '',
+      s.duration ? `<span>Duration: <b>${UI.esc(s.duration)}</b></span>` : '',
+      s.notes ? `<span>Notes: <b>${UI.esc(s.notes)}</b></span>` : '',
+      s.sourceUrl ? `<span>Source: <a href="${UI.safeUrl(s.sourceUrl)}" target="_blank" rel="noopener noreferrer">${UI.esc(s.sourceUrl)}</a></span>` : '<span>Source: <b>not provided</b></span>'
+    ].filter(Boolean).join('');
+    modal.hidden = false;
+    requestAnimationFrame(() => modal.classList.add('is-open'));
+    document.body.style.overflow = 'hidden';
+  }
+  function closeModal() {
+    modal.classList.remove('is-open');
+    document.body.style.overflow = '';
+    setTimeout(() => { modal.hidden = true; }, 220);
+    reviewId = null;
+  }
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal || e.target.closest('[data-close]')) closeModal();
+  });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !modal.hidden) closeModal(); });
+
+  async function actOnReview(status, label) {
+    const id = reviewId;
+    if (!id) return;
+    const btn = $(`#m${label}`);
+    btn.classList.add('is-loading'); btn.disabled = true;
+    const res = status === 'verified'
+      ? await Suggestions.verifyAndPublish(id)
+      : await Suggestions.setStatus(id, status);
+    btn.classList.remove('is-loading'); btn.disabled = false;
+    if (!res || !res.ok) { UI.toast((res && res.error) || 'Action failed', 'error'); return; }
+    closeModal();
+    UI.toast(status === 'verified' ? 'Verified & published — now live in Browse.' : status === 'rejected' ? 'Suggestion rejected — the student was notified.' : 'Changes requested — the student was notified.');
+    await load();
+    Shell.syncPendingBadge();
+  }
+  $('#mVerify').addEventListener('click', () => actOnReview('verified', 'Verify'));
+  $('#mChanges').addEventListener('click', () => actOnReview('needs-changes', 'Changes'));
+  $('#mReject').addEventListener('click', async () => {
+    const ok = await UI.confirm({
+      title: 'Reject this suggestion?',
+      message: 'The student is notified that their submission was declined. This cannot be undone from the dashboard.',
+      confirmLabel: 'Reject suggestion', danger: true
+    });
+    if (ok) actOnReview('rejected', 'Reject');
+  });
+
+  /* ---------- load ---------- */
+  function skeletons() {
+    statsEl.innerHTML = Array(4).fill('<div class="stat card"><div class="skel" style="height:10px;width:45%"></div><div class="skel" style="height:26px;width:35%;margin-top:12px"></div></div>').join('');
+    const row = '<div class="row-sk"><div class="skel" style="width:38px;height:38px;flex:none;border-radius:10px"></div><div class="skel" style="height:12px;width:60%"></div></div>';
+    queueEl.innerHTML = row.repeat(3);
+    recentEl.innerHTML = row.repeat(4);
+    actEl.innerHTML = row.repeat(4);
+  }
+
+  async function load() {
+    let ints = [], users = [], sugg = [], pending = [], activity = [];
+    try {
+      [ints, users, sugg, pending, activity] = await Promise.all([
+        Analytics.internships(), Analytics.users(), Suggestions.list(null, 300),
+        Suggestions.list('pending', 200), Activity.recent(8)
+      ]);
+    } catch (err) { console.error('Dashboard load failed:', err); }
+    ints.sort((a, b) => (UI.toDate(b.createdAt) || 0) - (UI.toDate(a.createdAt) || 0));
+    data = { ints, users, sugg, pending, activity };
+    renderStats(); renderQueue(); renderActivity(); renderRecent(); renderChart();
+    $('#qaBadge').textContent = pending.length;
+    $('#qaBadge').hidden = !pending.length;
+  }
+
+  /* ---------- wiring ---------- */
+  document.addEventListener('click', (e) => {
+    const r = e.target.closest('[data-review]');
+    if (r) openReview(r.dataset.review);
+  });
+  const search = $('#adminSearch'), clearBtn = $('#searchClear');
+  search.addEventListener('input', () => {
+    query = search.value.trim().toLowerCase();
+    clearBtn.hidden = !query;
+    renderQueue(); renderRecent();
+  });
+  clearBtn.addEventListener('click', () => { search.value = ''; query = ''; clearBtn.hidden = true; renderQueue(); renderRecent(); search.focus(); });
+  $('#rangeSeg').addEventListener('click', (e) => {
+    const b = e.target.closest('[data-range]');
+    if (!b || b.dataset.range === range) return;
+    range = b.dataset.range;
+    document.querySelectorAll('#rangeSeg button').forEach((x) => x.classList.toggle('is-on', x === b));
+    renderStats();
+  });
+  document.addEventListener('shell:admin:refresh', load);
+
+  skeletons();
+  await load();
+});
+</script>
+</body>
+</html>

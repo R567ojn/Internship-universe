@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<!-- Dev-only measurement host. Lives in tools/ but resolves `p` against the project root:
+     http://127.0.0.1:8000/tools/_qa_frame.html?w=1360&h=900&p=internship.html
+     Exposes doc()/win()/ready(); resize the iframe's style.width to re-run media queries.
+     A non-painting panel keeps document.visibilityState "hidden", which suspends
+     requestAnimationFrame and IntersectionObserver — measure static geometry here, not
+     scroll or reveal behaviour. -->
+<html><head><meta charset="utf-8"><title>QA frame</title>
+<style>html,body{margin:0;background:#333}iframe{border:0;display:block;background:#fff}</style></head>
+<body>
+<iframe id="f"></iframe>
+<script>
+const q = new URLSearchParams(location.search);
+const W = Number(q.get('w')) || 1360;
+const H = Number(q.get('h')) || 900;
+const p = q.get('p') || '';
+const f = document.getElementById('f');
+f.style.width = W + 'px'; f.style.height = H + 'px';
+f.src = !p || /^(?:https?:|\/\/|\.\.\/|\/)/.test(p) ? p : '../' + p;
+window.ready = () => f.contentDocument && f.contentDocument.body && f.contentWindow.__shellReady;
+window.doc = () => f.contentDocument;
+window.win = () => f.contentWindow;
+</script>
+</body></html>

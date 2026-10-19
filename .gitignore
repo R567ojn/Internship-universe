@@ -1,0 +1,21 @@
+# Firebase service-account keys — NEVER commit these
+serviceAccount*.json
+*.serviceAccount.json
+firebase-adminsdk*.json
+credentials/
+
+# Node
+node_modules/
+tools/node_modules/
+npm-debug.log*
+
+# Local QA tooling
+_serve.py
+
+# OS / editor
+.DS_Store
+Thumbs.db
+
+# Build / deploy caches
+.firebase/
+.netlify/

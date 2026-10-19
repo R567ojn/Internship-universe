@@ -1,0 +1,80 @@
+rules_version = '2';
+
+// ============================================================
+// InternHub · Firestore security
+// One shared database for the student and admin experiences.
+// Privilege comes ONLY from the Firebase Auth custom claim
+// `token.admin == true` (granted server-side via tools/setAdminClaim.js).
+// A student can never reach admin writes by guessing a URL.
+// ============================================================
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn()   { return request.auth != null; }
+    function isAdmin()    { return signedIn() && request.auth.token.admin == true; }
+    function owner(uid)   { return signedIn() && request.auth.uid == uid; }
+
+    // ---------- Internships: public read of published, admin-only writes ----------
+    match /internships/{id} {
+      allow read: if isAdmin() || resource.data.published == true;
+      allow create, update, delete: if isAdmin();
+    }
+
+    // ---------- Suggestions: student/anonymous submit (pending), owner or admin read ----------
+    match /suggestions/{id} {
+      allow get, list: if isAdmin()
+                     || (signedIn() && resource.data.submittedBy == request.auth.uid)
+                     || resource.data.submittedBy == 'anonymous';
+      // New submissions are always pending and attributed honestly.
+      allow create: if request.resource.data.status == 'pending'
+                    && request.resource.data.submittedBy == (signedIn() ? request.auth.uid : 'anonymous');
+      // Only staff edits/declines/verifies/removes a suggestion.
+      allow update, delete: if isAdmin();
+    }
+
+    // ---------- Users: owner-scoped profile; admin may moderate ----------
+    match /users/{uid} {
+      allow read:  if owner(uid) || isAdmin();
+      // A new student creates only a plain, non-privileged profile.
+      allow create: if owner(uid)
+                    && request.resource.data.uid == uid
+                    && request.resource.data.get('role', 'student') == 'student'
+                    && request.resource.data.get('admin', false) != true;
+      // Owner may edit their profile but can never grant themselves admin/role/uid.
+      allow update: if isAdmin()
+                    || (owner(uid)
+                        && request.resource.data.get('admin', false) == resource.data.get('admin', false)
+                        && request.resource.data.get('role', 'student') == resource.data.get('role', 'student')
+                        && request.resource.data.uid == resource.data.uid);
+      allow delete: if owner(uid) || isAdmin();
+
+      // Saved internships (owner only)
+      match /saved/{internshipId} {
+        allow read, write: if owner(uid);
+      }
+
+      // Notifications: owner reads/marks read; owner or admin may create an alert.
+      match /notifications/{notifId} {
+        allow read, update: if owner(uid);
+        allow create: if owner(uid) || isAdmin();
+        allow delete: if owner(uid) || isAdmin();
+      }
+    }
+
+    // ---------- Platform config: public read of taxonomy, admin writes ----------
+    match /platform/{doc} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // ---------- Activity log: admin only ----------
+    match /activity/{id} {
+      allow read, write: if isAdmin();
+    }
+
+    // Everything else is denied.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

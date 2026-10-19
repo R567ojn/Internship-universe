@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Create your account · InternHub</title>
+<meta name="description" content="Create a free InternHub account, set your field and location preferences, and start tracking internships.">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/ui.css">
+<link rel="stylesheet" href="assets/css/auth.css">
+</head>
+<body class="auth-body">
+<header class="auth-nav">
+  <a class="brand" href="index.html"><span class="brand-mark" id="mark"></span>InternHub</a>
+  <a class="back" href="signin.html">Already have an account?</a>
+</header>
+
+<div class="auth-wrap">
+  <div class="auth-card">
+    <div class="brand-line">Free for students, always</div>
+    <h1>Create your account</h1>
+    <p class="lead">Save opportunities, track deadlines, apply on time. You can set your field and location later.</p>
+    <div class="form-err" id="err" role="alert"></div>
+    <form id="regForm" novalidate>
+      <div class="field"><label for="name">Full name</label><input class="input" id="name" autocomplete="name" required placeholder="Your name"></div>
+      <div class="field"><label for="email">Email</label><input class="input" type="email" id="email" autocomplete="email" required placeholder="you@example.com"></div>
+      <div class="field">
+        <label for="password">Password</label>
+        <div class="pw-toggle"><input class="input" type="password" id="password" autocomplete="new-password" required placeholder="At least 6 characters"><button type="button" data-pw="password" aria-label="Show password"></button></div>
+      </div>
+      <div class="field">
+        <label for="confirm">Confirm password</label>
+        <div class="pw-toggle"><input class="input" type="password" id="confirm" autocomplete="new-password" required placeholder="Repeat your password"><button type="button" data-pw="confirm" aria-label="Show password"></button></div>
+      </div>
+      <label class="check" style="margin:2px 0 20px"><input type="checkbox" id="terms" required> I agree to the <a href="terms.html" style="color:var(--green)">Terms</a> and <a href="privacy.html" style="color:var(--green)">Privacy Policy</a>.</label>
+      <button class="btn btn-primary btn-block btn-lg" type="submit" id="submitBtn">Create account</button>
+    </form>
+    <p class="auth-alt">Already registered? <a href="signin.html">Sign in</a></p>
+  </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+<script src="assets/js/firebase-config.js"></script>
+<script src="assets/js/lib/ui.js"></script>
+<script src="assets/js/services/platform.js"></script>
+<script src="assets/js/services/auth.js"></script>
+<script>
+(function () {
+  document.getElementById('mark').innerHTML = UI.icon('bookmark', 16, true);
+  document.querySelectorAll('[data-pw]').forEach((eye) => {
+    eye.innerHTML = UI.icon('eye', 17);
+    eye.addEventListener('click', () => { const i = document.getElementById(eye.dataset.pw); const s = i.type === 'password'; i.type = s ? 'text' : 'password'; eye.innerHTML = UI.icon(s ? 'eye-off' : 'eye', 17); });
+  });
+
+  Auth.ready.then(() => { if (Auth.profile) location.replace(Auth.afterAuthPath()); });
+
+  const err = document.getElementById('err'), form = document.getElementById('regForm'), btn = document.getElementById('submitBtn');
+  function showErr(m) { err.textContent = m; err.classList.add('show'); btn.classList.remove('is-loading'); btn.disabled = false; }
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault(); err.classList.remove('show');
+    const name = document.getElementById('name').value.trim();
+    const email = document.getElementById('email').value.trim();
+    const password = document.getElementById('password').value;
+    const confirm = document.getElementById('confirm').value;
+    if (!name) return showErr('Please enter your name.');
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return showErr('Enter a valid email address.');
+    if (password.length < 6) return showErr('Password must be at least 6 characters.');
+    if (password !== confirm) return showErr('Passwords do not match.');
+    if (!document.getElementById('terms').checked) return showErr('Please accept the terms to continue.');
+    btn.classList.add('is-loading'); btn.disabled = true;
+    const res = await Auth.register(name, email, password);
+    if (!res.ok) return showErr(res.error);
+    location.replace(Auth.afterAuthPath());
+  });
+})();
+</script>
+</body>
+</html>

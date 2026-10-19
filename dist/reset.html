@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Reset password · InternHub</title>
+<meta name="description" content="Reset your InternHub password by email.">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/ui.css">
+<link rel="stylesheet" href="assets/css/auth.css">
+</head>
+<body class="auth-body">
+<header class="auth-nav">
+  <a class="brand" href="index.html"><span class="brand-mark" id="mark"></span>InternHub</a>
+  <a class="back" href="signin.html">← Back to sign in</a>
+</header>
+<div class="auth-wrap">
+  <div class="auth-card">
+    <div class="brand-line">Account recovery</div>
+    <h1>Reset your password</h1>
+    <p class="lead">Enter your email and we'll send you a link to choose a new password.</p>
+    <div class="form-err" id="err" role="alert"></div>
+    <form id="resetForm" novalidate>
+      <div class="field"><label for="email">Email</label><input class="input" type="email" id="email" autocomplete="email" required placeholder="you@example.com"></div>
+      <button class="btn btn-primary btn-block btn-lg" type="submit" id="submitBtn">Send reset link</button>
+    </form>
+    <p class="auth-alt">Remembered it? <a href="signin.html">Sign in</a></p>
+  </div>
+</div>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+<script src="assets/js/firebase-config.js"></script>
+<script src="assets/js/lib/ui.js"></script>
+<script src="assets/js/services/platform.js"></script>
+<script src="assets/js/services/auth.js"></script>
+<script>
+(function () {
+  document.getElementById('mark').innerHTML = UI.icon('bookmark', 16, true);
+  const err = document.getElementById('err'), form = document.getElementById('resetForm'), btn = document.getElementById('submitBtn');
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault(); err.classList.remove('show');
+    const email = form.email.value.trim();
+    if (!email) { err.textContent = 'Enter your email.'; err.classList.add('show'); return; }
+    btn.classList.add('is-loading'); btn.disabled = true;
+    const res = await Auth.resetPassword(email);
+    btn.classList.remove('is-loading'); btn.disabled = false;
+    if (res.ok) {
+      form.innerHTML = '<div class="state" style="padding:20px 0"><div class="state-icon">' + UI.icon('mail', 22) + '</div><h3>Check your inbox</h3><p class="state-msg">If an account exists for ' + UI.esc(email) + ', a reset link is on its way.</p></div>';
+    } else { err.textContent = res.error; err.classList.add('show'); }
+  });
+})();
+</script>
+</body>
+</html>

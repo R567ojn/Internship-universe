@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Admin · Manage internships · InternHub</title>
+<meta name="robots" content="noindex">
+<link rel="icon" href="../favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/css/ui.css">
+<link rel="stylesheet" href="../assets/css/app.css">
+</head>
+<body data-app="admin" data-nav="internships">
+<div id="view">
+
+  <header class="ahead">
+    <div>
+      <h1>Manage internships</h1>
+      <p class="sub">Review, verify and publish real listings. Every change writes straight to Firestore.<span class="mono" id="catalogLine"></span></p>
+    </div>
+    <div class="ahead-r">
+      <a class="btn btn-primary btn-sm" href="internship-editor.html"><svg width="15" height="15" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Add internship</a>
+    </div>
+  </header>
+
+  <div class="stabs" id="statusTabs" role="group" aria-label="Filter by status"></div>
+
+  <div class="toolbar">
+    <div class="searchbox">
+      <svg width="15" height="15" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <input id="searchInput" type="search" placeholder="Search internships, companies, locations…" autocomplete="off" aria-label="Search internships">
+      <button type="button" class="s-clear" id="sClear" hidden aria-label="Clear search">
+        <svg width="11" height="11" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>
+      </button>
+    </div>
+    <button type="button" class="icon-btn filter-btn" id="filterBtn" aria-haspopup="dialog" aria-controls="filterDrawer" aria-label="Open filters">
+      <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M7 12h10M10 18h4"/></svg>
+      <span class="fbadge" id="fBadge" hidden>0</span>
+    </button>
+  </div>
+
+  <div class="achips" id="activeChips"></div>
+
+  <section class="card list" id="list" aria-label="Internships"></section>
+
+  <div class="pager" id="pager"></div>
+
+  <!-- filter drawer -->
+  <div class="drawer-backdrop" id="fdScrim" hidden></div>
+  <aside class="drawer drawer--filters" id="filterDrawer" role="dialog" aria-modal="true" aria-labelledby="fdTitle" hidden>
+    <div class="drawer-head">
+      <h2 id="fdTitle">Filters</h2>
+      <div style="display:flex;gap:8px;align-items:center">
+        <button type="button" class="btn btn-ghost btn-sm" id="resetFilters">Reset all</button>
+        <button type="button" class="icon-btn" data-fd-close aria-label="Close filters">
+          <svg width="15" height="15" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>
+        </button>
+      </div>
+    </div>
+    <div class="drawer-body">
+      <div class="fsec"><span class="eyebrow">Field</span><div class="pillrow" id="fField"></div></div>
+      <div class="fsec"><span class="eyebrow">Location</span><div class="pillrow" id="fLoc"></div></div>
+      <div class="fsec"><span class="eyebrow">Work mode</span><div class="pillrow" id="fMode"></div></div>
+      <div class="fsec"><span class="eyebrow">Verification</span><div class="pillrow">
+        <button type="button" class="pill" data-ver="verified">Verified</button>
+        <button type="button" class="pill" data-ver="unverified">Unverified</button>
+      </div></div>
+      <div class="fsec"><span class="eyebrow">Publication</span><div class="pillrow">
+        <button type="button" class="pill" data-pub="published">Published</button>
+        <button type="button" class="pill" data-pub="draft">Draft</button>
+        <button type="button" class="pill" data-pub="expired">Expired</button>
+      </div></div>
+      <div class="fsec"><span class="eyebrow">Source</span><div class="pillrow">
+        <button type="button" class="pill" data-src="admin">Admin added</button>
+        <button type="button" class="pill" data-src="suggested">Student suggested</button>
+      </div></div>
+    </div>
+    <div class="drawer-foot">
+      <button type="button" class="btn btn-ghost" data-fd-close>Close</button>
+      <button type="button" class="btn btn-primary" id="applyFilters">Apply filters</button>
+    </div>
+  </aside>
+
+  <!-- bulk action bar -->
+  <div class="bulk-bar" id="bulkBar" role="region" aria-label="Bulk actions">
+    <b id="bulkCount">0 selected</b>
+    <span class="sep"></span>
+    <button type="button" class="btn btn-lime btn-sm" id="bulkVerify"><svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><path d="m4.5 12.5 5 5 10-11"/></svg>Verify</button>
+    <button type="button" class="btn btn-primary btn-sm" id="bulkPublish"><svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 3 10.5 13.5M21 3l-7 18-3.5-7.5L3 10l18-7Z"/></svg>Publish</button>
+    <button type="button" class="btn btn-ghost btn-sm" id="bulkUnpublish">Unpublish</button>
+    <button type="button" class="btn btn-coral btn-sm" id="bulkDelete"><svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2M6.5 7l1 13h9l1-13M10 11v5m4-5v5"/></svg>Delete</button>
+  </div>
+
+  <!-- preview modal -->
+  <div class="modal-backdrop" id="previewModal" hidden>
+    <div class="modal modal-lg" role="dialog" aria-modal="true" aria-labelledby="pmTitle">
+      <div class="dm-media" id="pmMedia"></div>
+      <button type="button" class="dm-x" data-close aria-label="Close"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+      <div class="m-body">
+        <p class="eyebrow">Internship preview</p>
+        <h3 id="pmTitle"></h3>
+        <p class="m-co" id="pmCo"></p>
+        <div class="m-meta" id="pmMeta"></div>
+        <p class="dm-desc" id="pmDesc"></p>
+        <div class="m-info" id="pmLinks"></div>
+        <div class="m-foot">
+          <button type="button" class="btn btn-ghost" data-close>Close</button>
+          <a class="btn btn-primary" id="pmEdit" href="#">Edit internship</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+<script src="../assets/js/firebase-config.js"></script>
+<script src="../assets/js/lib/ui.js"></script>
+<script src="../assets/js/services/platform.js"></script>
+<script src="../assets/js/services/auth.js"></script>
+<script src="../assets/js/services/internships.js"></script>
+<script src="../assets/js/services/suggestions.js"></script>
+<script src="../assets/js/services/users.js"></script>
+<script src="../assets/js/services/notifications.js"></script>
+<script src="../assets/js/lib/notify-ui.js"></script>
+<script src="../assets/js/lib/shell.js"></script>
+<script src="../assets/js/lib/router.js"></script>
+<script>
+window.onReady(async function () {
+  if (!(await Auth.requireAdmin())) return;
+
+  const $ = (sel) => document.querySelector(sel);
+  const listEl = $('#list'), pagerEl = $('#pager'), chipsEl = $('#activeChips'), tabsEl = $('#statusTabs');
+  const PER_PAGE = 10;
+  const st = {
+    tab: 'all', q: '', page: 1, busy: false,
+    fields: new Set(), locs: new Set(), modes: new Set(), vers: new Set(), pubs: new Set(), srcs: new Set(),
+    sel: new Set()
+  };
+  let ALL = [];
+
+  const srcOf = (it) => (it.sourceSuggestionId ? 'suggested' : 'admin');
+  const isExpired = (it) => !UI.isOpen(it);
+  const trim = (text, n) => {
+    const s = String(text || '').trim();
+    return s.length > n ? s.slice(0, n).replace(/\s+\S*$/, '') + '…' : s;
+  };
+  const emptyState = (icon, title, msg, cta = '') =>
+    `<div class="empty"><span class="e-ico">${UI.icon(icon, 22)}</span><h3>${title}</h3><p>${msg}</p>${cta}</div>`;
+
+  function counts() {
+    const c = { all: ALL.length, published: 0, draft: 0, verified: 0, unverified: 0, expired: 0 };
+    ALL.forEach((i) => {
+      if (i.published) c.published++; else c.draft++;
+      if (i.verified) c.verified++; else c.unverified++;
+      if (isExpired(i)) c.expired++;
+    });
+    return c;
+  }
+
+  /* ---------- status tabs ---------- */
+  function renderTabs() {
+    const c = counts();
+    const tab = (key, label) => `<button type="button" class="stab${st.tab === key ? ' is-on' : ''}" data-tab="${key}" aria-pressed="${st.tab === key}">${label}<b>${c[key]}</b></button>`;
+    tabsEl.innerHTML = tab('all', 'All') + tab('published', 'Published') + tab('draft', 'Draft')
+      + tab('verified', 'Verified') + tab('unverified', 'Unverified') + tab('expired', 'Expired');
+  }
+
+  /* ---------- filters ---------- */
+  function vocab(kind, values) {
+    const cfg = Settings.data[kind] || [];
+    return [...new Set([...cfg, ...values].filter(Boolean))];
+  }
+  function renderFilterOptions() {
+    const pills = (attr, list) => list.map((v) => `<button type="button" class="pill" data-${attr}="${UI.esc(v)}">${UI.esc(v)}</button>`).join('');
+    $('#fField').innerHTML = pills('field', vocab('fields', ALL.map((i) => i.field)));
+    $('#fLoc').innerHTML = pills('loc', vocab('locations', ALL.map((i) => i.city)));
+    $('#fMode').innerHTML = pills('mode', vocab('workModes', ALL.map((i) => i.workMode)));
+    syncPills();
+  }
+  const sets = { field: 'fields', loc: 'locs', mode: 'modes', ver: 'vers', pub: 'pubs', src: 'srcs' };
+  function syncPills() {
+    Object.keys(sets).forEach((k) => {
+      document.querySelectorAll(`[data-${k}]`).forEach((b) => b.classList.toggle('is-on', st[sets[k]].has(b.dataset[k])));
+    });
+  }
+  const activeCount = () => Object.values(sets).reduce((n, key) => n + st[key].size, 0);
+
+  function renderChips() {
+    const labels = { field: 'Field', loc: 'Location', mode: 'Mode', ver: 'Verification', pub: 'Publication', src: 'Source' };
+    const human = (k, v) => (k === 'src' ? (v === 'admin' ? 'Admin added' : 'Student suggested') : v);
+    const chips = [];
+    Object.keys(sets).forEach((k) => {
+      st[sets[k]].forEach((v) => {
+        chips.push(`<span class="achip">${UI.esc(`${labels[k]}: ${human(k, v)}`)}<button type="button" data-rm="${k}:${UI.esc(v)}" aria-label="Remove filter">${UI.icon('x', 10)}</button></span>`);
+      });
+    });
+    chipsEl.innerHTML = chips.join('') + (chips.length > 1 ? '<span class="achip is-clear" data-clear>Clear all</span>' : '');
+    const badge = $('#fBadge');
+    badge.textContent = activeCount();
+    badge.hidden = !activeCount();
+  }
+
+  function filtered() {
+    const q = st.q;
+    return ALL.filter((it) => {
+      if (st.tab === 'published' && !it.published) return false;
+      if (st.tab === 'draft' && it.published) return false;
+      if (st.tab === 'verified' && !it.verified) return false;
+      if (st.tab === 'unverified' && it.verified) return false;
+      if (st.tab === 'expired' && !isExpired(it)) return false;
+      if (st.fields.size && !st.fields.has(it.field)) return false;
+      if (st.locs.size && !st.locs.has(it.city)) return false;
+      if (st.modes.size && !st.modes.has(it.workMode)) return false;
+      if (st.vers.size && !st.vers.has(it.verified ? 'verified' : 'unverified')) return false;
+      if (st.pubs.size && !(
+        (st.pubs.has('published') && it.published) ||
+        (st.pubs.has('draft') && !it.published) ||
+        (st.pubs.has('expired') && isExpired(it)))) return false;
+      if (st.srcs.size && !st.srcs.has(srcOf(it))) return false;
+      if (q && !`${it.title} ${it.company} ${it.field} ${it.city} ${it.workMode}`.toLowerCase().includes(q)) return false;
+      return true;
+    });
+  }
+
+  /* ---------- list ---------- */
+  function thumb(it) {
+    const url = UI.safeUrl(it.image);
+    const img = url ? `<img src="${UI.esc(url)}" alt="" loading="lazy" onerror="this.remove()">` : '';
+    return `<span class="row-thumb">${UI.esc(UI.initials(it.company || 'InternHub'))}${img}</span>`;
+  }
+
+  function row(it, i) {
+    const dl = UI.deadlineInfo(it);
+    const src = srcOf(it);
+    const sel = st.sel.has(it.id);
+    const meta = [
+      it.field ? UI.icon('briefcase', 12) + UI.esc(it.field) : '',
+      it.city ? UI.icon('pin', 12) + UI.esc(it.city) : '',
+      it.workMode ? UI.icon('globe', 12) + UI.esc(it.workMode) : '',
+      dl.label ? UI.icon('clock', 12) + UI.esc(dl.label) : ''
+    ].filter(Boolean);
+    return `<div class="rrow${sel ? ' selected' : ''}" data-id="${UI.esc(it.id)}" style="animation-delay:${Math.min(i, 8) * 40}ms">
+      <button type="button" class="chk${sel ? ' is-on' : ''}" data-sel="${UI.esc(it.id)}" aria-pressed="${sel}" aria-label="Select ${UI.esc(it.title || 'internship')}">${UI.icon('check', 10)}</button>
+      ${thumb(it)}
+      <div class="rmain">
+        <b>${UI.esc(it.title || 'Untitled role')}</b>
+        <p class="ir-co">${UI.esc(it.company || '—')}${it.verified ? `<span class="vcheck">${UI.icon('check', 9)}</span>` : ''}</p>
+        <div class="rmeta">${meta.map((m) => `<span>${m}</span>`).join('')}</div>
+      </div>
+      <div class="rpills">
+        <button type="button" class="status ${it.verified ? 'st-verified' : 'st-pending'}" data-act="ver" data-id="${UI.esc(it.id)}" title="Toggle verification">${it.verified ? 'Verified' : 'Unverified'}</button>
+        <button type="button" class="status ${it.published ? 'st-published' : 'st-draft'}" data-act="pub" data-id="${UI.esc(it.id)}" title="Toggle publication">${it.published ? 'Published' : 'Draft'}</button>
+        <span class="status ${src === 'admin' ? 'st-admin' : 'st-suggested'}">${src === 'admin' ? 'Admin' : 'Suggested'}</span>
+      </div>
+      <span class="rdate">${UI.esc(UI.fmtDate(it.createdAt, false))}</span>
+      <div class="aacts">
+        <button type="button" data-preview="${UI.esc(it.id)}" title="Preview" aria-label="Preview">${UI.icon('eye', 14)}</button>
+        <a href="${H('admin_pages/internship-editor.html')}?id=${encodeURIComponent(it.id)}" title="Edit" aria-label="Edit">${UI.icon('pencil', 14)}</a>
+        <button type="button" class="${it.featured ? 'is-on' : ''}" data-act="feat" data-id="${UI.esc(it.id)}" title="${it.featured ? 'Remove from featured' : 'Feature on the landing page'}" aria-label="Feature">${UI.icon('bolt', 14)}</button>
+        <button type="button" data-act="del" data-id="${UI.esc(it.id)}" title="Delete" aria-label="Delete">${UI.icon('trash', 14)}</button>
+      </div>
+    </div>`;
+  }
+
+  function pageWindow(cur, total) {
+    if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
+    const from = Math.max(1, Math.min(cur - 2, total - 4));
+    const out = [];
+    for (let p = from; p <= total && out.length < 5; p++) out.push(p);
+    return out;
+  }
+
+  function renderPager(total) {
+    const pages = Math.ceil(total / PER_PAGE);
+    if (!total) { pagerEl.innerHTML = ''; return; }
+    if (pages < 2) {
+      pagerEl.innerHTML = `<p class="pager-info">Showing <b>${total}</b> internship${total === 1 ? '' : 's'}</p>`;
+      return;
+    }
+    const start = (st.page - 1) * PER_PAGE + 1;
+    const end = Math.min(st.page * PER_PAGE, total);
+    const btns = pageWindow(st.page, pages)
+      .map((p) => `<button type="button" class="pbtn${p === st.page ? ' is-on' : ''}" data-page="${p}" aria-label="Page ${p}">${p}</button>`).join('');
+    pagerEl.innerHTML = `<p class="pager-info">Showing <b>${start}–${end}</b> of <b>${total}</b> internships</p>
+      <div class="pager-btns">
+        <button type="button" class="pbtn" data-page="${st.page - 1}" ${st.page === 1 ? 'disabled' : ''} aria-label="Previous page">${UI.icon('arrow-left', 14)}</button>
+        ${btns}
+        <button type="button" class="pbtn" data-page="${st.page + 1}" ${st.page === pages ? 'disabled' : ''} aria-label="Next page">${UI.icon('arrow-right', 14)}</button>
+      </div>`;
+  }
+
+  function renderList() {
+    if (!ALL.length) {
+      listEl.innerHTML = emptyState('briefcase', 'No internships yet',
+        'Add your first verified listing to start building the catalogue.',
+        '<a class="btn btn-primary btn-sm" href="internship-editor.html">Add internship</a>');
+      pagerEl.innerHTML = '';
+      renderTabs(); updateBulk(); return;
+    }
+    const list = filtered();
+    const pages = Math.max(1, Math.ceil(list.length / PER_PAGE));
+    if (st.page > pages) st.page = pages;
+    renderTabs();
+    if (!list.length) {
+      listEl.innerHTML = emptyState('search', 'No internships match your filters',
+        'Try adjusting your search, status tab or filters.');
+      pagerEl.innerHTML = '';
+      updateBulk(); return;
+    }
+    const start = (st.page - 1) * PER_PAGE;
+    listEl.innerHTML = list.slice(start, start + PER_PAGE).map(row).join('');
+    renderPager(list.length);
+    updateBulk();
+  }
+
+  function render() { renderChips(); renderList(); }
+
+  /* ---------- actions ---------- */
+  async function actOn(id, act) {
+    if (st.busy) return;
+    const it = ALL.find((x) => x.id === id);
+    if (!it) return;
+    if (act === 'del') {
+      const ok = await UI.confirm({
+        title: 'Delete this internship?',
+        message: `"${it.title}" at ${it.company} will be permanently removed and cannot be recovered.`,
+        confirmLabel: 'Delete internship', danger: true
+      });
+      if (!ok) return;
+    }
+    st.busy = true;
+    let res;
+    if (act === 'pub') res = await Internships.setPublished(id, !it.published);
+    else if (act === 'ver') res = await Internships.setVerified(id, !it.verified);
+    else if (act === 'feat') res = await Internships.setFeatured(id, !it.featured);
+    else res = await Internships.remove(id);
+    st.busy = false;
+    if (!res || !res.ok) { UI.toast((res && res.error) || 'Update failed', 'error'); return; }
+    UI.toast(act === 'del' ? 'Internship deleted.' : act === 'feat' ? (it.featured ? 'Removed from featured.' : 'Featured on the landing page.') : 'Saved.');
+    await refresh();
+  }
+
+  const BULK_BTNS = ['#bulkVerify', '#bulkPublish', '#bulkUnpublish', '#bulkDelete'];
+  const setBulkBusy = (on) => BULK_BTNS.forEach((sel) => { $(sel).disabled = on; });
+
+  async function bulk(kind) {
+    if (st.busy || !st.sel.size) return;
+    const ids = [...st.sel];
+    if (kind === 'del') {
+      const ok = await UI.confirm({
+        title: `Delete ${ids.length} internship${ids.length === 1 ? '' : 's'}?`,
+        message: 'These listings will be permanently removed and cannot be recovered.',
+        confirmLabel: 'Delete', danger: true
+      });
+      if (!ok) return;
+    }
+    st.busy = true;
+    setBulkBusy(true);
+    let failed = 0;
+    for (const id of ids) {
+      const it = ALL.find((x) => x.id === id);
+      if (!it) continue;
+      const res = kind === 'verify' ? await Internships.setVerified(id, true)
+        : kind === 'publish' ? await Internships.setPublished(id, true)
+        : kind === 'unpublish' ? await Internships.setPublished(id, false)
+        : await Internships.remove(id);
+      if (!res || !res.ok) failed++;
+    }
+    st.busy = false;
+    setBulkBusy(false);
+    st.sel.clear();
+    if (failed) UI.toast(`${ids.length - failed} updated · ${failed} failed`, 'error');
+    else UI.toast(`${ids.length} internship${ids.length === 1 ? '' : 's'} updated.`);
+    await refresh();
+  }
+
+  function updateBulk() {
+    const n = st.sel.size;
+    $('#bulkCount').textContent = `${n} selected`;
+    $('#bulkBar').classList.toggle('is-open', n > 0);
+  }
+
+  function toggleSel(id) {
+    if (st.sel.has(id)) st.sel.delete(id); else st.sel.add(id);
+    const chk = listEl.querySelector(`.chk[data-sel="${CSS.escape(id)}"]`);
+    const rowEl = chk && chk.closest('.rrow');
+    const on = st.sel.has(id);
+    if (chk) { chk.classList.toggle('is-on', on); chk.setAttribute('aria-pressed', String(on)); }
+    if (rowEl) rowEl.classList.toggle('selected', on);
+    updateBulk();
+  }
+
+  /* ---------- preview modal ---------- */
+  const modal = $('#previewModal');
+  function openPreview(id) {
+    const it = ALL.find((x) => x.id === id);
+    if (!it) return;
+    const box = $('#pmMedia');
+    box.innerHTML = `<div class="ic-fallback">${UI.esc(UI.initials(it.company || 'InternHub'))}</div>`;
+    const url = UI.safeUrl(it.image);
+    if (url) {
+      const img = document.createElement('img');
+      img.src = url; img.alt = ''; img.addEventListener('error', () => img.remove());
+      box.appendChild(img);
+    }
+    $('#pmTitle').textContent = it.title || 'Untitled role';
+    $('#pmCo').textContent = [it.company, it.city, it.area].filter(Boolean).join(' · ') || '—';
+    const dl = UI.deadlineInfo(it);
+    $('#pmMeta').innerHTML = `<span class="status ${it.verified ? 'st-verified' : 'st-pending'}">${it.verified ? 'Verified' : 'Unverified'}</span>
+      <span class="status ${it.published ? 'st-published' : 'st-draft'}">${it.published ? 'Published' : 'Draft'}</span>
+      <span class="status ${srcOf(it) === 'admin' ? 'st-admin' : 'st-suggested'}">${srcOf(it) === 'admin' ? 'Admin added' : 'Student suggested'}</span>
+      ${[it.field, it.workMode, it.duration, it.category].filter(Boolean).map((v) => `<span class="mchip">${UI.esc(v)}</span>`).join('')}`;
+    const desc = $('#pmDesc');
+    desc.textContent = trim(it.description, 320);
+    desc.hidden = !it.description;
+    const line = (label, value, href) => {
+      if (!value) return '';
+      const v = href ? `<a href="${UI.esc(href)}" target="_blank" rel="noopener noreferrer">${UI.esc(value)}</a>` : `<b>${UI.esc(value)}</b>`;
+      return `<span>${UI.esc(label)} ${v}</span>`;
+    };
+    $('#pmLinks').innerHTML = [
+      `<span>Added <b>${UI.esc(UI.fmtDate(it.createdAt))}</b>${it.publishedAt ? ` · published <b>${UI.esc(UI.fmtDate(it.publishedAt))}</b>` : ''}</span>`,
+      line('Deadline:', it.deadline ? UI.fmtDate(it.deadline) + (dl.cls === 'is-closed' ? ' (closed)' : '') : ''),
+      line('Stipend:', it.stipend),
+      line('Contact:', it.contactEmail, it.contactEmail ? `mailto:${it.contactEmail}` : ''),
+      line('Phone:', it.contactPhone, it.contactPhone ? `tel:${it.contactPhone.replace(/\s+/g, '')}` : ''),
+      line('Application:', it.applicationUrl, UI.safeUrl(it.applicationUrl)),
+      line('Source:', it.sourceUrl, UI.safeUrl(it.sourceUrl))
+    ].filter(Boolean).join('');
+    $('#pmEdit').href = `${H('admin_pages/internship-editor.html')}?id=${encodeURIComponent(it.id)}`;
+    modal.hidden = false;
+    requestAnimationFrame(() => modal.classList.add('is-open'));
+    document.body.style.overflow = 'hidden';
+  }
+  function closeModal() {
+    modal.classList.remove('is-open');
+    document.body.style.overflow = '';
+    setTimeout(() => { modal.hidden = true; }, 220);
+  }
+  modal.addEventListener('click', (e) => { if (e.target === modal || e.target.closest('[data-close]')) closeModal(); });
+
+  /* ---------- filter drawer ---------- */
+  const drawer = $('#filterDrawer'), scrim = $('#fdScrim');
+  function openDrawer() {
+    scrim.hidden = false; drawer.hidden = false;
+    requestAnimationFrame(() => { scrim.classList.add('is-open'); drawer.classList.add('is-open'); });
+    document.body.style.overflow = 'hidden';
+  }
+  function closeDrawer() {
+    scrim.classList.remove('is-open'); drawer.classList.remove('is-open');
+    document.body.style.overflow = '';
+    setTimeout(() => { drawer.hidden = true; scrim.hidden = true; }, 300);
+  }
+
+  /* ---------- load ---------- */
+  async function refresh() {
+    try { ALL = await Internships.all(500); }
+    catch (err) { console.error('Manage internships load failed:', err); ALL = []; }
+    $('#catalogLine').textContent = `${ALL.length} in catalogue`;
+    renderFilterOptions();
+    render();
+  }
+
+  /* ---------- wiring ---------- */
+  listEl.addEventListener('click', (e) => {
+    const s = e.target.closest('[data-sel]');
+    if (s) { toggleSel(s.dataset.sel); return; }
+    const p = e.target.closest('[data-preview]');
+    if (p) { openPreview(p.dataset.preview); return; }
+    const a = e.target.closest('[data-act]');
+    if (a) { e.preventDefault(); actOn(a.dataset.id, a.dataset.act); }
+  });
+  pagerEl.addEventListener('click', (e) => {
+    const b = e.target.closest('[data-page]');
+    if (!b || b.disabled) return;
+    st.page = Math.max(1, Number(b.dataset.page));
+    renderList();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+  tabsEl.addEventListener('click', (e) => {
+    const b = e.target.closest('[data-tab]');
+    if (!b || b.dataset.tab === st.tab) return;
+    st.tab = b.dataset.tab; st.page = 1; renderList();
+  });
+  chipsEl.addEventListener('click', (e) => {
+    if (e.target.closest('[data-clear]')) {
+      Object.values(sets).forEach((k) => st[k].clear());
+      syncPills(); st.page = 1; render(); return;
+    }
+    const rm = e.target.closest('[data-rm]');
+    if (!rm) return;
+    const i = rm.dataset.rm.indexOf(':');
+    const key = rm.dataset.rm.slice(0, i), value = rm.dataset.rm.slice(i + 1);
+    st[sets[key]].delete(value);
+    syncPills(); st.page = 1; render();
+  });
+  $('#filterDrawer').addEventListener('click', (e) => {
+    const b = e.target.closest('[data-field],[data-loc],[data-mode],[data-ver],[data-pub],[data-src]');
+    if (!b) return;
+    Object.keys(sets).forEach((k) => {
+      if (b.dataset[k] === undefined) return;
+      const set = st[sets[k]];
+      if (set.has(b.dataset[k])) set.delete(b.dataset[k]); else set.add(b.dataset[k]);
+    });
+    syncPills(); st.page = 1; render();
+  });
+  $('#applyFilters').addEventListener('click', closeDrawer);
+  $('#resetFilters').addEventListener('click', () => {
+    Object.values(sets).forEach((k) => st[k].clear());
+    syncPills(); st.page = 1; render();
+  });
+  $('#filterBtn').addEventListener('click', openDrawer);
+  scrim.addEventListener('click', closeDrawer);
+  drawer.querySelectorAll('[data-fd-close]').forEach((b) => b.addEventListener('click', closeDrawer));
+
+  const search = $('#searchInput'), clearBtn = $('#sClear');
+  search.addEventListener('input', () => {
+    st.q = search.value.trim().toLowerCase();
+    clearBtn.hidden = !st.q;
+    st.page = 1;
+    renderList();
+  });
+  clearBtn.addEventListener('click', () => {
+    search.value = ''; st.q = ''; clearBtn.hidden = true; st.page = 1; renderList(); search.focus();
+  });
+
+  $('#bulkVerify').addEventListener('click', () => bulk('verify'));
+  $('#bulkPublish').addEventListener('click', () => bulk('publish'));
+  $('#bulkUnpublish').addEventListener('click', () => bulk('unpublish'));
+  $('#bulkDelete').addEventListener('click', () => bulk('del'));
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key !== 'Escape') return;
+    if (!drawer.hidden) closeDrawer();
+    if (!modal.hidden) closeModal();
+  });
+  document.addEventListener('shell:admin:refresh', refresh);
+
+  listEl.innerHTML = '<div class="row-sk"><div class="skel" style="width:56px;height:56px;flex:none;border-radius:10px"></div><div class="skel" style="height:14px;width:55%"></div><div class="skel" style="height:24px;width:120px;flex:none"></div></div>'.repeat(4);
+  await Settings.load();
+  await refresh();
+});
+</script>
+</body>
+</html>

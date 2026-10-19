@@ -1,0 +1,771 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>InternHub Admin — Add Internship</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0b110d; --panel:#111a14; --panel2:#0e1510;
+  --line:rgba(151,255,196,.10); --line2:rgba(151,255,196,.22);
+  --txt:#e9f6ee; --mut:#8fa89a; --dim:#5f7468;
+  --acc:#2fd57f; --acc-ink:#04150b; --green:#17925a; --mint:#7fe0ae; --mint2:#c9f4dc;
+  --amber:#e5a144; --amber-bg:rgba(229,161,68,.13);
+  --coral:#e0705c; --coral-bg:rgba(224,112,92,.13);
+  --lime:#b8e08a; --lime-bg:rgba(184,224,138,.13);
+  --sage:#9db4a6; --sage-bg:rgba(157,180,166,.12);
+  --r:14px;
+  --sh1:0 1px 0 rgba(255,255,255,.03) inset,0 10px 30px -18px rgba(0,0,0,.7);
+  --fd:"Fraunces",Georgia,serif; --fs:"Inter",-apple-system,"Segoe UI",sans-serif; --fm:"JetBrains Mono",ui-monospace,monospace;
+  --ease:cubic-bezier(.4,0,.2,1);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--txt);font:14px/1.55 var(--fs);-webkit-font-smoothing:antialiased;
+  background-image:radial-gradient(900px 340px at 70% -10%,rgba(47,213,127,.07),transparent 60%)}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+input,select,textarea{font:inherit}
+svg{display:block;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+::selection{background:rgba(47,213,127,.35)}
+:focus-visible{outline:2px solid var(--acc);outline-offset:2px;border-radius:6px}
+.eyebrow{font:500 10.5px var(--fm);letter-spacing:.14em;text-transform:uppercase;color:var(--dim)}
+.display{font-family:var(--fd);font-weight:600;letter-spacing:-.01em}
+.card{background:linear-gradient(180deg,var(--panel),var(--panel2));border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--sh1)}
+
+/* ============ SIDEBAR ============ */
+.shell{display:flex;min-height:100vh}
+.asb{width:256px;flex:none;background:var(--panel2);border-right:1px solid var(--line);position:sticky;top:0;height:100vh;overflow:hidden;display:flex;flex-direction:column;transition:width .35s var(--ease);z-index:120}
+body.asb-collapsed .asb{width:78px}
+.asb-top{display:flex;align-items:center;gap:10px;padding:18px 16px 14px}
+.logo{width:30px;height:30px;flex:none;border-radius:9px;background:var(--green);display:grid;place-items:center;color:#eafff3}
+.logo svg{width:15px;height:15px;stroke-width:2.4}
+.brand-t{min-width:0;white-space:nowrap;transition:opacity .2s}
+.brand-t b{font-size:15.5px;font-weight:700}
+.brand-t .tag{font:600 9px var(--fm);letter-spacing:.12em;color:var(--acc);border:1px solid var(--line2);border-radius:5px;padding:2px 6px;margin-left:7px;vertical-align:2px}
+body.asb-collapsed .brand-t{opacity:0;width:0;overflow:hidden}
+.asb-collapse{margin-left:auto;width:30px;height:30px;border-radius:8px;display:grid;place-items:center;color:var(--mut);transition:.2s}
+.asb-collapse:hover{background:rgba(151,255,196,.08);color:var(--mint)}
+.asb-collapse svg{width:15px;height:15px;transition:transform .3s var(--ease)}
+body.asb-collapsed .asb-collapse svg{transform:rotate(180deg)}
+body.asb-collapsed .asb-collapse{margin-left:0}
+.asb-nav{flex:1;overflow-y:auto;overflow-x:hidden;padding:6px 14px;scrollbar-width:none;display:flex;flex-direction:column;gap:3px}
+.asb-lbl{padding:14px 12px 7px;transition:opacity .2s}
+body.asb-collapsed .asb-lbl{opacity:0;height:8px;padding:4px 0}
+.anav{position:relative;display:flex;align-items:center;gap:12px;width:100%;padding:10px 12px;border-radius:10px;color:var(--mut);font-size:13.5px;font-weight:500;text-align:left;transition:.2s}
+.anav:hover{background:rgba(151,255,196,.06);color:var(--mint2)}
+.anav.on{background:rgba(47,213,127,.12);color:var(--mint);font-weight:600;box-shadow:inset 2px 0 0 var(--acc)}
+.anav .ico{flex:none;width:20px;height:20px;display:grid;place-items:center}
+.anav .ico svg{width:17px;height:17px}
+.anav .txt{white-space:nowrap;max-width:160px;transition:max-width .3s var(--ease),opacity .2s}
+body.asb-collapsed .txt{max-width:0;opacity:0;overflow:hidden}
+body.asb-collapsed .anav{justify-content:center;padding:10px}
+.abadge{position:absolute;right:10px;top:50%;transform:translateY(-50%);min-width:20px;height:19px;padding:0 6px;border-radius:999px;background:var(--amber);color:#241503;font:700 10.5px/19px var(--fs);text-align:center}
+body.asb-collapsed .abadge{right:7px;top:6px;transform:none;min-width:15px;height:15px;font-size:9px;line-height:15px;padding:0 3px}
+.tip{position:absolute;left:calc(100% + 10px);top:50%;transform:translateY(-50%);background:#1c2a20;border:1px solid var(--line2);color:var(--mint2);font-size:12px;padding:5px 10px;border-radius:7px;white-space:nowrap;opacity:0;pointer-events:none;transition:opacity .2s;z-index:200}
+body.asb-collapsed .anav:hover .tip,body.asb-collapsed .acct:hover .tip,body.asb-collapsed .alogout:hover .tip{opacity:1}
+.asb-acct{border-top:1px solid var(--line);padding:12px;display:flex;flex-direction:column;gap:6px}
+.acct{position:relative;display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:11px;transition:.2s;text-align:left;width:100%}
+.acct:hover{background:rgba(151,255,196,.06)}
+.acct .av{width:36px;height:36px;flex:none;border-radius:50%;background:linear-gradient(140deg,var(--green),#0a3d26);color:var(--mint2);display:grid;place-items:center;font:700 12.5px var(--fs);border:1px solid var(--line2)}
+.acct .inf{min-width:0;white-space:nowrap;transition:opacity .2s}
+.acct .nm{display:block;font-size:13px;font-weight:600}
+.acct .rl{display:block;font:500 10px var(--fm);letter-spacing:.1em;text-transform:uppercase;color:var(--acc)}
+body.asb-collapsed .inf{opacity:0;width:0;overflow:hidden}
+body.asb-collapsed .acct{justify-content:center}
+.alogout{position:relative;display:flex;align-items:center;gap:12px;width:100%;padding:9px 12px;border-radius:10px;color:var(--mut);font-size:13px;font-weight:500;transition:.2s}
+.alogout:hover{background:var(--coral-bg);color:var(--coral)}
+.alogout .ico svg{width:16px;height:16px}
+.alogout .txt{white-space:nowrap;transition:max-width .3s var(--ease),opacity .2s}
+body.asb-collapsed .txt{max-width:0;opacity:0;overflow:hidden}
+body.asb-collapsed .alogout{justify-content:center}
+.backdrop{position:fixed;inset:0;background:rgba(0,0,0,.5);opacity:0;pointer-events:none;transition:opacity .3s;z-index:110}
+body.asb-open .backdrop{opacity:1;pointer-events:auto}
+
+/* ============ MAIN ============ */
+.amain{flex:1;min-width:0;padding:24px clamp(14px,2.4vw,30px) 96px}
+.ahead{display:flex;align-items:flex-start;gap:14px;flex-wrap:wrap;margin-bottom:20px}
+.ahead h1{font-size:clamp(21px,2.4vw,27px)}
+.ahead .sub{color:var(--mut);font-size:13px;margin-top:4px}
+.breadcrumb{display:inline-flex;align-items:center;gap:8px;font-size:12px;color:var(--dim);margin-bottom:6px}
+.breadcrumb a{color:var(--mut);text-decoration:none;transition:color .2s}
+.breadcrumb a:hover{color:var(--mint)}
+.breadcrumb svg{width:12px;height:12px}
+.dirty-dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--amber);margin-left:8px;animation:blink 1.2s infinite}
+@keyframes blink{50%{opacity:.4}}
+.ahead-r{margin-left:auto;display:flex;gap:9px;align-items:center;flex-wrap:wrap}
+.save-state{font:500 11px var(--fm);letter-spacing:.08em;color:var(--dim);text-transform:uppercase}
+.save-state.ok{color:var(--acc)}
+.save-state.warn{color:var(--amber)}
+
+/* workspace grid */
+.ws{display:grid;grid-template-columns:minmax(0,1fr) 348px;gap:18px;align-items:start}
+
+/* form sections */
+.fsec{margin-bottom:14px;overflow:hidden}
+.fsec-head{display:flex;align-items:center;gap:10px;padding:14px 18px;cursor:pointer;user-select:none}
+.fsec-head h3{flex:1;font-size:14.5px;font-weight:700}
+.fsec-head .eyebrow{margin-left:auto}
+.fsec-chev{width:20px;height:20px;color:var(--mut);transition:transform .25s var(--ease)}
+.fsec.collapsed .fsec-chev{transform:rotate(-90deg)}
+.fsec-body{padding:4px 18px 18px;display:grid;grid-template-columns:1fr 1fr;gap:14px;transition:max-height .35s var(--ease),padding .3s var(--ease),opacity .2s}
+.fsec.collapsed .fsec-body{max-height:0;padding-top:0;padding-bottom:0;opacity:0;pointer-events:none;overflow:hidden}
+.span2{grid-column:1/-1}
+.field{display:flex;flex-direction:column;gap:7px}
+.field label{display:flex;align-items:baseline;gap:6px;font-size:12.5px;font-weight:600;color:var(--mut)}
+.field label .req{color:var(--acc)}
+.field label .opt{font-weight:500;color:var(--dim);font-size:11px;margin-left:4px}
+.input,.select,textarea{width:100%;background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:10px 13px;font-size:13.5px;color:var(--txt);transition:border-color .2s,box-shadow .2s;outline:none}
+.input:focus,.select:focus,textarea:focus{border-color:var(--line2);box-shadow:0 0 0 3px rgba(47,213,127,.12)}
+textarea{min-height:96px;resize:vertical;font-family:var(--fs)}
+.input::placeholder,textarea::placeholder{color:var(--dim)}
+.field.err .input,.field.err textarea,.field.err .select{border-color:rgba(224,112,92,.5);box-shadow:0 0 0 3px var(--coral-bg)}
+.ferr{font-size:11.5px;color:var(--coral);min-height:14px}
+.fhint{font-size:11.5px;color:var(--dim);min-height:14px}
+.fhint.good{color:var(--acc)}
+.fhint.bad{color:var(--coral)}
+.fhint .spin{width:11px;height:11px;border:1.5px solid rgba(151,255,196,.3);border-top-color:var(--mint);border-radius:50%;animation:rot .7s linear infinite;display:inline-block;vertical-align:-1px;margin-right:6px}
+@keyframes rot{to{transform:rotate(360deg)}}
+/* chips */
+.chips{display:flex;flex-wrap:wrap;gap:7px}
+.chip{border:1px solid var(--line2);background:rgba(151,255,196,.04);border-radius:999px;padding:8px 14px;font-size:12.5px;color:var(--mut);transition:.18s;display:inline-flex;align-items:center;gap:7px}
+.chip:hover{border-color:var(--acc);color:var(--mint)}
+.chip.on{background:var(--acc);border-color:var(--acc);color:var(--acc-ink);font-weight:600}
+.chip svg{width:13px;height:13px}
+/* segmented */
+.seg{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;background:var(--panel2);border:1px solid var(--line);border-radius:11px;padding:4px}
+.seg button{display:flex;align-items:center;justify-content:center;gap:8px;border-radius:8px;padding:10px;font-size:13px;font-weight:600;color:var(--mut);transition:.2s var(--ease)}
+.seg button svg{width:14px;height:14px}
+.seg button.on{background:var(--panel);color:var(--mint);box-shadow:var(--sh1)}
+/* switches */
+.sw{display:flex;align-items:center;gap:12px;padding:12px 14px;background:var(--panel2);border:1px solid var(--line);border-radius:10px;cursor:pointer;transition:.2s}
+.sw:hover{border-color:var(--line2)}
+.sw .info{flex:1;min-width:0}
+.sw b{display:block;font-size:13px;font-weight:600}
+.sw span{font-size:11.5px;color:var(--dim);display:block;margin-top:2px}
+.sw input{position:absolute;opacity:0}
+.sw .track{width:38px;height:22px;flex:none;border-radius:999px;background:rgba(151,255,196,.12);border:1px solid var(--line);position:relative;transition:.25s}
+.sw .track::after{content:"";position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:var(--mut);transition:left .25s var(--ease),background .25s}
+.sw input:checked+.track{background:rgba(47,213,127,.2);border-color:var(--acc)}
+.sw input:checked+.track::after{left:18px;background:var(--acc)}
+
+/* image preview inline */
+.img-slot{display:flex;gap:12px;align-items:flex-start;grid-column:1/-1}
+.img-thumb{width:128px;height:84px;flex:none;border-radius:10px;overflow:hidden;background:linear-gradient(140deg,var(--green),#0a3d26);border:1px solid var(--line);position:relative;display:grid;place-items:center}
+.img-thumb img{width:100%;height:100%;object-fit:cover}
+.img-thumb .mg{color:rgba(255,255,255,.45);font:700 22px var(--fs)}
+.img-thumb.loading::before{content:"";position:absolute;inset:0;background:linear-gradient(90deg,transparent 30%,rgba(151,255,196,.1) 50%,transparent 70%);background-size:200% 100%;animation:sh 1.1s infinite}
+@keyframes sh{to{background-position:-200% 0}}
+.img-info{flex:1;min-width:0;font-size:12px;color:var(--dim);line-height:1.5}
+.img-info b{color:var(--mut);display:block;margin-bottom:4px}
+
+/* preview column */
+.pvcol{position:sticky;top:80px;display:flex;flex-direction:column;gap:12px}
+.pv-head{display:flex;align-items:center;gap:9px}
+.pv-head .dot{width:7px;height:7px;border-radius:50%;background:var(--acc);animation:blink 2s infinite}
+.pv-head span{font:500 11px var(--fm);letter-spacing:.12em;color:var(--mut);text-transform:uppercase}
+.pv-toggle{display:none;margin-left:auto;font-size:12px;font-weight:600;color:var(--mint)}
+/* preview card - student facing */
+.pv-card{background:linear-gradient(180deg,var(--panel),var(--panel2));border:1px solid var(--line);border-radius:var(--r);overflow:hidden;box-shadow:var(--sh1)}
+.pv-media{position:relative;height:156px;background:linear-gradient(140deg,var(--green),#0a3d26);overflow:hidden}
+.pv-media img{width:100%;height:100%;object-fit:cover}
+.pv-media .noimg{position:absolute;inset:0;display:grid;place-items:center;color:rgba(255,255,255,.5);font:700 36px var(--fs)}
+.pv-media .noimg::after{content:"";position:absolute;inset:0;background:repeating-linear-gradient(-45deg,rgba(255,255,255,.05) 0 10px,transparent 10px 20px)}
+.pv-badge{position:absolute;top:10px;left:10px;display:inline-flex;align-items:center;gap:6px;font:600 10px var(--fm);letter-spacing:.09em;text-transform:uppercase;border-radius:7px;padding:4px 9px;background:rgba(4,21,11,.6);color:var(--mint2);backdrop-filter:blur(4px)}
+.pv-badge::before{content:"";width:5px;height:5px;border-radius:50%;background:var(--mint);animation:blink 2s infinite}
+.pv-badge.ver{background:rgba(4,21,11,.75);color:var(--mint)}
+.pv-badge.feat{background:rgba(229,161,68,.2);color:var(--amber);border:1px solid rgba(229,161,68,.4);margin-left:6px}
+.pv-av{position:absolute;left:14px;bottom:-15px;width:32px;height:32px;border-radius:50%;background:var(--green);color:#bfe8cd;display:grid;place-items:center;font:700 11.5px var(--fs);border:2px solid var(--panel)}
+.pv-body{padding:22px 16px 12px}
+.pv-body h3{font-size:15px;font-weight:600;letter-spacing:-.005em}
+.pv-body h3.ph,.pv-co.ph{color:var(--dim);font-weight:500}
+.pv-co{display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--mut);margin-top:3px}
+.vcheck{width:15px;height:15px;flex:none;border-radius:50%;background:var(--acc);color:var(--acc-ink);display:grid;place-items:center}
+.vcheck svg{width:9px;height:9px;stroke-width:3}
+.pv-meta{list-style:none;display:flex;flex-wrap:wrap;gap:5px 11px;margin-top:10px}
+.pv-meta li{display:flex;align-items:center;gap:5px;font-size:11.5px;color:var(--mut)}
+.pv-meta svg{width:12px;height:12px;color:var(--dim)}
+.pv-foot{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;border-top:1px solid var(--line);font-size:11.5px;color:var(--dim)}
+.pv-foot .dead{color:var(--amber);font-weight:600}
+.pv-empty{padding:50px 18px;text-align:center;color:var(--mut);font-size:12.5px}
+
+/* action footer */
+.actions{position:fixed;bottom:0;left:0;right:0;z-index:50;background:linear-gradient(to top,var(--bg) 60%,transparent);padding:20px clamp(14px,2.4vw,30px);display:flex;gap:10px;justify-content:flex-end;pointer-events:none}
+.actions .btn{pointer-events:auto}
+.actions-left{margin-right:auto;display:flex;align-items:center;gap:10px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border-radius:10px;font-weight:600;font-size:13px;padding:11px 18px;transition:.2s var(--ease);white-space:nowrap}
+.btn svg{width:15px;height:15px}
+.btn.primary{background:var(--acc);color:var(--acc-ink);font-weight:700}
+.btn.primary:hover{filter:brightness(1.12);transform:translateY(-1px)}
+.btn.primary:disabled{opacity:.6;cursor:not-allowed;transform:none;filter:none}
+.btn.ghostd{background:var(--panel);border:1px solid var(--line);color:var(--mut)}
+.btn.ghostd:hover{border-color:var(--line2);color:var(--mint2)}
+.btn.coral{background:var(--coral-bg);border:1px solid rgba(224,112,92,.4);color:var(--coral)}
+.btn.coral:hover{background:rgba(224,112,92,.22)}
+.btn.amber{background:var(--amber-bg);border:1px solid rgba(229,161,68,.4);color:var(--amber)}
+.spin{width:15px;height:15px;border:2px solid rgba(4,21,11,.3);border-top-color:var(--acc-ink);border-radius:50%;animation:rot .7s linear infinite}
+.btn.ghostd .spin{border-color:rgba(151,255,196,.3);border-top-color:var(--mint)}
+
+/* toast */
+.toast{position:fixed;left:50%;bottom:96px;transform:translate(-50%,16px);z-index:400;background:#1c2a20;border:1px solid var(--line2);color:var(--mint2);border-radius:999px;padding:10px 18px;font-size:13px;opacity:0;pointer-events:none;transition:.3s var(--ease);box-shadow:0 16px 40px -16px rgba(0,0,0,.8)}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+.toast.err{background:#2a1816;border-color:rgba(224,112,92,.4);color:var(--coral)}
+
+/* modal */
+.modal{position:fixed;inset:0;z-index:300;display:grid;place-items:center;padding:18px;visibility:hidden;opacity:0;transition:.28s var(--ease)}
+.modal.open{visibility:visible;opacity:1}
+.modal-bk{position:absolute;inset:0;background:rgba(0,0,0,.6);backdrop-filter:blur(3px)}
+.modal-card{position:relative;width:min(440px,100%);background:var(--panel);border:1px solid var(--line2);border-radius:18px;box-shadow:0 30px 80px -30px rgba(0,0,0,.8);transform:translateY(14px) scale(.98);transition:.3s var(--ease)}
+.modal.open .modal-card{transform:none}
+.modal-x{position:absolute;top:12px;right:12px;width:32px;height:32px;border-radius:9px;background:rgba(151,255,196,.07);display:grid;place-items:center;color:var(--mut);z-index:2}
+.modal-x svg{width:14px;height:14px}
+.m-body{padding:22px}
+.m-body h3{font-size:17px;margin-bottom:8px}
+.m-body .md{color:var(--mut);font-size:13px;margin-bottom:14px}
+.m-foot{display:flex;gap:9px}
+.m-foot .btn{flex:1}
+
+/* skeleton */
+.sk{background:linear-gradient(90deg,rgba(151,255,196,.05) 25%,rgba(151,255,196,.1) 50%,rgba(151,255,196,.05) 75%);background-size:200% 100%;animation:sh 1.1s infinite;border-radius:8px}
+
+/* ============ RESPONSIVE ============ */
+@media (max-width:1180px){
+  .ws{grid-template-columns:minmax(0,1fr) 310px}
+}
+@media (max-width:1040px){
+  .ws{grid-template-columns:1fr}
+  .pvcol{position:static}
+  .pv-toggle{display:inline-flex}
+}
+@media (max-width:960px){
+  .asb{position:fixed;left:0;top:0;width:270px !important;transform:translateX(-105%);transition:transform .35s var(--ease);box-shadow:0 0 60px rgba(0,0,0,.6)}
+  body.asb-open .asb{transform:none}
+  body.asb-collapsed .txt,body.asb-collapsed .inf,body.asb-collapsed .brand-t{max-width:160px;opacity:1;width:auto}
+  body.asb-collapsed .anav,body.asb-collapsed .acct,body.asb-collapsed .alogout{justify-content:flex-start}
+  .asb-collapse{display:none}.tip{display:none}
+}
+@media (max-width:640px){
+  .fsec-body{grid-template-columns:1fr}
+  .seg{grid-template-columns:1fr}
+  .img-slot{flex-direction:column;align-items:stretch}
+  .img-thumb{width:100%;height:160px}
+  .actions{flex-wrap:wrap}
+  .actions-left{width:100%}
+}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{transition-duration:.01ms !important;animation-duration:.01ms !important}}
+</style>
+</head>
+<body>
+<div class="shell">
+  <aside class="asb">
+    <div class="asb-top">
+      <span class="logo"><svg viewBox="0 0 24 24"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg></span>
+      <span class="brand-t"><b>InternHub</b><span class="tag">ADMIN</span></span>
+      <button class="asb-collapse" id="asbToggle" aria-label="Collapse sidebar"><svg viewBox="0 0 24 24"><path d="M11 17l-5-5 5-5M18 17l-5-5 5-5"/></svg></button>
+    </div>
+    <nav class="asb-nav">
+      <p class="eyebrow asb-lbl">Overview</p>
+      <button class="anav" data-toast="Dashboard — designed previously."><span class="ico"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg></span><span class="txt">Dashboard</span><span class="tip">Dashboard</span></button>
+      <button class="anav" data-toast="Analytics — designed later."><span class="ico"><svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-8M22 20H2"/></svg></span><span class="txt">Analytics</span><span class="tip">Analytics</span></button>
+      <p class="eyebrow asb-lbl">Manage</p>
+      <button class="anav" data-toast="Manage Internships — designed previously."><span class="ico"><svg viewBox="0 0 24 24"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M9 7V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2"/></svg></span><span class="txt">Manage internships</span><span class="tip">Manage internships</span></button>
+      <button class="anav" data-toast="Suggestions — designed previously."><span class="ico"><svg viewBox="0 0 24 24"><path d="M12 2l7 4v6c0 5-3.5 8.5-7 10-3.5-1.5-7-5-7-10V6z"/><path d="M9 12l2 2 4-4"/></svg></span><span class="txt">Suggestions & verification</span><span class="abadge">3</span><span class="tip">Suggestions & verification</span></button>
+      <button class="anav" data-toast="Manage Users — designed later."><span class="ico"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg></span><span class="txt">Manage users</span><span class="tip">Manage users</span></button>
+      <button class="anav on"><span class="ico"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg></span><span class="txt">Add internship</span><span class="tip">Add internship</span></button>
+      <p class="eyebrow asb-lbl">System</p>
+      <button class="anav" data-toast="Settings — designed later."><span class="ico"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h0a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h0a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v0a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span><span class="txt">Settings</span><span class="tip">Settings</span></button>
+    </nav>
+    <div class="asb-acct">
+      <button class="acct" data-toast="Admin profile — designed later."><span class="av">NA</span><span class="inf"><span class="nm">Nadia Atem</span><span class="rl">Administrator</span></span><span class="tip">Admin profile</span></button>
+      <button class="alogout" data-toast="Signed out (demo)."><span class="ico"><svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5M21 12H9"/></svg></span><span class="txt">Logout</span><span class="tip">Logout</span></button>
+    </div>
+  </aside>
+  <div class="backdrop" id="backdrop"></div>
+
+  <main class="amain">
+    <header class="ahead">
+      <div>
+        <nav class="breadcrumb"><a href="#" data-toast="Manage Internships — designed previously.">Manage internships</a><svg viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg><span>New internship</span></nav>
+        <h1 class="display">Add Internship<span class="dirty-dot" id="dirtyDot" hidden></span></h1>
+        <p class="sub">Create and publish a new internship opportunity on InternHub. Students will see it as soon as you publish.</p>
+      </div>
+      <div class="ahead-r">
+        <span class="save-state" id="saveState">Not saved yet</span>
+      </div>
+    </header>
+
+    <div class="ws">
+      <!-- FORM -->
+      <form id="form" novalidate>
+        <!-- basics -->
+        <section class="fsec card" id="sec-basics">
+          <div class="fsec-head">
+            <h3>Internship basics</h3>
+            <span class="eyebrow">Required</span>
+            <svg class="fsec-chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+          </div>
+          <div class="fsec-body">
+            <div class="field span2" data-f="title">
+              <label for="fTitle">Internship title <span class="req">*</span></label>
+              <input class="input" id="fTitle" placeholder="e.g. Software Engineering Intern" maxlength="90">
+              <p class="ferr"></p>
+            </div>
+            <div class="field" data-f="company">
+              <label for="fCompany">Company <span class="req">*</span></label>
+              <input class="input" id="fCompany" placeholder="e.g. Afrimax Technologies">
+              <p class="ferr"></p>
+            </div>
+            <div class="field" data-f="category">
+              <label>Category <span class="req">*</span></label>
+              <div class="chips" id="catChips"></div>
+              <p class="ferr"></p>
+            </div>
+            <div class="field" data-f="duration">
+              <label for="fDur">Duration</label>
+              <select class="select" id="fDur">
+                <option value="">Not sure yet</option>
+                <option>1 – 2 months</option><option>3 months</option>
+                <option>4 – 5 months</option><option>6 months</option><option>6+ months</option>
+              </select>
+              <p class="ferr"></p>
+            </div>
+            <div class="field" data-f="deadline">
+              <label for="fDeadline">Application deadline</label>
+              <input class="input" type="date" id="fDeadline">
+              <p class="ferr"></p>
+            </div>
+          </div>
+        </section>
+
+        <!-- visuals -->
+        <section class="fsec card" id="sec-visual">
+          <div class="fsec-head">
+            <h3>Visuals</h3>
+            <span class="eyebrow">Image URLs only</span>
+            <svg class="fsec-chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+          </div>
+          <div class="fsec-body">
+            <div class="field span2" data-f="image">
+              <label for="fImg">Internship image URL <span class="opt">(optional)</span></label>
+              <input class="input" id="fImg" placeholder="https://…/image.jpg">
+              <p class="fhint" id="imgHint">Paste a direct link to an image. If empty, we'll use the InternHub branded cover.</p>
+            </div>
+            <div class="img-slot" id="imgSlot">
+              <div class="img-thumb" id="imgThumb"><span class="mg" id="imgMg">IH</span></div>
+              <div class="img-info"><b>Image preview</b>This is how the cover will appear on the student-facing listing. Recommended aspect: 16:9 or wider.</div>
+            </div>
+            <div class="field span2" data-f="logo">
+              <label for="fLogo">Company logo URL <span class="opt">(optional)</span></label>
+              <input class="input" id="fLogo" placeholder="https://…/logo.png">
+              <p class="fhint" id="logoHint">If empty, we'll use company initials.</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- company -->
+        <section class="fsec card" id="sec-company">
+          <div class="fsec-head">
+            <h3>Company information</h3>
+            <span class="eyebrow">Contact & web</span>
+            <svg class="fsec-chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+          </div>
+          <div class="fsec-body">
+            <div class="field" data-f="website">
+              <label for="fWeb">Company website</label>
+              <input class="input" id="fWeb" placeholder="https://company.cm">
+              <p class="fhint" id="webHint"></p>
+            </div>
+            <div class="field" data-f="phone">
+              <label for="fPhone">Phone</label>
+              <input class="input" id="fPhone" placeholder="+237 6XX XX XX XX">
+              <p class="ferr"></p>
+            </div>
+            <div class="field" data-f="email">
+              <label for="fEmail">Contact email</label>
+              <input class="input" id="fEmail" type="email" placeholder="careers@company.cm">
+              <p class="ferr"></p>
+            </div>
+          </div>
+        </section>
+
+        <!-- location & mode -->
+        <section class="fsec card" id="sec-loc">
+          <div class="fsec-head">
+            <h3>Location & work mode</h3>
+            <span class="eyebrow">Where the intern works</span>
+            <svg class="fsec-chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+          </div>
+          <div class="fsec-body">
+            <div class="field" data-f="location">
+              <label for="fLoc">City / region <span class="req">*</span></label>
+              <input class="input" id="fLoc" list="locList" placeholder="e.g. Douala">
+              <datalist id="locList"><option>Douala</option><option>Yaoundé</option><option>Buea</option><option>Limbe</option><option>Bamenda</option><option>Kribi</option><option>Remote</option></datalist>
+              <p class="ferr"></p>
+            </div>
+            <div class="field" data-f="area">
+              <label for="fArea">Specific area <span class="opt">(optional)</span></label>
+              <input class="input" id="fArea" placeholder="e.g. Bonapriso, Mile 17, Bastos">
+              <p class="ferr"></p>
+            </div>
+            <div class="field span2" data-f="mode">
+              <label>Work mode <span class="req">*</span></label>
+              <div class="seg" id="modeSeg">
+                <button type="button" data-mode="On-site"><svg viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M9 7h2m2 0h2M9 11h2m2 0h2M9 15h2m2 0h2"/></svg>On-site</button>
+                <button type="button" data-mode="Hybrid"><svg viewBox="0 0 24 24"><path d="M12 3v6m0 0a4 4 0 1 0 4 4"/><circle cx="12" cy="9" r="0"/><path d="M5 21a7 7 0 0 1 14 0"/></svg>Hybrid</button>
+                <button type="button" data-mode="Remote"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></svg>Remote</button>
+              </div>
+              <p class="ferr"></p>
+            </div>
+          </div>
+        </section>
+
+        <!-- description -->
+        <section class="fsec card" id="sec-desc">
+          <div class="fsec-head">
+            <h3>Description & requirements</h3>
+            <span class="eyebrow">What the role is</span>
+            <svg class="fsec-chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+          </div>
+          <div class="fsec-body">
+            <div class="field span2" data-f="description">
+              <label for="fDesc">Internship description <span class="req">*</span></label>
+              <textarea id="fDesc" placeholder="What will the intern work on? Which team? What will they ship?"></textarea>
+              <p class="ferr"></p>
+            </div>
+            <div class="field span2" data-f="requirements">
+              <label for="fReq">Requirements <span class="opt">(one per line)</span></label>
+              <textarea id="fReq" placeholder="e.g.&#10;CS fundamentals or a coding portfolio&#10;JavaScript or Python&#10;Available 3 days per week"></textarea>
+              <p class="ferr"></p>
+            </div>
+          </div>
+        </section>
+
+        <!-- application -->
+        <section class="fsec card" id="sec-app">
+          <div class="fsec-head">
+            <h3>Application information</h3>
+            <span class="eyebrow">Where students apply</span>
+            <svg class="fsec-chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+          </div>
+          <div class="fsec-body">
+            <div class="field" data-f="application">
+              <label for="fApp">Application URL <span class="req">*</span></label>
+              <input class="input" id="fApp" placeholder="https://company.cm/careers/intern">
+              <p class="fhint" id="appHint">Direct link where students submit their application.</p>
+            </div>
+            <div class="field" data-f="source">
+              <label for="fSource">Source / original website</label>
+              <input class="input" id="fSource" placeholder="https://…">
+              <p class="fhint" id="srcHint">Optional — the page where you found this opportunity.</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- publishing -->
+        <section class="fsec card" id="sec-pub">
+          <div class="fsec-head">
+            <h3>Publishing</h3>
+            <span class="eyebrow">Trust & placement</span>
+            <svg class="fsec-chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+          </div>
+          <div class="fsec-body">
+            <label class="sw span2" data-sw="verified">
+              <div class="info"><b>Verified internship</b><span>Students will see a trust indicator across InternHub. Only enable if you've confirmed the opportunity directly with the company.</span></div>
+              <input type="checkbox" id="fVerified">
+              <span class="track"></span>
+            </label>
+            <label class="sw span2" data-sw="featured">
+              <div class="info"><b>Featured</b><span>Give this internship stronger placement in Browse and discovery areas.</span></div>
+              <input type="checkbox" id="fFeatured">
+              <span class="track"></span>
+            </label>
+          </div>
+        </section>
+      </form>
+
+      <!-- PREVIEW -->
+      <aside class="pvcol">
+        <div class="pv-head">
+          <span class="dot"></span><span>Live student preview</span>
+          <button class="pv-toggle" id="pvToggle">Hide</button>
+        </div>
+        <article class="pv-card" id="pvCard"></article>
+      </aside>
+    </div>
+  </main>
+</div>
+
+<!-- sticky actions -->
+<div class="actions">
+  <div class="actions-left">
+    <button class="btn ghostd" id="discardBtn"><svg viewBox="0 0 24 24"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg>Discard</button>
+  </div>
+  <button class="btn ghostd" id="draftBtn"><svg viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><path d="M17 21v-8H7v8M7 3v5h8"/></svg>Save draft</button>
+  <button class="btn primary" id="publishBtn"><svg viewBox="0 0 24 24"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4z"/></svg>Publish internship</button>
+</div>
+
+<!-- confirm modals -->
+<div class="modal" id="discardModal" aria-hidden="true">
+  <div class="modal-bk" data-close></div>
+  <div class="modal-card">
+    <button class="modal-x" data-close><svg viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
+    <div class="m-body">
+      <h3>Discard this internship?</h3>
+      <p class="md">You'll lose all the information you've entered. This cannot be undone.</p>
+      <div class="m-foot"><button class="btn ghostd" data-close>Keep editing</button><button class="btn coral" id="discardConfirm">Discard</button></div>
+    </div>
+  </div>
+</div>
+<div class="modal" id="successModal" aria-hidden="true">
+  <div class="modal-bk" data-close></div>
+  <div class="modal-card">
+    <button class="modal-x" data-close><svg viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
+    <div class="m-body">
+      <div style="width:54px;height:54px;border-radius:50%;background:rgba(47,213,127,.12);display:grid;place-items:center;margin-bottom:14px;color:var(--acc)"><svg viewBox="0 0 24 24" style="width:24px;height:24px"><path d="M20 6L9 17l-5-5"/></svg></div>
+      <h3>Internship published</h3>
+      <p class="md" id="sucDesc"></p>
+      <div class="m-foot">
+        <button class="btn ghostd" data-close>Add another</button>
+        <button class="btn primary" data-toast="Manage Internships — designed previously.">Manage internships</button>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+const CATS=["Software Engineering","Data & AI","Design","Finance","Agriculture","Engineering","Health","Marketing","Business","Other"];
+const IC={tag:'<svg viewBox="0 0 24 24"><path d="M20.6 13.4L11 3H4v7l9.6 10.4a2 2 0 0 0 2.8 0l4.2-4.2a2 2 0 0 0 0-2.8z"/></svg>',clock:'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>',pin:'<svg viewBox="0 0 24 24"><path d="M20 10c0 6-8 12-8 12S4 16 4 10a8 8 0 0 1 16 0z"/><circle cx="12" cy="10" r="3"/></svg>',mode:'<svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></svg>'};
+const $=s=>document.querySelector(s);
+const esc=s=>String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+const initials=n=>String(n||"").split(/\s+/).map(w=>w[0]).join("").slice(0,2).toUpperCase()||"?";
+const fbCache={};
+function fbFor(n){if(fbCache[n])return fbCache[n];const svg='<svg xmlns="http://www.w3.org/2000/svg" width="900" height="500"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#17925a"/><stop offset="1" stop-color="#0a3d26"/></linearGradient></defs><rect width="900" height="500" fill="url(#g)"/><text x="450" y="285" font-family="Arial" font-size="150" font-weight="700" fill="rgba(255,255,255,0.35)" text-anchor="middle">'+initials(n)+"</text></svg>";return fbCache[n]="data:image/svg+xml;charset=utf-8,"+encodeURIComponent(svg);}
+
+const F={title:"",company:"",category:"",duration:"",deadline:"",img:"",logo:"",web:"",phone:"",email:"",location:"",area:"",mode:"",desc:"",req:"",app:"",source:"",verified:false,featured:false};
+const DIRTY=new Set();
+let imgState="empty"; // empty|loading|ok|bad
+
+/* ---- category chips ---- */
+$("#catChips").innerHTML=CATS.map(c=>`<button type="button" class="chip" data-cat="${esc(c)}">${esc(c)}</button>`).join("");
+$("#catChips").addEventListener("click",e=>{const b=e.target.closest("[data-cat]");if(!b)return;F.category=F.category===b.dataset.cat?"":b.dataset.cat;DIRTY.add("category");sync();markDirty();});
+
+/* ---- mode seg ---- */
+$("#modeSeg").addEventListener("click",e=>{const b=e.target.closest("[data-mode]");if(!b)return;F.mode=b.dataset.mode;DIRTY.add("mode");sync();markDirty();});
+
+/* ---- switches ---- */
+document.querySelectorAll("[data-sw]").forEach(sw=>{
+ sw.addEventListener("click",e=>{
+   if(e.target.tagName==="INPUT")return;
+   const inp=sw.querySelector("input");inp.checked=!inp.checked;
+   const k=sw.dataset.sw;F[k]=inp.checked;DIRTY.add(k);sync();markDirty();
+ });
+});
+document.querySelectorAll("[data-sw] input").forEach(inp=>{
+ inp.addEventListener("change",()=>{const k=inp.closest("[data-sw]").dataset.sw;F[k]=inp.checked;DIRTY.add(k);sync();markDirty();});
+});
+
+/* ---- inputs ---- */
+const bind=(id,key)=>{const el=$(id);el.addEventListener("input",()=>{F[key]=el.value;DIRTY.add(key);sync();markDirty();validateField(key);});};
+["fTitle:title","fCompany:company","fDur:duration","fDeadline:deadline","fLogo:logo","fWeb:web","fPhone:phone","fEmail:email","fLoc:location","fArea:area","fDesc:desc","fReq:req","fApp:app","fSource:source"].forEach(pair=>{const[i,k]=pair.split(":");bind("#"+i,k);});
+
+/* ---- image url (debounced) ---- */
+let imgT;
+$("#fImg").addEventListener("input",()=>{
+ F.img=$("#fImg").value.trim();DIRTY.add("image");markDirty();
+ const h=$("#imgHint");
+ if(!F.img){imgState="empty";h.className="fhint";h.textContent="Paste a direct link to an image. If empty, we'll use the InternHub branded cover.";renderImg();renderPreview();return;}
+ imgState="loading";h.className="fhint";h.innerHTML='<span class="spin"></span>Checking image…';
+ const th=$("#imgThumb");th.classList.add("loading");
+ clearTimeout(imgT);
+ imgT=setTimeout(()=>{
+  const t=new Image();
+  t.onload=()=>{imgState="ok";th.classList.remove("loading");h.className="fhint good";h.textContent="Image loaded — preview updated.";renderImg();renderPreview();};
+  t.onerror=()=>{imgState="bad";th.classList.remove("loading");h.className="fhint bad";h.textContent="Couldn't load that URL. We'll use the branded cover instead.";renderImg();renderPreview();};
+  t.src=F.img;
+ },450);
+});
+
+/* ---- section collapse ---- */
+document.querySelectorAll(".fsec-head").forEach(h=>h.addEventListener("click",()=>{h.parentElement.classList.toggle("collapsed");}));
+
+/* ---- dirty / save state ---- */
+let saveState="idle"; // idle|dirty|saving|saved
+function markDirty(){
+ if(!DIRTY.size)return;
+ saveState="dirty";$("#saveState").textContent="Unsaved changes";$("#saveState").className="save-state warn";$("#dirtyDot").hidden=false;
+}
+function setSaveState(s,msg){
+ saveState=s;$("#saveState").textContent=msg;
+ $("#saveState").className="save-state"+(s==="saved"?" ok":s==="saving"?" warn":"");
+ $("#dirtyDot").hidden=s!=="dirty";
+}
+$("#fDeadline").min=new Date().toISOString().split("T")[0];
+
+/* ---- sync UI from state ---- */
+function sync(){
+ document.querySelectorAll("#catChips .chip").forEach(c=>c.classList.toggle("on",c.dataset.cat===F.category));
+ document.querySelectorAll("#modeSeg button").forEach(b=>b.classList.toggle("on",b.dataset.mode===F.mode));
+ document.querySelector("[data-sw=verified] input").checked=F.verified;
+ document.querySelector("[data-sw=featured] input").checked=F.featured;
+ renderPreview();
+}
+
+/* ---- image preview ---- */
+function renderImg(){
+ const th=$("#imgThumb");
+ const mg=$("#imgMg");
+ if(imgState==="ok"&&F.img){
+   th.innerHTML=`<img src="${esc(F.img)}" alt="" onerror="this.outerHTML='<span class=\\'mg\\'>${initials(F.company||"IH")}</span>';document.getElementById('imgHint').textContent='Image failed to load — using branded cover.';">`;
+ }else{
+   th.innerHTML=`<span class="mg">${esc(initials(F.company||"IH"))}</span>`;
+ }
+}
+
+/* ---- live preview ---- */
+function renderPreview(){
+ const hasTitle=!!F.title,hasCo=!!F.company;
+ const media=(imgState==="ok"&&F.img)?`<img src="${esc(F.img)}" alt="" onerror="this.outerHTML='<div class=noimg>${initials(F.company||"IH")}</div>'">`:`<div class="noimg">${esc(initials(F.company||"IH"))}</div>`;
+ const meta=[];
+ meta.push(F.category?`<li>${IC.tag}${esc(F.category)}</li>`:`<li style="color:var(--dim)">${IC.tag}Category</li>`);
+ const loc=[F.location,F.area].filter(Boolean).join(" · ");
+ meta.push(loc?`<li>${IC.pin}${esc(loc)}</li>`:`<li style="color:var(--dim)">${IC.pin}Location</li>`);
+ meta.push(F.mode?`<li>${IC.mode}${esc(F.mode)}</li>`:`<li style="color:var(--dim)">${IC.mode}Work mode</li>`);
+ if(F.duration)meta.push(`<li>${IC.clock}${esc(F.duration)}</li>`);
+ const dl=F.deadline?new Date(F.deadline+"T00:00").toLocaleDateString("en-GB",{day:"numeric",month:"short"}):null;
+ const dead=dl?`<span class="dead">Closes ${dl}</span>`:`<span>Deadline not set</span>`;
+ const badges=`<span class="pv-badge">Just added</span>${F.verified?'<span class="pv-badge ver">Verified</span>':""}${F.featured?'<span class="pv-badge feat">Featured</span>':""}`;
+ $("#pvCard").innerHTML=`<div class="pv-media">${media}${badges}<span class="pv-av">${esc(initials(F.company||"IH"))}</span></div>
+  <div class="pv-body"><h3 class="${hasTitle?"":"ph"}">${esc(F.title||"Internship title")}</h3>
+  <p class="pv-co ${hasCo?"":"ph"}">${esc(F.company||"Company name")}${F.verified?' <span class="vcheck"><svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg></span>':""}</p>
+  <ul class="pv-meta">${meta.join("")}</ul></div>
+  <div class="pv-foot">${dead}<span style="font:500 10px var(--fm);letter-spacing:.1em;text-transform:uppercase">Admin added</span></div>`;
+}
+
+/* ---- validation ---- */
+function validateField(key){
+ const field=document.querySelector(`[data-f="${key}"]`);if(!field)return;
+ const err=field.querySelector(".ferr");if(!err)return;
+ let msg="";
+ if(key==="title"&&!F.title.trim())msg="Add an internship title.";
+ if(key==="company"&&!F.company.trim())msg="Add the company name.";
+ if(key==="category"&&!F.category)msg="Choose a category.";
+ if(key==="location"&&!F.location.trim())msg="Add a city or region.";
+ if(key==="mode"&&!F.mode)msg="Choose a work mode.";
+ if(key==="description"&&!F.desc.trim())msg="Describe the internship.";
+ if(key==="application"&&F.app&&!/^https?:\/\/.+\..+/.test(F.app))msg="URL should start with http:// or https://";
+ if(key==="application"&&!F.app.trim()&&saveState==="publishing")msg="Add where students will apply.";
+ if(key==="email"&&F.email&&!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(F.email))msg="Enter a valid email.";
+ field.classList.toggle("err",!!msg);
+ err.textContent=msg;
+ return !msg;
+}
+function validateAll(){
+ const required=["title","company","category","location","mode","description"];
+ const errs=[];required.forEach(k=>{if(!validateField(k))errs.push(k);});
+ if(F.app&&!/^https?:\/\/.+\..+/.test(F.app))errs.push("application");
+ if(F.email&&!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(F.email))errs.push("email");
+ return errs;
+}
+function focusFirstError(key){
+ const el=document.querySelector(`[data-f="${key}"]`);if(!el)return;
+ el.scrollIntoView({behavior:"smooth",block:"center"});
+ const inp=el.querySelector("input,textarea,select");if(inp)inp.focus();
+}
+
+/* ---- url hints ---- */
+$("#fApp").addEventListener("input",()=>{
+ const h=$("#appHint");
+ if(!F.app){h.className="fhint";h.textContent="Direct link where students submit their application.";return;}
+ if(/^https?:\/\/.+\..+/.test(F.app)){h.className="fhint good";h.textContent="Link looks good — students will open this to apply.";}
+ else{h.className="fhint bad";h.textContent="URL should start with http:// or https://";}
+});
+$("#fSource").addEventListener("input",()=>{
+ const h=$("#srcHint");
+ if(!F.source){h.className="fhint";h.textContent="Optional — the page where you found this opportunity.";return;}
+ if(/^https?:\/\/.+\..+/.test(F.source)){h.className="fhint good";h.textContent="Source link looks valid.";}
+ else{h.className="fhint bad";h.textContent="URL should start with http:// or https://";}
+});
+$("#fWeb").addEventListener("input",()=>{
+ const h=$("#webHint");
+ if(!F.web){h.className="fhint";h.textContent="";return;}
+ if(/^https?:\/\/.+\..+/.test(F.web)){h.className="fhint good";h.textContent="Company website looks valid.";}
+ else{h.className="fhint bad";h.textContent="URL should start with http:// or https://";}
+});
+
+/* ---- draft ---- */
+$("#draftBtn").addEventListener("click",()=>{
+ setSaveState("saving","Saving draft…");$("#draftBtn").disabled=true;
+ setTimeout(()=>{
+   setSaveState("saved","Draft saved");$("#draftBtn").disabled=false;DIRTY.clear();
+   $("#dirtyDot").hidden=true;toast("Draft saved — you can come back to it anytime.");
+ },700);
+});
+
+/* ---- publish ---- */
+$("#publishBtn").addEventListener("click",()=>{
+ setSaveState("publishing","Publishing…");
+ const errs=validateAll();
+ if(errs.length){
+   setSaveState("dirty","Unsaved changes");toast("A few required fields need attention.","err");
+   focusFirstError(errs[0]);return;
+ }
+ $("#publishBtn").disabled=true;$("#publishBtn").innerHTML='<span class="spin"></span>Publishing…';
+ setTimeout(()=>{
+   $("#publishBtn").disabled=false;$("#publishBtn").innerHTML='<svg viewBox="0 0 24 24"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4z"/></svg>Publish internship';
+   setSaveState("saved","Published");DIRTY.clear();$("#dirtyDot").hidden=true;
+   $("#sucDesc").textContent=`"${F.title}" at ${F.company} is now live across InternHub${F.verified?" with the verified trust indicator":""}${F.featured?" and featured in discovery":""}.`;
+   $("#successModal").classList.add("open");
+ },900);
+});
+
+/* ---- discard ---- */
+$("#discardBtn").addEventListener("click",()=>{
+ if(!DIRTY.size){toast("Nothing to discard yet.");return;}
+ $("#discardModal").classList.add("open");
+});
+$("#discardConfirm").addEventListener("click",()=>{
+ Object.keys(F).forEach(k=>{F[k]=typeof F[k]==="boolean"?false:"";});
+ document.querySelectorAll(".input,textarea").forEach(el=>el.value="");
+ $("#fDur").value="";$("#fVerified").checked=false;$("#fFeatured").checked=false;
+ DIRTY.clear();imgState="empty";
+ $("#imgHint").className="fhint";$("#imgHint").textContent="Paste a direct link to an image. If empty, we'll use the InternHub branded cover.";
+ $("#appHint").className="fhint";$("#appHint").textContent="Direct link where students submit their application.";
+ $("#srcHint").className="fhint";$("#srcHint").textContent="Optional — the page where you found this opportunity.";
+ $("#webHint").className="fhint";$("#webHint").textContent="";
+ $("#logoHint").className="fhint";$("#logoHint").textContent="If empty, we'll use company initials.";
+ document.querySelectorAll(".field.err").forEach(f=>f.classList.remove("err"));
+ closeModal();setSaveState("idle","Not saved yet");sync();renderImg();toast("Discarded — start fresh.");
+});
+
+/* ---- modals / toast / preview toggle ---- */
+function closeModal(){document.querySelectorAll(".modal").forEach(m=>{m.classList.remove("open");m.setAttribute("aria-hidden","true");});}
+document.querySelectorAll("[data-close]").forEach(el=>el.addEventListener("click",closeModal));
+document.querySelectorAll("[data-toast]").forEach(b=>b.addEventListener("click",()=>toast(b.dataset.toast)));
+let toastT;function toast(m,type){const t=$("#toast");t.textContent=m;t.className="toast show"+(type==="err"?" err":"");clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove("show"),2800);}
+$("#pvToggle").addEventListener("click",()=>{
+ const c=$(".pvcol");const h=c.style.display==="none";
+ c.style.display=h?"":"none";$("#pvToggle").textContent=h?"Hide":"Preview";
+});
+/* beforeunload */
+window.addEventListener("beforeunload",e=>{
+ if(DIRTY.size){e.preventDefault();e.returnValue="";}
+});
+
+/* ---- sidebar ---- */
+const mqMob=matchMedia("(max-width:960px)");
+$("#asbToggle").addEventListener("click",()=>{mqMob.matches?document.body.classList.toggle("asb-open"):document.body.classList.toggle("asb-collapsed");});
+$("#backdrop").addEventListener("click",()=>document.body.classList.remove("asb-open"));
+document.addEventListener("keydown",e=>{if(e.key==="Escape")closeModal();});
+
+/* ---- init skeletons ---- */
+document.querySelectorAll(".fsec").forEach(s=>{
+ const body=s.querySelector(".fsec-body");if(!body)return;
+ // no skeleton; form renders empty state immediately
+});
+sync();renderImg();
+</script>
+</body>
+</html>

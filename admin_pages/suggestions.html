@@ -1,0 +1,883 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Admin · Suggestions &amp; verification · InternHub</title>
+<meta name="robots" content="noindex">
+<link rel="icon" href="../favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/css/ui.css">
+<link rel="stylesheet" href="../assets/css/app.css">
+</head>
+<body data-app="admin" data-nav="suggestions">
+<div id="view">
+
+  <header class="ahead">
+    <div>
+      <nav class="breadcrumb" aria-label="Breadcrumb">
+        <a href="dashboard.html">Admin</a>
+        <svg width="12" height="12" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
+        <span>Suggestions</span>
+      </nav>
+      <h1>Suggestions &amp; verification</h1>
+      <p class="sub">Review what students found, confirm the source and publish it as a verified listing.<span class="mono" id="queueLine"></span></p>
+    </div>
+    <div class="ahead-r">
+      <span class="sum pending" id="sumPending">— pending</span>
+      <span class="sum verified" id="sumVerified">— verified</span>
+      <span class="sum rejected" id="sumRejected">— declined</span>
+    </div>
+  </header>
+
+  <div class="ws">
+    <!-- queue -->
+    <aside class="card qcol" aria-label="Suggestion queue">
+      <div class="q-head">
+        <div class="searchbox">
+          <svg width="15" height="15" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+          <input id="qSearch" type="search" placeholder="Search title, company, city… (press /)" autocomplete="off" aria-label="Search suggestions">
+          <button type="button" class="s-clear" id="sClear" hidden aria-label="Clear search">
+            <svg width="11" height="11" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>
+          </button>
+        </div>
+        <button type="button" class="icon-btn filter-btn" id="qFilterBtn" aria-expanded="false" aria-controls="qFilter" aria-label="Open queue filters">
+          <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M7 12h10M10 18h4"/></svg>
+          <span class="fbadge" id="qFBadge" hidden>0</span>
+        </button>
+      </div>
+      <div class="qfilter" id="qFilter">
+        <div class="qf-row"><span class="eyebrow">Field</span><div class="pillrow" id="fField"></div></div>
+        <div class="qf-row"><span class="eyebrow">Category</span><div class="pillrow" id="fCat"></div></div>
+        <div class="qf-row"><span class="eyebrow">Location</span><div class="pillrow" id="fCity"></div></div>
+        <div class="qf-row"><span class="eyebrow">Work mode</span><div class="pillrow" id="fMode"></div></div>
+        <div class="qf-row"><span class="eyebrow">Flags</span><div class="pillrow">
+          <button type="button" class="pill" data-flag="dup">Potential duplicate</button>
+          <button type="button" class="pill" data-flag="incomplete">Missing details</button>
+        </div></div>
+        <div class="qf-foot"><button type="button" class="linklike" id="qFClear">Clear filters</button></div>
+      </div>
+      <div class="qtabs" id="qTabs" role="group" aria-label="Filter by review state"></div>
+      <div class="qlist" id="qList"></div>
+    </aside>
+
+    <!-- review -->
+    <section class="rcol">
+      <button type="button" class="back-btn" id="backBtn">
+        <svg width="15" height="15" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12H4m6-6-6 6 6 6"/></svg>Back to queue</button>
+      <div class="card" id="reviewBody"></div>
+    </section>
+
+    <!-- verify -->
+    <aside class="vcol" id="vcol" aria-label="Verification"></aside>
+  </div>
+
+  <!-- decline modal (reject / duplicate / needs changes) -->
+  <div class="modal-backdrop" id="rejectModal" hidden>
+    <div class="modal modal-sm" role="dialog" aria-modal="true" aria-labelledby="rjTitle">
+      <h3 class="modal-title" id="rjTitle">Reject suggestion</h3>
+      <p class="modal-msg" id="rjDesc"></p>
+      <span class="eyebrow" style="display:block;margin-top:18px">Reason</span>
+      <div class="pillrow reason-row" id="rjReasons"></div>
+      <div class="field"><label for="rjNote">Note to student</label>
+        <textarea class="textarea" id="rjNote" placeholder="Say what should be corrected for a future submission…"></textarea>
+        <span class="hint">The student who suggested this is notified with the reason and this note.</span></div>
+      <div class="m-foot">
+        <button type="button" class="btn btn-ghost" data-close>Cancel</button>
+        <button type="button" class="btn btn-amber" id="rjConfirm">Reject suggestion</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- delete modal -->
+  <div class="modal-backdrop" id="deleteModal" hidden>
+    <div class="modal modal-sm" role="dialog" aria-modal="true" aria-labelledby="dmTitle">
+      <h3 class="modal-title" id="dmTitle">Delete this suggestion?</h3>
+      <p class="modal-msg" id="dmDesc"></p>
+      <div class="m-foot">
+        <button type="button" class="btn btn-ghost" data-close>Cancel</button>
+        <button type="button" class="btn btn-coral" id="dmConfirm">Delete permanently</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- compare modal -->
+  <div class="modal-backdrop" id="compareModal" hidden>
+    <div class="modal modal--wide" role="dialog" aria-modal="true" aria-labelledby="cmpTitle">
+      <h3 class="modal-title" id="cmpTitle">Compare with an existing listing</h3>
+      <p class="modal-msg" id="cmpDesc"></p>
+      <div style="margin-top:18px;overflow-x:auto"><table class="cmp" id="cmpBody"></table></div>
+      <div class="m-foot">
+        <button type="button" class="btn btn-ghost" data-close>Close</button>
+        <button type="button" class="btn btn-amber" id="cmpDuplicate">Mark as duplicate</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- edit drawer -->
+  <div class="drawer-backdrop" id="edScrim" hidden></div>
+  <aside class="drawer drawer--form" id="editDrawer" role="dialog" aria-modal="true" aria-labelledby="edTitle" hidden>
+    <div class="drawer-head">
+      <h2 id="edTitle">Edit before verifying</h2>
+      <button type="button" class="icon-btn" data-ed-close aria-label="Close">
+        <svg width="15" height="15" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>
+      </button>
+    </div>
+    <div class="drawer-body">
+      <div class="fsec"><span class="eyebrow">The listing</span>
+        <div class="field"><label for="eTitle">Internship title</label><input class="input" id="eTitle" autocomplete="off"></div>
+        <div class="field"><label for="eCompany">Company</label><input class="input" id="eCompany" autocomplete="off"></div>
+        <div class="grid-2">
+          <div class="field"><label for="eField">Field</label><select class="select" id="eField"></select></div>
+          <div class="field"><label for="eCat">Category</label><select class="select" id="eCat"></select></div>
+        </div>
+      </div>
+      <div class="fsec"><span class="eyebrow">Placement</span>
+        <div class="grid-2">
+          <div class="field"><label for="eCity">Location</label><select class="select" id="eCity"></select></div>
+          <div class="field"><label for="eArea">Specific area</label><input class="input" id="eArea" placeholder="e.g. Mile 17" autocomplete="off"></div>
+        </div>
+        <div class="grid-2">
+          <div class="field"><label for="eMode">Work mode</label><select class="select" id="eMode"></select></div>
+          <div class="field"><label for="eDeadline">Application deadline</label><input class="input" type="date" id="eDeadline"></div>
+        </div>
+        <div class="grid-2">
+          <div class="field"><label for="eDur">Duration</label><input class="input" id="eDur" placeholder="e.g. 3 months" autocomplete="off"></div>
+          <div class="field"><label for="eStipend">Stipend</label><input class="input" id="eStipend" placeholder="e.g. 120,000 FCFA / month" autocomplete="off"></div>
+        </div>
+      </div>
+      <div class="fsec"><span class="eyebrow">Links &amp; contact</span>
+        <div class="field"><label for="eApp">Application URL</label><input class="input" type="url" id="eApp" placeholder="https://…" autocomplete="off"></div>
+        <div class="field"><label for="eSrc">Source URL (where the student found it)</label><input class="input" type="url" id="eSrc" placeholder="https://…" autocomplete="off"></div>
+        <div class="field"><label for="eImg">Image URL</label><input class="input" type="url" id="eImg" placeholder="https://…/poster.jpg" autocomplete="off"></div>
+        <div class="grid-2">
+          <div class="field"><label for="eEmail">Contact email</label><input class="input" id="eEmail" autocomplete="off"></div>
+          <div class="field"><label for="ePhone">Contact phone</label><input class="input" id="ePhone" autocomplete="off"></div>
+        </div>
+      </div>
+      <div class="fsec"><span class="eyebrow">Content</span>
+        <div class="field"><label for="eDesc">Description</label><textarea class="textarea" id="eDesc"></textarea></div>
+        <div class="field"><label for="eReq">Requirements</label><textarea class="textarea" id="eReq" placeholder="One per line"></textarea>
+          <span class="hint">One per line. These are published with the listing.</span></div>
+      </div>
+    </div>
+    <div class="drawer-foot">
+      <button type="button" class="btn btn-ghost" data-ed-close>Cancel</button>
+      <button type="button" class="btn btn-primary" id="eSave">Save changes</button>
+    </div>
+  </aside>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+<script src="../assets/js/firebase-config.js"></script>
+<script src="../assets/js/lib/ui.js"></script>
+<script src="../assets/js/services/platform.js"></script>
+<script src="../assets/js/services/auth.js"></script>
+<script src="../assets/js/services/internships.js"></script>
+<script src="../assets/js/services/suggestions.js"></script>
+<script src="../assets/js/services/notifications.js"></script>
+<script src="../assets/js/services/users.js"></script>
+<script src="../assets/js/lib/notify-ui.js"></script>
+<script src="../assets/js/lib/shell.js"></script>
+<script src="../assets/js/lib/router.js"></script>
+<script>
+window.onReady(async function () {
+  if (!(await Auth.requireAdmin())) return;
+
+  const $ = (s) => document.querySelector(s);
+  const qList = $('#qList'), reviewBody = $('#reviewBody'), vcol = $('#vcol');
+  const CHECKS = [
+    'Source link opens and matches the company',
+    'Company and contact details look reasonable',
+    'Listing information is complete enough to publish',
+    'No signs of scam, spam or misleading claims'
+  ];
+  const STATUS = {
+    pending: ['Pending', 'st-pending'], approved: ['Draft made', 'st-draft'],
+    'needs-changes': ['Needs changes', 'st-needs'], verified: ['Verified', 'st-verified'],
+    rejected: ['Rejected', 'st-rejected'], duplicate: ['Duplicate', 'st-rejected']
+  };
+  const MODES = {
+    rejected: {
+      title: 'Reject suggestion', confirm: 'Reject suggestion', btn: 'btn-amber',
+      desc: (s) => `Reject “${s.title || 'this suggestion'}” from ${s.company || 'an unknown company'}? The student is notified and sees the reason you choose.`,
+      reasons: ['Insufficient information', 'Invalid source', 'Expired opportunity', 'Not relevant', 'Other']
+    },
+    duplicate: {
+      title: 'Mark as duplicate', confirm: 'Mark as duplicate', btn: 'btn-amber',
+      desc: (s) => `Mark “${s.title || 'this suggestion'}” as a duplicate? The student is notified that it is already on InternHub.`,
+      reasons: ['Already listed on InternHub', 'Submitted more than once', 'Same role, different wording']
+    },
+    'needs-changes': {
+      title: 'Ask for changes', confirm: 'Send back', btn: 'btn-primary',
+      desc: (s) => `Send “${s.title || 'this suggestion'}” back to ${s.submittedByName || 'the student'} with a note? It stays out of the published listings until they respond.`,
+      reasons: ['Missing application link', 'Incomplete details', 'Deadline has passed', 'Contact unclear']
+    }
+  };
+
+  const st = {
+    tab: 'pending', q: '', fields: new Set(), cats: new Set(), cities: new Set(), modes: new Set(),
+    dupOnly: false, incOnly: false, sel: null, checks: new Set(), busy: false, advanceTimer: 0
+  };
+  let ALL = [], INTERN = [], DUP = {};
+  const me = (Auth.profile || {}).uid;
+
+  /* ---------- helpers ---------- */
+  const cur = () => ALL.find((s) => s.id === st.sel) || null;
+  const slug = (v) => String(v || '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+  const dash = (v) => (v ? v : '—');
+  /** "just now" / "3 Sep" — or '' so a reviewed note never reads "Rejected —." */
+  const when = (v) => UI.timeAgo(v) || (UI.toDate(v) ? UI.fmtDate(v) : '');
+  const host = (u) => String(u || '').replace(/^https?:\/\//i, '').replace(/^www\./, '').split('/')[0];
+  const label = (s) => (STATUS[s] || STATUS.pending)[0];
+  const badge = (s) => `<span class="status ${STATUS[s] ? STATUS[s][1] : 'st-pending'}">${label(s)}</span>`;
+  const emptyState = (icon, cls, title, msg, cta = '') =>
+    `<div class="empty"><span class="e-ico${cls ? ' ' + cls : ''}">${UI.icon(icon, 22)}</span><h3>${title}</h3><p>${msg}</p>${cta}</div>`;
+  const urlOf = (u) => UI.safeUrl(u);
+  const dstr = (v) => {
+    const d = UI.toDate(v);
+    if (!d) return '';
+    const p = (n) => String(n).padStart(2, '0');
+    return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+  };
+  const reqLines = (s) => String(s || '').split(/\r?\n|;|\s•\s/).map((x) => x.trim()).filter(Boolean);
+
+  /** What a student left out — drives the warning block and the "missing details" flag. */
+  function missing(s) {
+    const m = [];
+    if (!s.company) m.push('company');
+    if (!urlOf(s.applicationUrl) && !urlOf(s.sourceUrl)) m.push('a working application link');
+    if (!s.deadline) m.push('deadline');
+    if (!s.duration) m.push('duration');
+    if (!s.category) m.push('category');
+    if (!s.image) m.push('image');
+    if (!s.notes) m.push('description');
+    return m;
+  }
+  function deadlinePassed(s) {
+    const d = UI.daysUntil(s.deadline);
+    return d !== null && d < 0;
+  }
+
+  /**
+   * Duplicates are never stored on a suggestion — they are derived by
+   * comparing each suggestion against the internships already on InternHub.
+   * The listing published from this suggestion doesn't count as its own duplicate.
+   */
+  function computeDups() {
+    DUP = {};
+    if (!INTERN.length) return;
+    ALL.forEach((s) => {
+      const others = INTERN.filter((x) => x.id !== s.internshipId);
+      const t = slug(s.title), c = slug(s.company);
+      if (t && c) {
+        const hit = others.find((x) => slug(x.title) === t && slug(x.company) === c);
+        if (hit) { DUP[s.id] = hit; return; }
+      }
+      const au = String(s.applicationUrl || '').trim().toLowerCase().replace(/\/+$/, '');
+      if (au.length > 8) {
+        const hit = others.find((x) => String(x.applicationUrl || '').trim().toLowerCase().replace(/\/+$/, '') === au);
+        if (hit) DUP[s.id] = hit;
+      }
+    });
+  }
+
+  /* ---------- summary + tabs ---------- */
+  function counts() {
+    const c = { pending: 0, verified: 0, declined: 0, reviewed: 0 };
+    ALL.forEach((s) => {
+      if (s.status === 'pending') c.pending++; else c.reviewed++;
+      if (s.status === 'verified') c.verified++;
+      if (s.status === 'rejected' || s.status === 'duplicate') c.declined++;
+    });
+    return c;
+  }
+  function renderSummary() {
+    const c = counts();
+    $('#sumPending').innerHTML = `<b>${c.pending}</b> pending`;
+    $('#sumVerified').innerHTML = `<b>${c.verified}</b> verified`;
+    $('#sumRejected').innerHTML = `<b>${c.declined}</b> declined`;
+    $('#queueLine').textContent = ALL.length ? `${ALL.length} submitted` : '';
+    const tabs = [['pending', 'Pending', c.pending], ['reviewed', 'Reviewed', c.reviewed], ['all', 'All', ALL.length]];
+    $('#qTabs').innerHTML = tabs.map(([k, lb, n]) =>
+      `<button type="button" class="qtab${st.tab === k ? ' is-on' : ''}" data-tab="${k}" aria-pressed="${st.tab === k}">${lb}<b>${n}</b></button>`).join('');
+  }
+
+  /* ---------- queue ---------- */
+  function visible() {
+    const q = st.q.toLowerCase();
+    return ALL.filter((s) => {
+      if (st.tab === 'pending' && s.status !== 'pending') return false;
+      if (st.tab === 'reviewed' && s.status === 'pending') return false;
+      if (st.fields.size && !st.fields.has(s.field)) return false;
+      if (st.cats.size && !st.cats.has(s.category)) return false;
+      if (st.cities.size && !st.cities.has(s.city)) return false;
+      if (st.modes.size && !st.modes.has(s.workMode)) return false;
+      if (st.dupOnly && !DUP[s.id]) return false;
+      if (st.incOnly && !missing(s).length) return false;
+      if (q && !`${s.title} ${s.company} ${s.city} ${s.field} ${s.category} ${s.submittedByName}`.toLowerCase().includes(q)) return false;
+      return true;
+    }).sort((a, b) => (UI.toDate(a.createdAt) || 0) - (UI.toDate(b.createdAt) || 0));
+  }
+  function filterCount() {
+    return st.fields.size + st.cats.size + st.cities.size + st.modes.size + (st.dupOnly ? 1 : 0) + (st.incOnly ? 1 : 0);
+  }
+  function renderFilterOptions() {
+    const uniq = (key) => [...new Set(ALL.map((s) => s[key]).filter(Boolean))].sort();
+    const merge = (cfgKey, values) => [...new Set([...(Settings.data[cfgKey] || []), ...values])];
+    const pills = (attr, list) => list.map((v) =>
+      `<button type="button" class="pill" data-${attr}="${UI.esc(v)}">${UI.esc(v)}</button>`).join('');
+    $('#fField').innerHTML = pills('field', merge('fields', uniq('field')));
+    $('#fCat').innerHTML = pills('cat', merge('categories', uniq('category')));
+    $('#fCity').innerHTML = pills('city', merge('locations', uniq('city')));
+    $('#fMode').innerHTML = pills('mode', merge('workModes', uniq('workMode')));
+    syncPills();
+  }
+  function syncPills() {
+    [['field', 'fields'], ['cat', 'cats'], ['city', 'cities'], ['mode', 'modes']].forEach(([attr, key]) => {
+      document.querySelectorAll(`#qFilter [data-${attr}]`).forEach((b) => b.classList.toggle('is-on', st[key].has(b.dataset[attr])));
+    });
+    document.querySelectorAll('#qFilter [data-flag]').forEach((b) => {
+      const on = b.dataset.flag === 'dup' ? st.dupOnly : st.incOnly;
+      b.classList.toggle('is-on', on);
+    });
+    const n = filterCount(), badgeEl = $('#qFBadge');
+    badgeEl.textContent = n;
+    badgeEl.hidden = !n;
+  }
+  function renderQueue() {
+    const list = visible();
+    if (!list.length) {
+      const filtered = st.q || filterCount() || st.tab !== 'all';
+      qList.innerHTML = `<div class="q-empty">${UI.icon(filtered ? 'search' : 'inbox', 21)}<p>${
+        filtered ? 'No suggestions match this view.' : 'Nothing in this view right now.'}</p></div>`;
+      return;
+    }
+    qList.innerHTML = list.map((s, i) => {
+      const ini = UI.initials(s.company || s.title);
+      return `<button type="button" class="qitem${st.sel === s.id ? ' is-on' : ''}" data-qid="${UI.esc(s.id)}" style="animation-delay:${Math.min(i, 10) * 30}ms" aria-pressed="${st.sel === s.id}">
+        <span class="q-thumb">${UI.esc(ini)}${s.image ? `<img src="${UI.esc(s.image)}" alt="" loading="lazy" onerror="this.remove()">` : ''}</span>
+        <span class="q-main"><b>${UI.esc(s.title || 'Untitled suggestion')}</b>
+          <span>${UI.esc(dash(s.company))}${s.city ? ' · ' + UI.esc(s.city) : ''}</span></span>
+        ${DUP[s.id] ? `<span class="q-flag" title="Potential duplicate of a listing already on InternHub">${UI.icon('copy', 9)}</span>` : ''}
+        <span class="q-side"><time>${UI.esc(UI.timeAgo(s.createdAt) || '—')}</time>
+          <span class="q-dot ${UI.esc(s.status || 'pending')}" title="${UI.esc(label(s.status))}"></span></span></button>`;
+    }).join('');
+  }
+
+  /* ---------- review panel ---------- */
+  function renderReview() {
+    const s = cur();
+    if (!s) {
+      reviewBody.innerHTML = emptyState('shield', '', ALL.length ? 'Select a suggestion' : 'You’re all caught up', ALL.length
+        ? 'Pick a suggestion from the queue to start reviewing it.'
+        : 'There are currently no internship suggestions waiting for review. New student submissions appear in the queue on the left.');
+      return;
+    }
+    const miss = missing(s);
+    const ini = UI.initials(s.company || s.title);
+    const media = `<div class="rv-media"><span class="noimg">${UI.esc(ini)}</span>${
+      s.image ? `<img src="${UI.esc(s.image)}" alt="" onerror="this.remove()">` : ''}
+      <div class="rv-status">${badge(s.status)}${DUP[s.id] ? '<span class="status st-needs">Potential duplicate</span>' : ''}</div></div>`;
+    const chips = [s.field, [s.city, s.area].filter(Boolean).join(' · '), s.workMode, s.duration, s.category]
+      .filter(Boolean).map((v) => `<span class="mchip">${UI.esc(v)}</span>`);
+    if (s.deadline) chips.push(`<span class="mchip">Deadline ${UI.esc(UI.fmtDate(s.deadline, false))}</span>`);
+    const links = [
+      urlOf(s.sourceUrl) && ['Source the student found', host(s.sourceUrl), urlOf(s.sourceUrl), 'send'],
+      urlOf(s.applicationUrl) && ['Application link', host(s.applicationUrl), urlOf(s.applicationUrl), 'external'],
+      urlOf(s.image) && ['Suggested image', host(s.image), urlOf(s.image), 'image'],
+      s.contactEmail && ['Contact email', s.contactEmail, `mailto:${s.contactEmail}`, 'mail'],
+      s.contactPhone && ['Contact phone', s.contactPhone, `tel:${s.contactPhone.replace(/[^\d+]/g, '')}`, 'phone']
+    ].filter(Boolean);
+    const req = reqLines(s.requirements);
+    const who = s.submittedByName || s.submittedByEmail || (s.submittedBy === 'anonymous' ? 'an anonymous student' : 'a student');
+    reviewBody.innerHTML = `${media}
+      <div class="rv-head"><h2>${UI.esc(s.title || 'Untitled suggestion')}</h2>
+        <p class="rv-co">${UI.esc(dash(s.company))}${s.status === 'verified' ? `<span class="vcheck">${UI.icon('check', 9)}</span>verified listing` : ''}</p>
+        ${chips.length ? `<div class="rv-meta">${chips.join('')}</div>` : ''}</div>
+      ${(miss.length || deadlinePassed(s)) && s.status === 'pending' ? `<div class="rv-sec"><div class="miss">${UI.icon('alert', 15)}<span>${
+        miss.length ? `<b>Incomplete submission</b> — missing ${miss.join(', ')}. Add them with “Edit before verifying”.` : ''}${
+        miss.length && deadlinePassed(s) ? '<br>' : ''}${
+        deadlinePassed(s) ? `<b>Deadline passed</b> — it closed ${UI.esc(UI.fmtDate(s.deadline, false))}.` : ''}</span></div></div>` : ''}
+      <div class="rv-sec"><span class="eyebrow">Description</span>
+        <p class="rv-desc">${s.notes ? UI.esc(s.notes) : 'No description provided.'}</p></div>
+      ${req.length ? `<div class="rv-sec"><span class="eyebrow">Requirements</span><ul class="rv-req">${
+        req.map((r) => `<li>${UI.icon('check', 13)}${UI.esc(r)}</li>`).join('')}</ul></div>` : ''}
+      <div class="rv-sec"><span class="eyebrow">Links &amp; contact</span>${links.length ? links.map((l) =>
+        `<a class="lrow" href="${UI.esc(l[2])}" target="_blank" rel="noopener noreferrer"><span class="lico">${UI.icon(l[3], 14)}</span>
+          <span class="lt"><span class="eyebrow">${UI.esc(l[0])}</span><b>${UI.esc(l[1])}</b></span>
+          <span class="ext">${UI.icon('external', 13)}</span></a>`).join('')
+        : '<p class="rv-desc">No links or contact details were provided with this suggestion.</p>'}</div>
+      <div class="rv-sec"><span class="eyebrow">Submission</span>
+        <div class="subrow"><span class="av">${UI.esc(UI.initials(who))}</span>
+          <span class="who"><b>Submitted by ${UI.esc(who)}</b>
+            <span>${UI.esc(UI.timeAgo(s.createdAt) || '—')} · ${UI.esc(s.whereFound ? 'found via ' + s.whereFound : 'student suggestion')} · ID #${UI.esc(s.id.slice(0, 6).toUpperCase())}</span></span>
+          ${s.reviewNotes ? badge(s.status) : ''}</div>
+        ${s.reviewNotes ? `<p class="rv-desc" style="margin-top:11px">Your note: ${UI.esc(s.reviewNotes)}</p>` : ''}</div>`;
+  }
+
+  /* ---------- verify panel ---------- */
+  function renderVerify() {
+    const s = cur();
+    if (!s) {
+      vcol.innerHTML = '<div class="card vcard"><p class="v-note" style="margin:0">Select a suggestion from the queue to begin reviewing it.</p></div>';
+      return;
+    }
+    const done = CHECKS.filter((_, i) => st.checks.has(i)).length;
+    const dup = DUP[s.id];
+    const more = `<div class="u-menu">
+      <button type="button" class="btn btn-ghost" aria-haspopup="true">${UI.icon('more', 15, true)}More actions</button>
+      <div class="u-menu-pop" style="width:222px">
+        <button type="button" class="u-menu-item" data-vact="draft">${UI.icon('file', 14)}Send to internship drafts</button>
+        <hr class="u-menu-sep">
+        <button type="button" class="u-menu-item warn" data-vact="changes">${UI.icon('refresh', 14)}Ask for changes</button>
+        <button type="button" class="u-menu-item warn" data-vact="duplicate">${UI.icon('copy', 14)}Mark as duplicate</button>
+        <hr class="u-menu-sep">
+        <button type="button" class="u-menu-item" data-vact="source">${UI.icon('external', 14)}Open the source page</button>
+      </div></div>`;
+    let html = `<div class="card vcard"><h3>${UI.icon('shield', 15)}Verification</h3>
+      <div class="vprog"><div class="bar"><i style="width:${(done / CHECKS.length) * 100}%"></i></div>
+        <p>${done} of ${CHECKS.length} checks complete</p></div>
+      ${CHECKS.map((c, i) => `<label class="vchk"><input type="checkbox" data-chk="${i}"${st.checks.has(i) ? ' checked' : ''}>
+        <span class="box"></span><span class="lb">${UI.esc(c)}</span></label>`).join('')}`;
+    if (dup) html += `<div class="dupcard"><div class="dt">${UI.icon('copy', 15)}<span><b>Potential duplicate</b>
+        <em>“${UI.esc(dup.title)}” at ${UI.esc(dup.company)} is already on InternHub.</em></span></div>
+        <button type="button" class="btn btn-amber btn-sm" data-vact="compare">Compare listings</button></div>`;
+    if (s.status === 'pending') {
+      html += `<div class="v-actions">
+        <button type="button" class="btn btn-primary" data-vact="verify">${UI.icon('check', 15)}Verify &amp; publish</button>
+        <button type="button" class="btn btn-ghost" data-vact="edit">${UI.icon('pencil', 15)}Edit before verifying</button>
+        ${more}
+        <div class="v-row"><button type="button" class="btn btn-amber" data-vact="reject">Reject</button>
+          <button type="button" class="btn btn-coral" data-vact="delete">Delete</button></div></div>
+        <div class="kbd-hints"><span><span class="kbd">V</span>verify</span><span><span class="kbd">E</span>edit</span><span><span class="kbd">N</span>next</span></div>`;
+    } else if (s.status === 'verified') {
+      html += `<div class="v-note"><b>Verified${when(s.reviewedAt) ? ' ' + UI.esc(when(s.reviewedAt)) : ''}${s.reviewedBy === me ? ' by you' : ''}.</b>
+        It is now live as a verified listing.${s.internshipId ? ` <a href="${H('admin_pages/internship-editor.html')}?id=${encodeURIComponent(s.internshipId)}">Open in the editor</a>.` : ''}</div>
+        <div class="v-actions"><button type="button" class="btn btn-ghost" data-vact="reopen">${UI.icon('refresh', 15)}Reopen review</button>
+        <button type="button" class="btn btn-primary" data-vact="next">Review next →</button></div>`;
+    } else {
+      html += `<div class="v-note"><b>${label(s.status)}${when(s.reviewedAt) ? ' ' + UI.esc(when(s.reviewedAt)) : ''}.</b> ${
+        UI.esc(s.reviewNotes || 'No reason was recorded.')}</div>
+        <div class="v-actions">${more}
+        <button type="button" class="btn btn-ghost" data-vact="reopen">${UI.icon('refresh', 15)}Reopen review</button>
+        <button type="button" class="btn btn-primary" data-vact="next">Review next →</button></div>`;
+    }
+    vcol.innerHTML = html + '</div>';
+  }
+
+  /** Keep the panel in sync when a tab/search/filter change hides the selection. */
+  function selectVisible() {
+    const list = visible();
+    if (!list.some((s) => s.id === st.sel)) st.sel = list.length ? list[0].id : null;
+  }
+  function renderView() {
+    selectVisible();
+    renderQueue(); renderReview(); renderVerify();
+  }
+  function renderAll() {
+    renderSummary(); renderFilterOptions(); renderView();
+  }
+
+  /* ---------- data ---------- */
+  async function reloadData() {
+    ALL = await Suggestions.list(null, 500);
+    INTERN = await Internships.all(500);
+    computeDups();
+    Shell.syncPendingBadge();
+  }
+
+  /** Applies the reviewed state locally, then resyncs and moves to the next item. */
+  async function afterReview(id, picked, patch) {
+    const s = ALL.find((x) => x.id === id);
+    if (s) Object.assign(s, patch);
+    st.checks = new Set();
+    renderAll();
+    clearTimeout(st.advanceTimer);
+    st.advanceTimer = setTimeout(async () => {
+      await reloadData();
+      const n = visible();
+      st.sel = picked && n.some((x) => x.id === picked) ? picked : (n.length ? n[0].id : null);
+      renderAll();
+    }, 900);
+  }
+  function nextPendingId(excludeId) {
+    const list = visible().filter((s) => s.status === 'pending' && s.id !== excludeId);
+    return list.length ? list[0].id : null;
+  }
+  function advanceNow() {
+    const list = visible().filter((s) => s.id !== st.sel);
+    st.sel = list.length ? list[0].id : null;
+    st.checks = new Set();
+    renderView();
+    if (st.sel && window.matchMedia('(max-width:960px)').matches) document.body.classList.add('review-open');
+  }
+
+  /* ---------- actions ---------- */
+  async function doVerify(btn) {
+    const s = cur();
+    if (!s || st.busy) return;
+    if (!s.title || !s.company) { UI.toast('Add a title and company before publishing.', 'error'); openEdit(); return; }
+    const ok = await UI.confirm({
+      title: 'Verify & publish?',
+      message: `“${s.title}” becomes a live, verified listing and the student who suggested it is notified.`,
+      confirmLabel: 'Publish'
+    });
+    if (!ok) return;
+    const id = s.id, picked = nextPendingId(id);
+    st.busy = true; if (btn) btn.classList.add('is-loading');
+    const res = await Suggestions.verifyAndPublish(id, {});
+    st.busy = false; if (btn) btn.classList.remove('is-loading');
+    if (!res || !res.ok) { UI.toast((res && res.error) || 'Publishing failed.', 'error'); return; }
+    UI.toast('Published as a verified listing.');
+    await afterReview(id, picked, { status: 'verified', internshipId: res.id, reviewedAt: new Date(), reviewedBy: me, reviewNotes: '' });
+  }
+
+  const declineModal = $('#rejectModal');
+  let declineMode = 'rejected', declineReason = '';
+  function openDecline(mode) {
+    const s = cur(); if (!s) return;
+    const m = MODES[mode];
+    declineMode = mode; declineReason = '';
+    $('#rjTitle').textContent = m.title;
+    $('#rjDesc').textContent = m.desc(s);
+    $('#rjReasons').innerHTML = m.reasons.map((r) => `<button type="button" class="pill" data-r="${UI.esc(r)}">${UI.esc(r)}</button>`).join('');
+    $('#rjNote').value = '';
+    const c = $('#rjConfirm');
+    c.textContent = m.confirm;
+    c.className = `btn ${m.btn}`;
+    openLayer(declineModal);
+  }
+  async function confirmDecline() {
+    const s = cur(); if (!s || st.busy) return;
+    const reason = declineReason || MODES[declineMode].reasons[0];
+    const note = $('#rjNote').value.trim();
+    const id = s.id, picked = nextPendingId(id);
+    st.busy = true; $('#rjConfirm').classList.add('is-loading');
+    const res = await Suggestions.setStatus(id, declineMode, [reason, note].filter(Boolean).join(' — '));
+    st.busy = false; $('#rjConfirm').classList.remove('is-loading');
+    if (!res || !res.ok) { UI.toast((res && res.error) || 'Update failed.', 'error'); return; }
+    closeLayer(declineModal);
+    UI.toast(declineMode === 'rejected' ? 'Suggestion rejected and student notified.' : 'Suggestion updated and student notified.');
+    await afterReview(id, picked, { status: declineMode, reviewNotes: [reason, note].filter(Boolean).join(' — '), reviewedAt: new Date(), reviewedBy: me });
+  }
+
+  const deleteModal = $('#deleteModal');
+  function openDelete() {
+    const s = cur(); if (!s) return;
+    $('#dmDesc').innerHTML = `This permanently removes “${UI.esc(s.title || 'this suggestion')}” from ${UI.esc(s.company || '—')} from the suggestion queue. Use it only for spam, scams or irrelevant submissions — the student is not notified.`;
+    openLayer(deleteModal);
+  }
+  async function confirmDelete() {
+    const s = cur(); if (!s || st.busy) return;
+    const id = s.id, picked = nextPendingId(id);
+    st.busy = true; $('#dmConfirm').classList.add('is-loading');
+    const res = await Suggestions.remove(id);
+    st.busy = false; $('#dmConfirm').classList.remove('is-loading');
+    if (!res || !res.ok) { UI.toast((res && res.error) || 'Delete failed.', 'error'); return; }
+    closeLayer(deleteModal);
+    UI.toast('Suggestion deleted.');
+    clearTimeout(st.advanceTimer);
+    await reloadData();
+    st.checks = new Set();
+    const list = visible();
+    st.sel = picked && list.some((x) => x.id === picked) ? picked : (list.length ? list[0].id : null);
+    renderAll();
+  }
+
+  async function doDraft() {
+    const s = cur(); if (!s || st.busy) return;
+    const ok = await UI.confirm({
+      title: 'Send to drafts?',
+      message: `“${s.title}” is created as an unpublished draft in Manage internships, where you can finish it before publishing.`,
+      confirmLabel: 'Create draft'
+    });
+    if (!ok) return;
+    const id = s.id, picked = nextPendingId(id);
+    st.busy = true;
+    const res = await Suggestions.toDraft(id);
+    st.busy = false;
+    if (!res || !res.ok) { UI.toast((res && res.error) || 'Could not create the draft.', 'error'); return; }
+    closeAllMenus();
+    UI.toast('Draft created — finish it in Manage internships.');
+    await afterReview(id, picked, { status: 'approved', internshipId: res.id, reviewNotes: 'Converted to draft' });
+  }
+
+  async function doReopen() {
+    const s = cur(); if (!s || st.busy) return;
+    const published = s.status === 'verified' && s.internshipId;
+    if (published) {
+      const ok = await UI.confirm({
+        title: 'Reopen this review?',
+        message: 'The listing this suggestion published stays live — unpublish it in Manage internships if it should not be shown.',
+        confirmLabel: 'Reopen'
+      });
+      if (!ok) return;
+    }
+    st.busy = true;
+    const res = await Suggestions.setStatus(s.id, 'pending', '');
+    st.busy = false;
+    if (!res || !res.ok) { UI.toast((res && res.error) || 'Update failed.', 'error'); return; }
+    UI.toast('Review reopened.');
+    await afterReview(s.id, s.id, { status: 'pending', reviewNotes: '', reviewedAt: null, reviewedBy: '' });
+  }
+
+  /* ---------- compare ---------- */
+  const compareModal = $('#compareModal');
+  function openCompare() {
+    const s = cur(), dup = s && DUP[s.id];
+    if (!dup) return;
+    $('#cmpDesc').innerHTML = `This suggestion matches <b>${UI.esc(dup.title)}</b> at ${UI.esc(dup.company)}${
+      dup.published ? ', a published listing' : ', currently a draft'}. Check the details before you decide.`;
+    const row = (lb, a, b) => {
+      const same = String(a || '').trim().toLowerCase() === String(b || '').trim().toLowerCase() && !!a;
+      return `<tr><td>${UI.esc(lb)}</td><td><b>${UI.esc(dash(a))}</b></td><td class="${same ? 'same' : ''}"><b>${UI.esc(dash(b))}</b></td></tr>`;
+    };
+    $('#cmpBody').innerHTML = '<tr><th></th><th>Submitted</th><th>Existing listing</th></tr>' +
+      row('Title', s.title, dup.title) + row('Company', s.company, dup.company) +
+      row('Field', s.field, dup.field) + row('Category', s.category, dup.category) +
+      row('Location', [s.city, s.area].filter(Boolean).join(' · '), [dup.city, dup.area].filter(Boolean).join(' · ')) +
+      row('Work mode', s.workMode, dup.workMode) + row('Duration', s.duration, dup.duration) +
+      row('Deadline', UI.fmtDate(s.deadline, false), UI.fmtDate(dup.deadline, false)) +
+      row('Application URL', host(s.applicationUrl) || '—', host(dup.applicationUrl) || '—') +
+      row('Listing status', `Suggestion · ${label(s.status)}`, dup.published ? 'Published' : 'Draft');
+    openLayer(compareModal);
+  }
+
+  /* ---------- edit drawer ---------- */
+  const editDrawer = $('#editDrawer'), edScrim = $('#edScrim');
+  function buildSelect(sel, options, current) {
+    const list = [...new Set([...options, ...(current ? [current] : [])].filter(Boolean))];
+    sel.innerHTML = '<option value="">Not set</option>' + list.map((o) =>
+      `<option value="${UI.esc(o)}"${o === current ? ' selected' : ''}>${UI.esc(o)}</option>`).join('');
+  }
+  function openEdit() {
+    const s = cur(); if (!s) return;
+    $('#eTitle').value = s.title || '';
+    $('#eCompany').value = s.company || '';
+    buildSelect($('#eField'), Settings.data.fields || [], s.field);
+    buildSelect($('#eCat'), Settings.data.categories || [], s.category);
+    buildSelect($('#eCity'), Settings.data.locations || [], s.city);
+    buildSelect($('#eMode'), Settings.data.workModes || [], s.workMode);
+    $('#eArea').value = s.area || '';
+    $('#eDur').value = s.duration || '';
+    $('#eStipend').value = s.stipend || '';
+    $('#eDeadline').value = dstr(s.deadline);
+    $('#eImg').value = s.image || '';
+    $('#eApp').value = s.applicationUrl || '';
+    $('#eSrc').value = s.sourceUrl || '';
+    $('#eEmail').value = s.contactEmail || '';
+    $('#ePhone').value = s.contactPhone || '';
+    $('#eDesc').value = s.notes || '';
+    $('#eReq').value = s.requirements || '';
+    openLayer(editDrawer);
+    setTimeout(() => $('#eTitle').focus(), 260);
+  }
+  async function saveEdit() {
+    const s = cur(); if (!s || st.busy) return;
+    const g = (id) => $(id).value.trim();
+    const patch = {
+      title: g('#eTitle'), company: g('#eCompany'), field: $('#eField').value, category: $('#eCat').value,
+      city: $('#eCity').value, area: g('#eArea'), workMode: $('#eMode').value, duration: g('#eDur'),
+      stipend: g('#eStipend'), image: g('#eImg'), applicationUrl: g('#eApp'), sourceUrl: g('#eSrc'),
+      contactEmail: g('#eEmail'), contactPhone: g('#ePhone'), notes: g('#eDesc'),
+      requirements: $('#eReq').value.trim(),
+      deadline: g('#eDeadline') ? new Date(`${g('#eDeadline')}T00:00:00`).toISOString() : ''
+    };
+    if (!patch.title || !patch.company) { UI.toast('A title and company are required.', 'error'); return; }
+    st.busy = true; $('#eSave').classList.add('is-loading');
+    const res = await Suggestions.update(s.id, patch);
+    st.busy = false; $('#eSave').classList.remove('is-loading');
+    if (!res || !res.ok) { UI.toast((res && res.error) || 'Update failed.', 'error'); return; }
+    Object.assign(s, patch);
+    closeLayer(editDrawer);
+    UI.toast('Details saved — review and publish when ready.');
+    computeDups();
+    renderAll();
+  }
+
+  /* ---------- layers ---------- */
+  const LAYERS = [];
+  function registerLayer(el, scrim) {
+    LAYERS.push({ el, scrim: scrim || null });
+    el.addEventListener('click', (e) => {
+      if (el.classList.contains('modal-backdrop') && (e.target === el || e.target.closest('[data-close]'))) closeLayer(el);
+    });
+    return el;
+  }
+  const scrimOf = (el) => (LAYERS.find((l) => l.el === el) || {}).scrim || null;
+  function openLayer(el) {
+    LAYERS.forEach((l) => { if (l.el !== el && l.el.classList.contains('is-open')) closeLayer(l.el); });
+    closeAllMenus();
+    const s = scrimOf(el);
+    if (s) { s.hidden = false; requestAnimationFrame(() => s.classList.add('is-open')); }
+    el.hidden = false;
+    requestAnimationFrame(() => el.classList.add('is-open'));
+    document.body.style.overflow = 'hidden';
+  }
+  function closeLayer(el) {
+    el.classList.remove('is-open');
+    const s = scrimOf(el);
+    if (s) {
+      s.classList.remove('is-open');
+      setTimeout(() => { if (!s.classList.contains('is-open')) s.hidden = true; }, 300);
+    }
+    setTimeout(() => { if (!el.classList.contains('is-open')) el.hidden = true; }, 240);
+    if (!document.querySelector('.modal-backdrop.is-open, .drawer.is-open')) document.body.style.overflow = '';
+  }
+  registerLayer(declineModal);
+  registerLayer(deleteModal);
+  registerLayer(compareModal);
+  registerLayer(editDrawer, edScrim);
+
+  /* ---------- menus ---------- */
+  function closeAllMenus() { document.querySelectorAll('.u-menu.is-open').forEach((m) => m.classList.remove('is-open')); }
+
+  /* ---------- wiring ---------- */
+  $('#qTabs').addEventListener('click', (e) => {
+    const b = e.target.closest('[data-tab]');
+    if (!b || b.dataset.tab === st.tab) return;
+    st.tab = b.dataset.tab;
+    renderSummary(); renderView();
+  });
+  qList.addEventListener('click', (e) => {
+    const b = e.target.closest('[data-qid]');
+    if (!b) return;
+    st.sel = b.dataset.qid;
+    st.checks = new Set();
+    renderView();
+    if (window.matchMedia('(max-width:960px)').matches) document.body.classList.add('review-open');
+  });
+  $('#qSearch').addEventListener('input', (e) => {
+    st.q = e.target.value.trim();
+    $('#sClear').hidden = !st.q;
+    renderView();
+  });
+  $('#sClear').addEventListener('click', () => {
+    st.q = ''; $('#qSearch').value = ''; $('#sClear').hidden = true;
+    renderView(); $('#qSearch').focus();
+  });
+  $('#qFilterBtn').addEventListener('click', () => {
+    const f = $('#qFilter');
+    f.classList.toggle('is-open');
+    $('#qFilterBtn').setAttribute('aria-expanded', String(f.classList.contains('is-open')));
+  });
+  $('#qFilter').addEventListener('click', (e) => {
+    const b = e.target.closest('.pill');
+    if (!b) return;
+    if (b.dataset.flag) {
+      if (b.dataset.flag === 'dup') st.dupOnly = !st.dupOnly; else st.incOnly = !st.incOnly;
+    } else {
+      const map = { field: 'fields', cat: 'cats', city: 'cities', mode: 'modes' };
+      const key = Object.keys(map).find((k) => b.dataset[k] !== undefined);
+      if (!key) return;
+      const set = st[map[key]];
+      if (set.has(b.dataset[key])) set.delete(b.dataset[key]); else set.add(b.dataset[key]);
+    }
+    syncPills(); renderView();
+  });
+  $('#qFClear').addEventListener('click', () => {
+    st.fields.clear(); st.cats.clear(); st.cities.clear(); st.modes.clear();
+    st.dupOnly = false; st.incOnly = false;
+    syncPills(); renderView();
+  });
+  $('#backBtn').addEventListener('click', () => document.body.classList.remove('review-open'));
+
+  vcol.addEventListener('change', (e) => {
+    const c = e.target.closest('[data-chk]');
+    if (!c) return;
+    const i = Number(c.dataset.chk);
+    if (c.checked) st.checks.add(i); else st.checks.delete(i);
+    const done = CHECKS.filter((_, n) => st.checks.has(n)).length;
+    vcol.querySelector('.vprog .bar i').style.width = `${(done / CHECKS.length) * 100}%`;
+    vcol.querySelector('.vprog p').textContent = `${done} of ${CHECKS.length} checks complete`;
+  });
+  vcol.addEventListener('click', (e) => {
+    if (e.target.closest('.u-menu-btn, .u-menu [aria-haspopup]')) {
+      const m = e.target.closest('.u-menu');
+      const wasOpen = m.classList.contains('is-open');
+      closeAllMenus();
+      if (!wasOpen) m.classList.add('is-open');
+      return;
+    }
+    const b = e.target.closest('[data-vact]');
+    if (!b) return;
+    const act = b.dataset.vact, s = cur();
+    if (act === 'source') {
+      const u = s && (urlOf(s.sourceUrl) || urlOf(s.applicationUrl));
+      if (!u) { UI.toast('This suggestion has no source link.', 'error'); return; }
+      closeAllMenus();
+      window.open(u, '_blank', 'noopener');
+      return;
+    }
+    if (!s && act !== 'next') return;
+    closeAllMenus();
+    if (act === 'verify') doVerify(b);
+    if (act === 'edit') openEdit();
+    if (act === 'reject') openDecline('rejected');
+    if (act === 'changes') openDecline('needs-changes');
+    if (act === 'duplicate') openDecline('duplicate');
+    if (act === 'draft') doDraft();
+    if (act === 'delete') openDelete();
+    if (act === 'compare') openCompare();
+    if (act === 'reopen') doReopen();
+    if (act === 'next') advanceNow();
+  });
+  $('#rjReasons').addEventListener('click', (e) => {
+    const b = e.target.closest('[data-r]');
+    if (!b) return;
+    declineReason = b.dataset.r;
+    $('#rjReasons').querySelectorAll('.pill').forEach((p) => p.classList.toggle('is-on', p === b));
+  });
+  $('#rjConfirm').addEventListener('click', confirmDecline);
+  $('#dmConfirm').addEventListener('click', confirmDelete);
+  $('#cmpDuplicate').addEventListener('click', () => {
+    closeLayer(compareModal);
+    openDecline('duplicate');
+    const p = $('#rjReasons').querySelector('[data-r="Already listed on InternHub"]');
+    if (p) { p.classList.add('is-on'); declineReason = p.dataset.r; }
+  });
+  edScrim.addEventListener('click', () => closeLayer(editDrawer));
+  editDrawer.querySelectorAll('[data-ed-close]').forEach((b) => b.addEventListener('click', () => closeLayer(editDrawer)));
+  $('#eSave').addEventListener('click', saveEdit);
+
+  document.addEventListener('click', (e) => { if (!e.target.closest('.u-menu')) closeAllMenus(); });
+  document.addEventListener('keydown', (e) => {
+    const tag = (e.target.tagName || '').toLowerCase();
+    const typing = tag === 'input' || tag === 'textarea' || tag === 'select';
+    if (e.key === 'Escape') {
+      closeAllMenus();
+      const open = document.querySelector('.modal-backdrop.is-open, .drawer.is-open');
+      if (open) { closeLayer(open); return; }
+      document.body.classList.remove('review-open');
+      return;
+    }
+    if (e.key === '/' && !typing) { e.preventDefault(); $('#qSearch').focus(); return; }
+    if (typing || e.metaKey || e.ctrlKey || e.altKey) return;
+    if (document.querySelector('.modal-backdrop.is-open, .drawer.is-open')) return;
+    const s = cur();
+    const k = e.key.toLowerCase();
+    if (k === 'n') { e.preventDefault(); advanceNow(); return; }
+    if (!s || s.status !== 'pending') return;
+    if (k === 'v') { e.preventDefault(); doVerify(vcol.querySelector('[data-vact="verify"]')); }
+    if (k === 'e') { e.preventDefault(); openEdit(); }
+  });
+
+  /* ---------- boot ---------- */
+  qList.innerHTML = Array(5).fill('<div class="q-sk"><span class="skel" style="width:40px;height:40px;flex:none;border-radius:10px"></span><span class="skel"></span></div>').join('');
+  reviewBody.innerHTML = '<div class="skel" style="height:200px;border-radius:0"></div><div style="padding:18px 20px;display:flex;flex-direction:column;gap:10px"><div class="skel skel-title" style="width:55%"></div><div class="skel skel-meta" style="width:34%"></div><div class="skel" style="height:58px"></div></div>';
+  vcol.innerHTML = '<div class="card vcard" style="display:flex;flex-direction:column;gap:11px"><div class="skel skel-title" style="width:50%"></div><div class="skel" style="height:38px"></div><div class="skel" style="height:38px"></div><div class="skel" style="height:38px"></div></div>';
+
+  await Settings.load();
+  await reloadData();
+  const first = visible()[0];
+  st.sel = first ? first.id : null;
+  renderAll();
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Internship · InternHub</title>
+<meta name="description" content="Full details for this verified internship on InternHub.">
+<meta name="robots" content="noindex">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/ui.css">
+<link rel="stylesheet" href="assets/css/app.css">
+<style>
+.dt-wrap{max-width:960px}
+.dt-hero{display:flex;gap:18px;align-items:flex-start;flex-wrap:wrap}
+.dt-logo{width:76px;height:76px;border-radius:16px;overflow:hidden;flex:none;background:var(--pine);display:grid;place-items:center}
+.dt-logo img{width:100%;height:100%;object-fit:cover}
+.dt-logo .lf{color:rgba(188,226,58,.8);font:700 30px var(--fd)}
+.dt-head{flex:1;min-width:220px}
+.dt-head h1{font-size:clamp(22px,3vw,30px);line-height:1.15}
+.dt-co{color:var(--mut);font-size:15px;margin-top:4px}
+.dt-badges{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+.dt-tags{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+.dt-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:20px}
+.dt-body{display:grid;grid-template-columns:minmax(0,1fr) 260px;gap:26px;margin-top:26px;align-items:start}
+.dt-section{margin-bottom:24px}
+.dt-section h2{font-size:17px;margin-bottom:8px}
+.dt-section p,.dt-section li{font-size:14.5px;color:#2a2e28;line-height:1.6}
+.dt-text{white-space:pre-line;color:#2a2e28;font-size:14.5px;line-height:1.65}
+.dt-side .panel{position:sticky;top:calc(var(--nav-h) + 16px)}
+.dt-meta{display:flex;flex-direction:column;gap:0}
+.dt-meta .row{display:flex;justify-content:space-between;gap:14px;padding:10px 0;border-bottom:1px solid var(--line);font-size:13.5px}
+.dt-meta .row:last-child{border-bottom:0}
+.dt-meta .k{color:var(--dim);font:600 10.5px var(--fm);letter-spacing:.06em;text-transform:uppercase}
+.dt-meta .v{text-align:right;font-weight:500}
+.dt-dead{font:600 12px var(--fm);letter-spacing:.04em;text-transform:uppercase}
+.dt-dead.is-urgent{color:var(--amber)} .dt-dead.is-closed{color:var(--dim)}
+@media (max-width:820px){.dt-body{grid-template-columns:1fr}.dt-side .panel{position:static}}
+</style>
+</head>
+<body data-app="student" data-nav="browse">
+<div id="view">
+  <a class="dt-back muted" href="#" id="backLink" style="display:inline-flex;align-items:center;gap:6px;font-size:13.5px;margin-bottom:18px"></a>
+  <div id="detail"></div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+<script src="assets/js/firebase-config.js"></script>
+<script src="assets/js/lib/ui.js"></script>
+<script src="assets/js/services/platform.js"></script>
+<script src="assets/js/services/auth.js"></script>
+<script src="assets/js/services/internships.js"></script>
+<script src="assets/js/services/saved.js"></script>
+<script src="assets/js/services/notifications.js"></script>
+<script src="assets/js/lib/rows.js"></script>
+<script src="assets/js/lib/notify-ui.js"></script>
+<script src="assets/js/lib/shell.js"></script>
+<script>
+window.onReady(async function () {
+  Rows.initSaveHandling();
+  const id = new URLSearchParams(location.search).get('id');
+  const box = document.getElementById('detail');
+  const back = document.getElementById('backLink');
+  back.innerHTML = UI.icon('arrow-left', 15) + '<span>Back to Browse</span>';
+  back.href = H('student_pages/browse.html');
+  document.title = 'Internship · InternHub';
+
+  function rich(text) {
+    if (!text) return '';
+    return String(text).split(/\n{2,}/).map((para) => {
+      const lines = para.split('\n').map((l) => l.trim()).filter(Boolean);
+      if (lines.length && lines.every((l) => /^[-•*]\s+/.test(l)))
+        return '<ul style="padding-left:18px;display:flex;flex-direction:column;gap:5px">' + lines.map((l) => '<li>' + UI.esc(l.replace(/^[-•*]\s+/, '')) + '</li>').join('') + '</ul>';
+      return `<p class="dt-text">${UI.esc(para)}</p>`;
+    }).join('');
+  }
+
+  async function boot() {
+    if (!id) { box.innerHTML = notFound(); return; }
+    box.innerHTML = `<div class="panel">${UI.skeletonRows(3)}</div>`;
+    try { await Auth.ready; await Saved.load(); } catch (_) {}
+    let item = null;
+    try { item = await Internships.get(id); } catch (err) { console.error(err); box.innerHTML = Rows.error(); return; }
+    if (!item) { box.innerHTML = notFound(); return; }
+
+    document.title = `${item.title} · ${item.company} · InternHub`;
+    const dl = UI.deadlineInfo(item);
+    const saved = Saved.has(item.id);
+    const ext = UI.safeUrl(item.applicationUrl);
+    const logo = (item.image && /^https?:/i.test(item.image))
+      ? `<div class="dt-logo"><img src="${UI.esc(item.image)}" alt="" onerror="this.parentNode.innerHTML='<div class=&quot;lf&quot;>${UI.esc((item.company || 'I').charAt(0).toUpperCase())}</div>'"></div>`
+      : `<div class="dt-logo"><div class="lf">${UI.esc((item.company || 'I').trim().charAt(0).toUpperCase())}</div></div>`;
+    const badges = (UI.isNew(item) ? '<span class="bdg bdg-new">New</span>' : '')
+      + (item.verified ? `<span class="bdg bdg-ver">${UI.icon('shield', 11)} Verified</span>` : '<span class="bdg bdg-unverified">Unverified</span>');
+    const tag = (v) => v ? `<span class="tag">${UI.esc(v)}</span>` : '';
+
+    box.innerHTML = `
+      <div class="dt-wrap">
+        <div class="dt-hero">
+          ${logo}
+          <div class="dt-head">
+            <h1>${UI.esc(item.title || 'Untitled role')}</h1>
+            <p class="dt-co">${UI.esc(item.company || '—')}${item.city ? ' · ' + UI.esc(item.city) : ''}</p>
+            <div class="dt-badges">${badges}</div>
+            <div class="dt-tags">${[item.field, item.category, item.workMode].map(tag).join('')}</div>
+          </div>
+        </div>
+
+        <div class="dt-actions">
+          ${ext
+            ? `<a class="btn btn-primary" href="${ext}" target="_blank" rel="noopener" data-apply>${UI.icon('external', 16)} Apply on company site</a>`
+            : `<span class="btn btn-ghost" title="The posting didn't include a direct link">${UI.icon('alert', 16)} No direct link — see details</span>`}
+          <button type="button" class="btn ${saved ? 'btn-dark' : 'btn-ghost'}" data-save="${UI.esc(item.id)}" aria-pressed="${saved}">
+            ${UI.icon('bookmark', 16, saved)}<span>${saved ? 'Saved' : 'Save'}</span>
+          </button>
+        </div>
+        ${item.contactEmail && !ext ? `<p class="hint" style="margin-top:10px">Apply by email: <a href="mailto:${UI.esc(item.contactEmail)}" style="color:var(--green)">${UI.esc(item.contactEmail)}</a></p>` : ''}
+
+        <div class="dt-body">
+          <div class="dt-main">
+            ${item.description ? `<div class="dt-section"><h2>About this role</h2>${rich(item.description)}</div>` : ''}
+            ${item.responsibilities ? `<div class="dt-section"><h2>What you'll do</h2>${rich(item.responsibilities)}</div>` : ''}
+            ${item.requirements ? `<div class="dt-section"><h2>Requirements</h2>${rich(item.requirements)}</div>` : ''}
+            ${item.additionalInfo ? `<div class="dt-section"><h2>Important notice</h2><p class="hint">${rich(item.additionalInfo)}</p></div>` : ''}
+            ${!item.description && !item.responsibilities && !item.requirements
+              ? `<div class="dt-section"><h2>Details</h2><p class="muted">The publisher hasn't added a full description yet. Use the apply link above for the complete posting.</p></div>` : ''}
+          </div>
+
+          <aside class="dt-side">
+            <div class="panel">
+              <div class="dt-meta">
+                <div class="row"><span class="k">Deadline</span><span class="dt-dead ${dl.cls}">${UI.esc(dl.label)}</span></div>
+                ${item.duration ? `<div class="row"><span class="k">Duration</span><span class="v">${UI.esc(item.duration)}</span></div>` : ''}
+                ${item.workMode ? `<div class="row"><span class="k">Mode</span><span class="v">${UI.esc(item.workMode)}</span></div>` : ''}
+                ${item.stipend ? `<div class="row"><span class="k">Stipend</span><span class="v">${UI.esc(item.stipend)}</span></div>` : ''}
+                ${item.field ? `<div class="row"><span class="k">Field</span><span class="v">${UI.esc(item.field)}</span></div>` : ''}
+                ${item.city ? `<div class="row"><span class="k">Location</span><span class="v">${UI.esc(item.city)}</span></div>` : ''}
+                <div class="row"><span class="k">Listed</span><span class="v">${UI.fmtDate(item.publishedAt || item.createdAt)}</span></div>
+              </div>
+              ${item.sourceUrl ? `<a class="btn btn-ghost btn-block btn-sm" style="margin-top:14px" href="${UI.safeUrl(item.sourceUrl)}" target="_blank" rel="noopener">${UI.icon('external', 15)} Original posting</a>` : ''}
+            </div>
+          </aside>
+        </div>
+
+        <div id="related" style="margin-top:34px"></div>
+      </div>`;
+
+    applyTracking(item.id);
+    loadRelated(item);
+  }
+
+  function applyTracking(iid) {
+    Internships.bump(iid, 'views');
+    const a = box.querySelector('[data-apply]');
+    if (a) a.addEventListener('click', () => Internships.bump(iid, 'clicks'));
+  }
+
+  async function loadRelated(item) {
+    if (!item.field) return;
+    const rel = document.getElementById('related');
+    let pool = [];
+    try { pool = (await Internships.published(60)) || []; } catch (_) { pool = []; }
+    const more = pool.filter((x) => x.id !== item.id && x.field === item.field).slice(0, 3);
+    if (!more.length) { rel.innerHTML = ''; return; }
+    rel.innerHTML = `<div class="panel-head"><h2 style="font-size:18px">More in ${UI.esc(item.field)}</h2></div>` + Rows.grid(more);
+  }
+
+  function notFound() {
+    return `<div class="dt-wrap"><div class="ic-empty"><b>Internship not found</b>
+      <span>This listing may have been withdrawn by the publisher.</span>
+      <div style="margin-top:16px"><a class="btn btn-primary btn-sm" href="${H('student_pages/browse.html')}">Browse open internships</a></div></div></div>`;
+  }
+
+  boot();
+});
+</script>
+</body>
+</html>

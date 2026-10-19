@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>What's New · InternHub</title>
+<meta name="description" content="Internships verified and published on InternHub in the last 48 hours.">
+<meta name="robots" content="noindex">
+<link rel="icon" href="../favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/css/ui.css">
+<link rel="stylesheet" href="../assets/css/app.css">
+<style>
+.wn-error .rtoolbar,.wn-error .countline,.wn-error .achips,.wn-error .browse-layout,.wn-error .frail-scrim{display:none}
+</style>
+</head>
+<body data-app="student" data-nav="whats-new">
+<div id="view">
+
+  <!-- ===== INTRO ===== -->
+  <section class="darkzone">
+    <svg class="radar" viewBox="0 0 330 220" aria-hidden="true">
+      <circle class="ring-a" cx="230" cy="110" r="34"/>
+      <circle class="ring-b" cx="230" cy="110" r="66" stroke-dasharray="3 7"/>
+      <circle class="ring-c" cx="230" cy="110" r="98" stroke-dasharray="3 7"/>
+      <circle class="pulse" cx="230" cy="110" r="30"/>
+      <circle class="pulse p2" cx="230" cy="110" r="30"/>
+      <g class="sweep"><path d="M230 110 L230 14"/></g>
+      <circle class="core" cx="230" cy="110" r="4.5"/>
+      <circle class="blip" cx="263" cy="86" r="3"/>
+      <circle class="blip" cx="196" cy="142" r="3" opacity=".75"/>
+      <circle class="blip" cx="152" cy="76" r="2.5" opacity=".5"/>
+    </svg>
+    <p class="eyebrow"><span class="live-dot"></span>Fresh opportunities · updated continuously</p>
+    <h1>What's New</h1>
+    <p class="dz-sub">Every internship added to InternHub in the last <span class="win-h">48</span> hours — your first look, before the crowd. When a listing turns <span class="win-h">48</span> hours old it leaves this page and lives on in Browse.</p>
+    <p class="stat-line"><span id="statCount">— new opportunities</span><span class="pill48" id="windowPill">48h window</span><span>Then live forever in Browse</span></p>
+  </section>
+  <!-- ===== TOOLBAR ===== -->
+  <div class="rtoolbar">
+    <div class="searchmini">
+      <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+      <input id="q" type="search" placeholder="Search new internships — role, company, city, field…" autocomplete="off" aria-label="Search new internships">
+      <button type="button" class="s-clear" id="qClear" hidden aria-label="Clear search"><svg viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
+    </div>
+    <button type="button" class="btn btn-ghost frail-open-btn" id="frailOpen">
+      <svg viewBox="0 0 24 24"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3"/><path d="M1 14h6M9 8h6M17 16h6"/></svg>Filters <span class="fbadge" id="fBadge" hidden>0</span>
+    </button>
+  </div>
+  <p class="eyebrow countline" id="countLabel" aria-live="polite"></p>
+  <div class="achips" id="activeChips"></div>
+
+  <!-- ===== RAIL + TIME SECTIONS ===== -->
+  <div class="browse-layout" id="browseLayout">
+    <aside class="filters" id="filters" aria-label="Filters">
+      <div class="frail-head">
+        <h4 class="eyebrow">Filters</h4>
+        <button type="button" class="linklike" id="resetFilters">Reset all</button>
+        <button type="button" class="icon-btn frail-x" id="frailClose" aria-label="Close filters"><svg viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
+      </div>
+      <div class="fsec" id="fieldSec" hidden>
+        <span class="eyebrow">Field</span>
+        <div id="fieldList"></div>
+      </div>
+      <div class="fsec" id="citySec" hidden>
+        <span class="eyebrow">City</span>
+        <select class="select" id="citySel" aria-label="City"></select>
+      </div>
+      <div class="fsec" id="modeSec" hidden>
+        <span class="eyebrow">Work mode</span>
+        <div class="pillrow" id="modeRow"></div>
+      </div>
+      <div class="fsec">
+        <span class="eyebrow">Deadline</span>
+        <select class="select" id="dlSel" aria-label="Deadline">
+          <option value="any">Any deadline</option>
+          <option value="7">Closing ≤ 7 days</option>
+          <option value="14">Closing ≤ 14 days</option>
+        </select>
+      </div>
+      <div class="fsec">
+        <span class="eyebrow">Trust</span>
+        <label class="switch"><input type="checkbox" id="verOnly"><span class="track"></span>Verified only</label>
+      </div>
+      <button type="button" class="btn btn-primary frail-apply" id="frailApply">Show results</button>
+    </aside>
+    <section class="browse-main" id="sections">
+      <div class="tsec" id="secJust" hidden>
+        <div class="tsec-head">
+          <h2><span class="t-ico"><svg viewBox="0 0 24 24"><path d="M13 2L3 14h7l-1 8 10-12h-7l1-8z"/></svg></span>Just added</h2>
+          <span class="eyebrow">Under 6 hours old</span>
+        </div>
+        <div class="cards" id="gridJust"></div>
+      </div>
+      <div class="tsec" id="secToday" hidden>
+        <div class="tsec-head">
+          <h2><span class="t-ico"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><path d="M12 2v3m0 14v3M2 12h3m14 0h3M4.9 4.9l2.1 2.1m10 10l2.1 2.1M19.1 4.9l-2.1 2.1m-10 10l-2.1 2.1"/></svg></span>Added today</h2>
+          <span class="eyebrow">6 – 24 hours old</span>
+        </div>
+        <div class="cards" id="gridToday"></div>
+      </div>
+      <div class="tsec" id="secYday" hidden>
+        <div class="tsec-head">
+          <h2><span class="t-ico"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span>Added yesterday</h2>
+          <span class="eyebrow">24 – 48 hours old · leaving soon</span>
+        </div>
+        <div class="cards" id="gridYday"></div>
+      </div>
+      <div class="empty" id="emptyBox" hidden>
+        <div class="e-ico"><svg viewBox="0 0 24 24"><path d="M12 2l2.4 7.6L22 12l-7.6 2.4L12 22l-2.4-7.6L2 12l7.6-2.4z"/></svg></div>
+        <h3 id="emptyTitle">No new opportunities right now</h3>
+        <p id="emptyText">There aren't any internships newly added within the last 48 hours. Every opportunity we know about is waiting for you in Browse.</p>
+        <button type="button" class="btn btn-primary" id="emptyAction" data-act="browse">Browse all internships</button>
+      </div>
+    </section>
+  </div>
+  <div class="frail-scrim" id="frailScrim"></div>
+
+  <div class="empty" id="errorBox" hidden>
+    <div class="e-ico"><svg viewBox="0 0 24 24"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4m0 4h.01"/></svg></div>
+    <h3>Couldn't load internships</h3>
+    <p>There was a problem reaching the database.</p>
+    <button type="button" class="btn btn-ghost" onclick="location.reload()">Retry</button>
+  </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+<script src="../assets/js/firebase-config.js"></script>
+<script src="../assets/js/lib/ui.js"></script>
+<script src="../assets/js/services/platform.js"></script>
+<script src="../assets/js/services/auth.js"></script>
+<script src="../assets/js/services/internships.js"></script>
+<script src="../assets/js/services/saved.js"></script>
+<script src="../assets/js/services/notifications.js"></script>
+<script src="../assets/js/lib/rows.js"></script>
+<script src="../assets/js/lib/notify-ui.js"></script>
+<script src="../assets/js/lib/shell.js"></script>
+<script src="../assets/js/lib/router.js"></script>
+<script>
+window.onReady(function () {
+  Rows.initSaveHandling();
+  const $ = (s) => document.querySelector(s);
+  const el = {
+    body: document.getElementById('view'),
+    stat: $('#statCount'), pill: $('#windowPill'),
+    q: $('#q'), qClear: $('#qClear'), layout: $('#browseLayout'),
+    fieldSec: $('#fieldSec'), fieldList: $('#fieldList'),
+    citySec: $('#citySec'), citySel: $('#citySel'),
+    modeSec: $('#modeSec'), modeRow: $('#modeRow'),
+    dlSel: $('#dlSel'), verOnly: $('#verOnly'),
+    openBtn: $('#frailOpen'), closeBtn: $('#frailClose'), scrim: $('#frailScrim'),
+    apply: $('#frailApply'), reset: $('#resetFilters'),
+    count: $('#countLabel'), chips: $('#activeChips'), fBadge: $('#fBadge'),
+    secJust: $('#secJust'), gridJust: $('#gridJust'),
+    secToday: $('#secToday'), gridToday: $('#gridToday'),
+    secYday: $('#secYday'), gridYday: $('#gridYday'),
+    empty: $('#emptyBox'), emptyTitle: $('#emptyTitle'), emptyText: $('#emptyText'), emptyAction: $('#emptyAction')
+  };
+
+  const ALL_CITIES = 'All cities';
+  const windowH = () => UI.newWindowHours();
+  function paintWindow() {
+    document.querySelectorAll('.win-h').forEach((s) => { s.textContent = windowH(); });
+    el.pill.textContent = `${windowH()}h window`;
+  }
+  let FRESH = [];
+  const state = { q: '', fields: new Set(), city: ALL_CITIES, modes: new Set(), dl: 'any', verOnly: false };
+  DetailModal.init(() => FRESH);
+
+  const hoursAgo = (it) => {
+    const t = UI.toDate(it.publishedAt || it.createdAt);
+    return t ? Math.max(0, (Date.now() - t.getTime()) / 3600000) : 0;
+  };
+  const addedLabel = (h) => (h < 1 ? 'Added just now' : h < 24 ? `Added ${Math.floor(h)}h ago` : 'Added yesterday');
+  const leavesLeft = (h) => Math.max(0, Math.ceil(windowH() - h));
+  const closingLabel = (it) => {
+    const d = UI.daysUntil(it.deadline);
+    if (d === null || d < 0) return null;
+    if (d <= 1) return 'Closes tomorrow';
+    if (d <= 7) return `Closes in ${d} days`;
+    return null;
+  };
+  const vocab = (key) => [...new Set(FRESH.map((i) => i[key]).filter(Boolean))].sort((a, b) => a.localeCompare(b));
+
+  function filtered() {
+    const q = state.q.toLowerCase();
+    return FRESH.filter((it) => {
+      if (state.fields.size && !state.fields.has(it.field)) return false;
+      if (state.city !== ALL_CITIES && it.city !== state.city) return false;
+      if (state.modes.size && !state.modes.has(it.workMode)) return false;
+      if (state.verOnly && !it.verified) return false;
+      if (state.dl !== 'any') {
+        const d = UI.daysUntil(it.deadline);
+        if (!(d !== null && d >= 0 && d <= +state.dl)) return false;
+      }
+      if (q && ![it.title, it.company, it.city, it.field, it.workMode].join(' ').toLowerCase().includes(q)) return false;
+      return true;
+    }).sort((a, b) => hoursAgo(a) - hoursAgo(b));
+  }
+
+  function afCount() {
+    return state.fields.size + state.modes.size
+      + (state.city !== ALL_CITIES ? 1 : 0)
+      + (state.dl !== 'any' ? 1 : 0)
+      + (state.verOnly ? 1 : 0);
+  }
+
+  function wnCard(item, i) {
+    const href = Rows.detailHref(item.id);
+    const h = hoursAgo(item);
+    const left = leavesLeft(h);
+    return `<article class="icard" style="animation-delay:${Math.min(i * 45, 360)}ms">
+      <div class="ic-media">${Rows.media(item)}
+        <div class="ic-badges">${Rows.badges(item, closingLabel(item))}</div>
+        ${Rows.saveBtn(item, 'save')}
+      </div>
+      <span class="mono-av">${UI.esc(UI.initials(item.company || 'InternHub'))}</span>
+      <div class="ic-body">
+        <h3 class="ic-title"><a href="${href}">${UI.esc(item.title || 'Untitled role')}</a></h3>
+        <p class="ic-co">${UI.icon('building', 13)} ${UI.esc(item.company || '—')}${item.verified ? `<span class="vcheck">${UI.icon('check', 9)}</span>` : ''}</p>
+        <div class="ic-meta">${Rows.metaTags(item, true)}</div>
+      </div>
+      <div class="ic-foot">
+        <div class="fresh">
+          <span class="added"><svg viewBox="0 0 24 24"><path d="M12 2l2.4 7.6L22 12l-7.6 2.4L12 22l-2.4-7.6L2 12l7.6-2.4z"/></svg>${addedLabel(h)}</span>
+          <span class="leaves${left <= 12 ? ' late' : ''}">Leaves in ${left}h</span>
+        </div>
+        <a class="btn btn-ghost btn-sm" href="${href}" data-details="${UI.esc(item.id)}">Details</a>
+      </div>
+    </article>`;
+  }
+
+  function checkRow(value, label, count, on) {
+    return `<label class="cbx"><input type="checkbox" value="${UI.esc(value)}"${on ? ' checked' : ''}>`
+      + `<span class="box"></span><span class="txt">${UI.esc(label)}</span><span class="cnt">${count}</span></label>`;
+  }
+
+  function renderFacets() {
+    const fields = vocab('field');
+    el.fieldSec.hidden = !fields.length;
+    el.fieldList.innerHTML = fields.map((f) =>
+      checkRow(f, f, FRESH.filter((d) => d.field === f).length, state.fields.has(f))).join('');
+
+    const cities = vocab('city');
+    el.citySec.hidden = !cities.length;
+    el.citySel.innerHTML = [ALL_CITIES, ...cities].map((c) =>
+      `<option value="${UI.esc(c)}"${c === state.city ? ' selected' : ''}>${UI.esc(c)}</option>`).join('');
+
+    const modes = vocab('workMode');
+    el.modeSec.hidden = !modes.length;
+    el.modeRow.innerHTML = modes.map((m) =>
+      `<button type="button" class="pill${state.modes.has(m) ? ' is-on' : ''}" data-mode="${UI.esc(m)}">${UI.esc(m)}</button>`).join('');
+  }
+
+  function renderChips() {
+    const c = [];
+    state.fields.forEach((f) => c.push(['field', f, f]));
+    state.modes.forEach((m) => c.push(['mode', m, m]));
+    if (state.city !== ALL_CITIES) c.push(['city', state.city, state.city]);
+    if (state.dl !== 'any') c.push(['dl', state.dl, `≤ ${state.dl} days`]);
+    if (state.verOnly) c.push(['ver', '1', 'Verified']);
+    el.chips.innerHTML = c.map((x) => `<span class="achip">${UI.esc(x[2])}`
+      + `<button type="button" data-rm="${x[0]}:${UI.esc(x[1])}" aria-label="Remove filter">${UI.icon('x', 10)}</button></span>`).join('')
+      + (c.length > 1 ? '<span class="achip is-clear" data-rm="*">Clear all</span>' : '');
+    const n = afCount();
+    el.fBadge.textContent = n;
+    el.fBadge.hidden = !n;
+  }
+
+  function renderSections() {
+    const L = filtered();
+    const put = (sec, grid, list) => {
+      sec.hidden = !list.length;
+      grid.innerHTML = list.map(wnCard).join('');
+    };
+    put(el.secJust, el.gridJust, L.filter((it) => hoursAgo(it) < 6));
+    put(el.secToday, el.gridToday, L.filter((it) => { const h = hoursAgo(it); return h >= 6 && h < 24; }));
+    put(el.secYday, el.gridYday, L.filter((it) => hoursAgo(it) >= 24));
+
+    const none = !L.length;
+    el.empty.hidden = !none;
+    if (none) {
+      if (afCount() || state.q) {
+        el.emptyTitle.textContent = 'Nothing new matches your filters';
+        el.emptyText.textContent = `No internship added in the last ${windowH()} hours fits this combination. Loosen a filter — or browse everything we know about.`;
+        el.emptyAction.textContent = 'Clear all filters';
+        el.emptyAction.dataset.act = 'clear';
+      } else {
+        el.emptyTitle.textContent = 'No new opportunities right now';
+        el.emptyText.textContent = `There aren't any internships newly added within the last ${windowH()} hours. Every opportunity we know about is waiting for you in Browse.`;
+        el.emptyAction.textContent = 'Browse all internships';
+        el.emptyAction.dataset.act = 'browse';
+      }
+    }
+
+    el.count.textContent = `${L.length} of ${FRESH.length} fresh opportunities shown`;
+    el.stat.textContent = `${FRESH.length} new ${FRESH.length === 1 ? 'opportunity' : 'opportunities'}`;
+    document.querySelectorAll('[data-new-badge]').forEach((b) => {
+      b.hidden = !FRESH.length;
+      b.textContent = FRESH.length;
+    });
+    el.apply.textContent = `Show ${L.length}${L.length === 1 ? ' result' : ' results'}`;
+    renderChips();
+  }
+
+  function showSkeletons() {
+    const cells = Rows.skeletonCells(4);
+    el.gridJust.innerHTML = cells;
+    el.gridToday.innerHTML = cells;
+    el.secJust.hidden = false;
+    el.secToday.hidden = false;
+    el.secYday.hidden = true;
+  }
+
+  function openDrawer() {
+    el.layout.classList.add('filters-open');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeDrawer() {
+    el.layout.classList.remove('filters-open');
+    document.body.style.overflow = '';
+  }
+
+  function resetFilters() {
+    state.fields.clear();
+    state.modes.clear();
+    state.city = ALL_CITIES;
+    state.dl = 'any';
+    state.verOnly = false;
+    el.dlSel.value = 'any';
+    el.verOnly.checked = false;
+    renderFacets();
+    renderSections();
+  }
+
+  el.q.addEventListener('input', () => {
+    state.q = el.q.value.trim();
+    el.qClear.hidden = !state.q;
+    renderSections();
+  });
+
+  el.qClear.addEventListener('click', () => {
+    state.q = '';
+    el.q.value = '';
+    el.qClear.hidden = true;
+    renderSections();
+    el.q.focus();
+  });
+
+  el.fieldList.addEventListener('change', (e) => {
+    if (e.target.checked) state.fields.add(e.target.value);
+    else state.fields.delete(e.target.value);
+    renderSections();
+  });
+
+  el.citySel.addEventListener('change', (e) => { state.city = e.target.value; renderSections(); });
+  el.dlSel.addEventListener('change', (e) => { state.dl = e.target.value; renderSections(); });
+  el.verOnly.addEventListener('change', (e) => { state.verOnly = e.target.checked; renderSections(); });
+  el.reset.addEventListener('click', resetFilters);
+
+  el.modeRow.addEventListener('click', (e) => {
+    const p = e.target.closest('.pill');
+    if (!p) return;
+    const m = p.dataset.mode;
+    if (state.modes.has(m)) state.modes.delete(m);
+    else state.modes.add(m);
+    p.classList.toggle('is-on');
+    renderSections();
+  });
+
+  el.chips.addEventListener('click', (e) => {
+    const rm = e.target.closest('[data-rm]');
+    if (!rm) return;
+    const raw = rm.dataset.rm;
+    if (raw === '*') { resetFilters(); return; }
+    const i = raw.indexOf(':');
+    const kind = raw.slice(0, i);
+    const val = raw.slice(i + 1);
+    if (kind === 'field') state.fields.delete(val);
+    if (kind === 'mode') state.modes.delete(val);
+    if (kind === 'city') state.city = ALL_CITIES;
+    if (kind === 'dl') { state.dl = 'any'; el.dlSel.value = 'any'; }
+    if (kind === 'ver') { state.verOnly = false; el.verOnly.checked = false; }
+    renderFacets();
+    renderSections();
+  });
+
+  el.emptyAction.addEventListener('click', () => {
+    if (el.emptyAction.dataset.act === 'clear') {
+      resetFilters();
+      state.q = '';
+      el.q.value = '';
+      el.qClear.hidden = true;
+      renderSections();
+    } else {
+      window.location.href = 'browse.html';
+    }
+  });
+
+  el.openBtn.addEventListener('click', openDrawer);
+  el.closeBtn.addEventListener('click', closeDrawer);
+  el.scrim.addEventListener('click', closeDrawer);
+  el.apply.addEventListener('click', closeDrawer);
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeDrawer(); });
+
+  async function boot() {
+    showSkeletons();
+    paintWindow();
+    el.stat.textContent = '— new opportunities';
+    el.count.textContent = 'Loading fresh opportunities…';
+    try { await Settings.load(); } catch (_) {}
+    paintWindow();
+    try { await Auth.ready; await Saved.load(); } catch (_) {}
+    let items = [];
+    try {
+      items = (await Internships.published(200)) || [];
+    } catch (err) {
+      console.error(err);
+      el.body.classList.add('wn-error');
+      el.count.textContent = 'Opportunities could not be loaded right now.';
+      $('#errorBox').hidden = false;
+      return;
+    }
+    FRESH = items.filter((it) => UI.isNew(it));
+    renderFacets();
+    renderSections();
+  }
+
+  boot();
+});
+</script>
+</body>
+</html>

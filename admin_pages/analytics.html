@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Admin · Analytics · InternHub</title>
+<meta name="robots" content="noindex">
+<link rel="icon" href="../favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/css/ui.css">
+<link rel="stylesheet" href="../assets/css/app.css">
+</head>
+<body data-app="admin" data-nav="analytics">
+<div id="view">
+
+  <header class="ahead">
+    <div>
+      <nav class="breadcrumb" aria-label="Breadcrumb">
+        <a href="dashboard.html">Admin</a>
+        <svg width="12" height="12" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
+        <span>Analytics</span>
+      </nav>
+      <h1>Analytics</h1>
+      <p class="sub">Every figure below is read from Firestore. Charts follow the selected window; totals, locations and fields count all live listings.<span class="mono" id="dataLine"></span></p>
+    </div>
+    <div class="ahead-r">
+      <div class="seg seg--range" id="rangeSeg" role="group" aria-label="Time range">
+        <button type="button" data-range="7">7 days</button>
+        <button type="button" data-range="30" class="is-on">30 days</button>
+        <button type="button" data-range="90">90 days</button>
+        <button type="button" data-range="all">All time</button>
+      </div>
+    </div>
+  </header>
+
+  <section class="stats six" id="metrics" aria-label="Platform metrics"></section>
+
+  <div class="agrid" id="agrid">
+    <div class="card c8">
+      <div class="card-h"><h2>Student growth</h2><span class="note">New registrations</span></div>
+      <div class="chart" id="growthChart"></div>
+    </div>
+
+    <div class="card c4">
+      <div class="card-h"><h2>Internships by location</h2><span class="note">Live listings</span></div>
+      <div id="locDonut"></div>
+    </div>
+
+    <div class="card c8">
+      <div class="card-h"><h2>Internship activity</h2>
+        <div class="legend">
+          <span><i style="background:var(--green)"></i>Added</span>
+          <span><i style="background:var(--green-deep)"></i>Published</span>
+          <span><i style="background:var(--amber)"></i>Verified</span>
+        </div>
+      </div>
+      <div class="chart" id="activityChart"></div>
+    </div>
+
+    <div class="card c4">
+      <div class="card-h"><h2>Internships by field</h2><span class="note">Supply + interest</span></div>
+      <div class="hbars" id="fieldBars"></div>
+    </div>
+
+    <div class="card c8">
+      <div class="card-h"><h2>Popular internships</h2>
+        <div class="ptoggle" role="group" aria-label="Rank listings by">
+          <button type="button" id="rankViews" data-rank="views" class="is-on" aria-pressed="true">Views</button>
+          <button type="button" id="rankSaves" data-rank="saves" aria-pressed="false">Saves</button>
+        </div>
+      </div>
+      <div class="pop-head">
+        <span>#</span><span>Internship</span><span class="field">Field</span><span class="loc">Location</span>
+        <span>Views</span><span>Saves</span><span>Save rate</span>
+      </div>
+      <div id="popList"></div>
+    </div>
+
+    <div class="card c4">
+      <div class="card-h"><h2>Student activity</h2><span class="note">What students want</span></div>
+      <div class="ins" id="insights"></div>
+    </div>
+  </div>
+
+  <div class="card" id="loadError" hidden>
+    <div class="empty">
+      <span class="e-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/><path d="M12 9v4M12 17h.01"/></svg></span>
+      <h3>Couldn't load analytics</h3>
+      <p>The counts could not be read from Firestore. Check your connection and the security rules, then try again.</p>
+      <button type="button" class="btn btn-primary" id="retryBtn" style="margin-top:16px">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>Retry</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+<script src="../assets/js/firebase-config.js"></script>
+<script src="../assets/js/lib/ui.js"></script>
+<script src="../assets/js/services/platform.js"></script>
+<script src="../assets/js/services/auth.js"></script>
+<script src="../assets/js/services/internships.js"></script>
+<script src="../assets/js/services/suggestions.js"></script>
+<script src="../assets/js/services/users.js"></script>
+<script src="../assets/js/services/notifications.js"></script>
+<script src="../assets/js/lib/notify-ui.js"></script>
+<script src="../assets/js/lib/shell.js"></script>
+<script src="../assets/js/lib/router.js"></script>
+<script>
+window.onReady(async function () {
+  if (!(await Auth.requireAdmin())) return;
+
+  const $ = (sel) => document.querySelector(sel);
+  const metricsEl = $('#metrics'), growthEl = $('#growthChart'), activityEl = $('#activityChart'),
+        locEl = $('#locDonut'), fieldsEl = $('#fieldBars'), popEl = $('#popList'),
+        insEl = $('#insights'), agridEl = $('#agrid'), dataLine = $('#dataLine'), errEl = $('#loadError');
+
+  let range = '30';
+  let rank = 'views';
+  let data = null;
+
+  /* ---------- helpers ---------- */
+  const num = (n) => Number(n || 0).toLocaleString();
+  const axisNum = (n) => (n >= 1e6 ? (n / 1e6).toFixed(1) + 'M' : n >= 1e4 ? Math.round(n / 1e3) + 'k' : String(n));
+  const rangeWord = () => (range === 'all' ? 'all time' : `${range} days`);
+  const UP = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 19V5M5 12l7-7 7 7"/></svg>';
+
+  function emptyCard(icon, title, msg) {
+    return `<div class="empty"><span class="e-ico">${UI.icon(icon, 20)}</span><h3>${title}</h3><p>${msg}</p></div>`;
+  }
+
+  /* Every chart slot registers one redraw so a resize or range change
+     re-measures the container instead of stacking duplicate layers. */
+  const redraws = new Map();
+  function mount(el, draw) { redraws.set(el, draw); draw(); }
+
+  /* ---------- metric tiles ---------- */
+  function renderMetrics() {
+    const t = data.totals, g = data.growth, e = data.engagement;
+    const cumulative = '<span class="dl flat">all time</span>';
+    const fresh = (n) => range === 'all' ? cumulative
+      : `<span class="dl up">${UP}+${num(n)} ${range}d</span>`;
+    const tiles = [
+      ['users', 'Students', t.students, fresh(g.students)],
+      ['briefcase', 'Internships', t.internships, fresh(g.internships)],
+      ['eye', 'Listing views', e.views, cumulative],
+      ['external', 'Apply clicks', e.clicks, cumulative],
+      ['bookmark', 'Saves', e.saves, cumulative],
+      ['send', 'Suggestions', t.suggestions, fresh(g.suggestions)]
+    ];
+    metricsEl.innerHTML = tiles.map(([icon, label, value, chip]) => `
+      <div class="stat card"><span class="ic">${UI.icon(icon, 15)}</span>
+        <span class="lb">${label}</span>
+        <div class="vl"><b>${num(value)}</b>${chip}</div></div>`).join('');
+    dataLine.textContent = t.pendingSuggestions
+      ? `${t.pendingSuggestions} suggestion${t.pendingSuggestions === 1 ? '' : 's'} awaiting review`
+      : 'suggestion queue clear';
+  }
+
+  /* ---------- line / area chart ---------- */
+  function niceMax(v) {
+    if (v <= 10) return 10;
+    const p = Math.pow(10, Math.floor(Math.log10(v)));
+    const n = v / p;
+    return (n <= 1 ? 1 : n <= 2 ? 2 : n <= 5 ? 5 : 10) * p;
+  }
+  function smooth(pts) {
+    if (pts.length < 3) return 'M' + pts.map((p) => p[0] + ',' + p[1]).join('L');
+    let d = 'M' + pts[0][0] + ',' + pts[0][1];
+    for (let i = 1; i < pts.length; i++) {
+      const a = pts[i - 1], b = pts[i], mx = (a[0] + b[0]) / 2;
+      d += 'C' + mx + ',' + a[1] + ' ' + mx + ',' + b[1] + ' ' + b[0] + ',' + b[1];
+    }
+    return d;
+  }
+  function lineChart(el, cfg) {
+    mount(el, () => {
+      if (!cfg.series.some((s) => s.values.some((v) => v))) {
+        el.innerHTML = emptyCard('chart', cfg.emptyTitle, cfg.emptyMsg);
+        return;
+      }
+      const W = Math.max(el.clientWidth, 280), H = 230;
+      const padL = 42, padR = 12, padT = 12, padB = 26;
+      const n = cfg.labels.length;
+      const max = niceMax(Math.max(...cfg.series.flatMap((s) => s.values)));
+      const X = (i) => padL + (W - padL - padR) * (n === 1 ? 0.5 : i / (n - 1));
+      const Y = (v) => padT + (H - padT - padB) * (1 - v / max);
+
+      let grid = '';
+      for (let g = 0; g <= 4; g++) {
+        const y = padT + (H - padT - padB) * g / 4;
+        grid += `<line class="grid-l" x1="${padL}" y1="${y.toFixed(1)}" x2="${W - padR}" y2="${y.toFixed(1)}"/>` +
+                `<text class="ax" x="6" y="${(y + 3).toFixed(1)}">${axisNum(Math.round(max * (1 - g / 4)))}</text>`;
+      }
+      const step = Math.max(1, Math.ceil(n / 6));
+      let xl = '';
+      for (let i = 0; i < n; i += step) {
+        xl += `<text class="ax" x="${X(i).toFixed(1)}" y="${H - 8}" text-anchor="middle">${UI.esc(cfg.labels[i])}</text>`;
+      }
+      let paths = '';
+      cfg.series.forEach((s) => {
+        const line = smooth(s.values.map((v, i) => [X(i), Y(v)]));
+        if (s.area) paths += `<path d="${line}L${X(n - 1).toFixed(1)},${H - padB}L${X(0).toFixed(1)},${H - padB}Z" fill="${s.color}" opacity="0.12"/>`;
+        paths += `<path d="${line}" fill="none" stroke="${s.color}" stroke-width="2"/>`;
+      });
+      el.innerHTML = `<svg width="${W}" height="${H}" role="img" aria-label="${UI.esc(cfg.aria)}">${grid}${xl}${paths}` +
+        `<line class="guide" x1="0" x2="0" y1="${padT}" y2="${H - padB}" style="opacity:0"/>` +
+        `<rect class="ovl" x="${padL}" y="${padT}" width="${W - padL - padR}" height="${H - padT - padB}" fill="transparent"/></svg>` +
+        `<div class="ctip" role="presentation"></div>`;
+
+      const svg = el.querySelector('svg'), tip = el.querySelector('.ctip'), guide = el.querySelector('.guide');
+      const dots = cfg.series.map((s) => {
+        const c = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+        c.setAttribute('r', '3.5'); c.setAttribute('fill', s.color);
+        c.setAttribute('stroke', 'var(--card)'); c.setAttribute('stroke-width', '2');
+        c.style.opacity = '0'; svg.appendChild(c); return c;
+      });
+      el.querySelector('.ovl').addEventListener('mousemove', (ev) => {
+        const box = svg.getBoundingClientRect();
+        const i = Math.round((ev.clientX - box.left - padL) / (W - padL - padR) * (n - 1));
+        if (i < 0 || i > n - 1) return;
+        guide.setAttribute('x1', X(i)); guide.setAttribute('x2', X(i)); guide.style.opacity = '1';
+        let rows = '';
+        cfg.series.forEach((s, si) => {
+          dots[si].setAttribute('cx', X(i)); dots[si].setAttribute('cy', Y(s.values[i])); dots[si].style.opacity = '1';
+          rows += `<div class="row"><i style="background:${s.color}"></i>${UI.esc(s.name)}<em>${num(s.values[i])}</em></div>`;
+        });
+        tip.innerHTML = `<b>${UI.esc(cfg.labels[i])}</b>${rows}`;
+        tip.style.opacity = '1';
+        const tw = tip.offsetWidth;
+        let tx = X(i) + 14;
+        if (tx + tw > W - 8) tx = X(i) - tw - 14;
+        tip.style.left = tx + 'px'; tip.style.top = (padT + 6) + 'px';
+      });
+      el.addEventListener('mouseleave', () => {
+        guide.style.opacity = '0'; tip.style.opacity = '0';
+        dots.forEach((d) => { d.style.opacity = '0'; });
+      });
+    });
+  }
+
+  /* ---------- donut ---------- */
+  const DONUT_COLORS = ['#177a4c', '#2f9a63', '#57b57f', '#8fcfa4', '#b45309', '#c9ccbd'];
+  function renderDonut() {
+    const locs = data.locations.filter((l) => l.count > 0);
+    if (!locs.length) {
+      locEl.innerHTML = emptyCard('globe', 'No live listings yet', 'The location split appears once internships are published.');
+      return;
+    }
+    const total = locs.reduce((a, b) => a + b.count, 0);
+    const R = 62, C = 2 * Math.PI * R;
+    let acc = 0, segs = '';
+    locs.forEach((l, i) => {
+      const frac = l.count / total, dash = frac * C;
+      segs += `<circle r="${R}" cx="80" cy="80" fill="none" stroke="${DONUT_COLORS[i % DONUT_COLORS.length]}" ` +
+              `stroke-width="16" stroke-dasharray="${dash.toFixed(2)} ${(C - dash).toFixed(2)}" ` +
+              `stroke-dashoffset="${(-acc * C).toFixed(2)}" transform="rotate(-90 80 80)">` +
+              `<title>${UI.esc(l.name)} · ${num(l.count)} listing${l.count === 1 ? '' : 's'}</title></circle>`;
+      acc += frac;
+    });
+    locEl.innerHTML = `<div class="donut-wrap"><div class="donut"><svg width="160" height="160" role="img" ` +
+      `aria-label="Live listings by location">${segs}</svg>` +
+      `<div class="center"><div><b>${num(total)}</b><span>live</span></div></div></div>` +
+      `<div class="dlegend">${locs.map((l, i) => `<div class="dl"><i style="background:${DONUT_COLORS[i % DONUT_COLORS.length]}"></i>` +
+      `<b>${UI.esc(l.name)}</b><em>${Math.round((l.count / total) * 100)}%</em></div>`).join('')}</div></div>`;
+  }
+
+  /* ---------- field bars ---------- */
+  function renderFields() {
+    const rows = data.fields.filter((f) => f.count > 0);
+    if (!rows.length) {
+      fieldsEl.innerHTML = emptyCard('briefcase', 'No live listings yet', 'The field breakdown appears once internships are published.');
+      return;
+    }
+    const max = Math.max(...rows.map((f) => f.count));
+    fieldsEl.innerHTML = rows.map((f) => `<div class="hbar">
+      <div class="hb-top"><b title="${UI.esc(f.name)}">${UI.esc(f.name)}</b>
+        <span>${num(f.count)} · ${num(f.views)} views</span></div>
+      <div class="hb-track"><i data-w="${(f.count / max * 100).toFixed(1)}"></i></div></div>`).join('');
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      fieldsEl.querySelectorAll('.hb-track i').forEach((i) => { i.style.width = i.dataset.w + '%'; });
+    }));
+  }
+
+  /* ---------- popular listings ---------- */
+  function renderPopularRows() {
+    const list = data.popular.slice();
+    const engaged = list.filter((p) => p.views > 0 || p.saves > 0)
+      .sort((a, b) => (rank === 'views' ? b.views - a.views : b.saves - a.saves))
+      .slice(0, 10);
+    if (!engaged.length) {
+      popEl.innerHTML = emptyCard('pulse', 'No engagement recorded yet',
+        'Views and saves are counted on the live listings. Ranked internships appear as soon as students start browsing.');
+      return;
+    }
+    const maxRate = Math.max(...engaged.map((p) => (p.views ? p.saves / p.views : 0)), 0.01);
+    popEl.innerHTML = engaged.map((p, i) => {
+      const rate = p.views ? (p.saves / p.views) * 100 : 0;
+      return `<div class="prow" style="animation-delay:${i * 40}ms">
+        <span class="prank">${String(i + 1).padStart(2, '0')}</span>
+        <div class="pmain"><b title="${UI.esc(p.title)}">${UI.esc(p.title)}</b><span>${UI.esc(p.company)}</span></div>
+        <span class="pcell field" title="${UI.esc(p.field)}">${UI.esc(p.field || '—')}</span>
+        <span class="pcell loc" title="${UI.esc(p.city)}">${UI.esc(p.city || '—')}</span>
+        <span class="pnum">${num(p.views)}</span><span class="pnum">${num(p.saves)}</span>
+        <div class="pratio"><div class="hb-track"><i style="width:${(rate / (maxRate * 100) * 100).toFixed(0)}%;background:linear-gradient(90deg,var(--green),var(--amber))"></i></div>
+          <em>${rate.toFixed(rate < 10 ? 1 : 0)}%</em></div></div>`;
+    }).join('');
+  }
+
+  /* ---------- insights ---------- */
+  function chipRows(rows, noneMsg) {
+    if (!rows.length) return `<p class="none">${noneMsg}</p>`;
+    const max = Math.max(...rows.map((r) => r.value)) || 1;
+    return `<div class="chips">${rows.map((r) => `<div class="ichip">
+      <span class="nm" title="${UI.esc(r.name)}">${UI.esc(r.name)}</span>
+      <div class="hb-track"><i style="width:${(r.value / max * 100).toFixed(0)}%"></i></div>
+      <em>${num(r.value)}</em></div>`).join('')}</div>`;
+  }
+  function renderInsights() {
+    const ins = data.insights;
+    const rows = data.recentSuggestions;
+    insEl.innerHTML = `
+      <div><h4>Most viewed fields</h4>${chipRows(ins.viewsByField, 'No listing has been viewed yet.')}</div>
+      <div><h4>Most viewed locations</h4>${chipRows(ins.viewsByLocation, 'No listing has been viewed yet.')}</div>
+      <div><h4>Most saved fields</h4>${chipRows(ins.savesByField, 'Nothing has been saved yet.')}</div>
+      <div><h4>Recent suggestions</h4>${rows.length ? `<div class="suglist">${rows.map((s) => `
+        <a class="sr" href="${H('admin_pages/suggestions.html')}">
+          <span class="sr-av">${UI.esc(UI.initials(s.by))}</span>
+          <span class="sr-t"><b>${UI.esc(s.title)}</b><span>${UI.esc(s.company)} · by ${UI.esc(s.by)}</span></span>
+          <time>${UI.esc(UI.timeAgo(s.createdAt))}</time></a>`).join('')}</div>`
+        : '<p class="none">No suggestions submitted yet.'}</div>`;
+  }
+
+  /* ---------- render all ---------- */
+  function renderAll() {
+    renderMetrics();
+    lineChart(growthEl, {
+      labels: data.series.labels,
+      series: [{ name: 'New students', color: 'var(--green)', values: data.series.students, area: true }],
+      aria: 'New student registrations per ' + (range === 'all' ? 'month' : range === '90' ? 'week' : 'day'),
+      emptyTitle: 'No registrations in this window',
+      emptyMsg: 'The growth line appears once students sign up in the selected period.'
+    });
+    lineChart(activityEl, {
+      labels: data.series.labels,
+      series: [
+        { name: 'Added', color: 'var(--green)', values: data.series.added },
+        { name: 'Published', color: 'var(--green-deep)', values: data.series.published },
+        { name: 'Verified', color: 'var(--amber)', values: data.series.verified }
+      ],
+      aria: 'Internships added, published and verified per ' + (range === 'all' ? 'month' : range === '90' ? 'week' : 'day'),
+      emptyTitle: 'No listing activity in this window',
+      emptyMsg: 'This chart plots the day each internship was created, published and verified.'
+    });
+    renderDonut();
+    renderFields();
+    renderPopularRows();
+    renderInsights();
+  }
+
+  function showLoading() {
+    metricsEl.innerHTML = Array(6).fill('<div class="stat card"><div class="skel" style="width:32px;height:32px;border-radius:9px"></div>' +
+      '<div class="skel" style="height:10px;width:55%;margin-top:10px"></div>' +
+      '<div class="skel" style="height:22px;width:40%;margin-top:8px"></div></div>').join('');
+    growthEl.innerHTML = activityEl.innerHTML = '<div class="skel" style="height:200px"></div>';
+    locEl.innerHTML = '<div class="skel" style="height:160px;margin:12px 18px"></div>';
+    fieldsEl.innerHTML = '<div class="skel" style="height:170px"></div>';
+    popEl.innerHTML = '<div class="skel" style="height:190px;margin:0 18px 18px"></div>';
+    insEl.innerHTML = '<div class="skel" style="height:230px"></div>';
+  }
+
+  function showError() {
+    metricsEl.innerHTML = '';
+    dataLine.textContent = 'data unavailable';
+    agridEl.hidden = true;
+    errEl.hidden = false;
+  }
+
+  async function load() {
+    errEl.hidden = true;
+    agridEl.hidden = false;
+    showLoading();
+    redraws.clear();
+    let payload = null;
+    try { payload = await Analytics.summary(range); } catch (err) { console.error('Analytics load failed:', err); }
+    if (!payload || !payload.totals) { showError(); return; }
+    data = payload;
+    renderAll();
+  }
+
+  $('#rangeSeg').addEventListener('click', (e) => {
+    const b = e.target.closest('[data-range]');
+    if (!b || b.dataset.range === range) return;
+    range = b.dataset.range;
+    document.querySelectorAll('#rangeSeg button').forEach((x) => {
+      const on = x === b;
+      x.classList.toggle('is-on', on);
+      x.setAttribute('aria-pressed', String(on));
+    });
+    load();
+  });
+
+  document.addEventListener('click', (e) => {
+    const b = e.target.closest('#rankViews, #rankSaves');
+    if (!b || b.dataset.rank === rank) return;
+    rank = b.dataset.rank;
+    document.querySelectorAll('.ptoggle button').forEach((x) => {
+      const on = x === b;
+      x.classList.toggle('is-on', on);
+      x.setAttribute('aria-pressed', String(on));
+    });
+    renderPopularRows();
+  });
+  $('#retryBtn').addEventListener('click', () => load());
+
+  let rT;
+  window.addEventListener('resize', () => {
+    clearTimeout(rT);
+    rT = setTimeout(() => redraws.forEach((fn) => fn()), 160);
+  });
+  document.addEventListener('shell:admin:refresh', load);
+
+  await load();
+});
+</script>
+</body>
+</html>

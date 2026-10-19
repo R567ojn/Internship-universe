@@ -1,0 +1,726 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Admin · Internship editor · InternHub</title>
+<meta name="robots" content="noindex">
+<link rel="icon" href="../favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/css/ui.css">
+<link rel="stylesheet" href="../assets/css/app.css">
+</head>
+<body data-app="admin" data-nav="add">
+<div id="view">
+  <header class="ahead">
+    <div>
+      <nav class="breadcrumb" aria-label="Breadcrumb">
+        <a href="internships.html">Manage internships</a>
+        <svg width="12" height="12" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg>
+        <span id="crumb">New internship</span>
+      </nav>
+      <h1 id="pageTitle">Add internship<span class="dirty-dot" id="dirtyDot" hidden></span></h1>
+      <p class="sub">Everything here is what students see on the public listing. Only publish real opportunities you have verified with the company.</p>
+    </div>
+    <div class="ahead-r"><span class="save-state" id="saveState">Not saved yet</span></div>
+  </header>
+
+  <div class="suggest-grid editor-grid">
+    <div class="form-col">
+      <form id="edForm" novalidate>
+
+        <!-- 01 basics -->
+        <section class="fcard" data-sec="basics">
+          <div class="fhead"><span class="fstep">01</span><h3>Internship basics</h3><span class="opt">Required</span>
+            <button type="button" class="fchev" aria-expanded="true" aria-label="Collapse section"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button></div>
+          <div class="fbody"><div>
+            <div class="fgrid">
+              <div class="field span2" id="wTitle">
+                <label for="title_f">Internship title <span class="req">*</span><span class="count" id="titleCount">0 / 120</span></label>
+                <input class="input" id="title_f" maxlength="120" placeholder="e.g. Software Engineering Intern" autocomplete="off">
+                <span class="field-err">Add an internship title.</span>
+              </div>
+              <div class="field" id="wCompany">
+                <label for="company">Company / organisation <span class="req">*</span></label>
+                <input class="input" id="company" maxlength="120" placeholder="e.g. Afrimax Technologies" autocomplete="off">
+                <span class="field-err">Add the company name.</span>
+              </div>
+              <div class="field">
+                <label for="duration">Duration</label>
+                <input class="input" id="duration" maxlength="60" placeholder="e.g. 3 months" autocomplete="off">
+              </div>
+              <div class="field">
+                <label for="stipend">Stipend</label>
+                <input class="input" id="stipend" maxlength="60" placeholder="e.g. 120,000 FCFA / month" autocomplete="off">
+                <span class="hint">Leave blank if unpaid or not stated.</span>
+              </div>
+              <div class="field">
+                <label for="deadline">Application deadline</label>
+                <input class="input" type="date" id="deadline">
+                <span class="hint">Leave blank for a rolling deadline.</span>
+              </div>
+              <div class="field span2" id="wField">
+                <label>Field <span class="req">*</span></label>
+                <div class="fchips" id="fieldChips"></div>
+                <span class="field-err">Choose the field this role belongs to.</span>
+              </div>
+              <div class="field span2">
+                <label>Category <span class="opt-label">(optional)</span></label>
+                <div class="fchips" id="catChips"></div>
+              </div>
+            </div>
+          </div></div>
+        </section>
+
+        <!-- 02 visuals -->
+        <section class="fcard" data-sec="visuals">
+          <div class="fhead"><span class="fstep">02</span><h3>Visuals</h3><span class="opt">Image URL only</span>
+            <button type="button" class="fchev" aria-expanded="true" aria-label="Collapse section"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button></div>
+          <div class="fbody"><div>
+            <div class="field">
+              <label for="image">Cover image URL <span class="opt-label">(optional)</span></label>
+              <input class="input" id="image" type="url" maxlength="500" placeholder="https://…/image.jpg" autocomplete="off">
+              <span class="hint" id="imgHint">Paste a direct link to an image. If empty, we use the InternHub branded cover.</span>
+            </div>
+            <div class="img-slot">
+              <div class="img-thumb" id="imgThumb"><span class="mg">IH</span></div>
+              <p class="img-info"><b>Image preview</b>This is how the cover appears on the student-facing listing. Recommended: 16:9 or wider. InternHub stores the link, not the file.</p>
+            </div>
+          </div></div>
+        </section>
+
+        <!-- 03 company -->
+        <section class="fcard" data-sec="company">
+          <div class="fhead"><span class="fstep">03</span><h3>Company contact</h3><span class="opt">Shown on the listing</span>
+            <button type="button" class="fchev" aria-expanded="true" aria-label="Collapse section"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button></div>
+          <div class="fbody"><div>
+            <div class="fgrid">
+              <div class="field" id="wEmail">
+                <label for="contactEmail">Contact email</label>
+                <input class="input" id="contactEmail" type="email" maxlength="120" placeholder="careers@company.cm" autocomplete="off">
+                <span class="field-err">Enter a valid email address.</span>
+              </div>
+              <div class="field">
+                <label for="contactPhone">Contact phone</label>
+                <input class="input" id="contactPhone" maxlength="40" placeholder="+237 6XX XX XX XX" autocomplete="off">
+              </div>
+            </div>
+          </div></div>
+        </section>
+
+        <!-- 04 location -->
+        <section class="fcard" data-sec="loc">
+          <div class="fhead"><span class="fstep">04</span><h3>Location &amp; work mode</h3><span class="opt">Where the intern works</span>
+            <button type="button" class="fchev" aria-expanded="true" aria-label="Collapse section"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button></div>
+          <div class="fbody"><div>
+            <div class="fgrid">
+              <div class="field span2" id="wCity">
+                <label>City <span class="req">*</span></label>
+                <div class="fchips" id="cityChips"></div>
+                <span class="field-err">Pick a city — or “Other” to type one in.</span>
+              </div>
+              <div class="field span2" id="cityOtherWrap" hidden>
+                <label for="cityOther">City name</label>
+                <input class="input" id="cityOther" maxlength="80" placeholder="e.g. Kribi" autocomplete="off">
+              </div>
+              <div class="field">
+                <label for="area">Area / neighbourhood <span class="opt-label">(optional)</span></label>
+                <input class="input" id="area" maxlength="80" placeholder="e.g. Bonapriso, Mile 17, Bastos" autocomplete="off">
+              </div>
+              <div class="field" id="wMode">
+                <label>Work mode <span class="req">*</span></label>
+                <div class="mode-seg" id="modeSeg"></div>
+                <span class="field-err">Choose how the intern will work.</span>
+              </div>
+            </div>
+          </div></div>
+        </section>
+
+        <!-- 05 description -->
+        <section class="fcard" data-sec="desc">
+          <div class="fhead"><span class="fstep">05</span><h3>Description &amp; requirements</h3><span class="opt">What the role is</span>
+            <button type="button" class="fchev" aria-expanded="true" aria-label="Collapse section"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button></div>
+          <div class="fbody"><div>
+            <div class="fgrid">
+              <div class="field span2" id="wDesc">
+                <label for="description">Internship description <span class="req">*</span><span class="count" id="descCount">0 / 2000</span></label>
+                <textarea class="textarea" id="description" maxlength="2000" placeholder="What will the intern work on? Which team? What will they ship?"></textarea>
+                <span class="field-err">Describe the internship.</span>
+              </div>
+              <div class="field span2">
+                <label for="responsibilities">Responsibilities <span class="opt-label">(one per line)</span><span class="count" id="respCount">0 / 1500</span></label>
+                <textarea class="textarea" id="responsibilities" maxlength="1500" placeholder="- Build dashboards&#10;- Support the weekly reporting cycle"></textarea>
+              </div>
+              <div class="field span2">
+                <label for="requirements">Requirements <span class="opt-label">(one per line)</span><span class="count" id="reqCount">0 / 1500</span></label>
+                <textarea class="textarea" id="requirements" maxlength="1500" placeholder="- Final-year student&#10;- Comfortable with SQL"></textarea>
+              </div>
+            </div>
+          </div></div>
+        </section>
+
+        <!-- 06 application -->
+        <section class="fcard" data-sec="app">
+          <div class="fhead"><span class="fstep">06</span><h3>Application information</h3><span class="opt">Where students apply</span>
+            <button type="button" class="fchev" aria-expanded="true" aria-label="Collapse section"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button></div>
+          <div class="fbody"><div>
+            <div class="fgrid">
+              <div class="field span2" id="wApp">
+                <label for="applicationUrl">Application link <span class="req">*</span></label>
+                <input class="input" id="applicationUrl" type="url" maxlength="500" placeholder="https://company.cm/careers/intern" autocomplete="off">
+                <span class="hint" id="appHint">Direct link where students submit their application.</span>
+                <span class="field-err">Add where students will apply, as a full http(s) link.</span>
+              </div>
+              <div class="field span2">
+                <label for="sourceUrl">Source / verification link <span class="opt-label">(optional)</span></label>
+                <input class="input" id="sourceUrl" type="url" maxlength="500" placeholder="https://… the page this was found on" autocomplete="off">
+                <span class="hint" id="srcHint">Optional — the page where you confirmed this opportunity.</span>
+              </div>
+            </div>
+          </div></div>
+        </section>
+
+        <!-- 07 publishing -->
+        <section class="fcard" data-sec="pub">
+          <div class="fhead"><span class="fstep">07</span><h3>Publishing</h3><span class="opt">Trust &amp; placement</span>
+            <button type="button" class="fchev" aria-expanded="true" aria-label="Collapse section"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button></div>
+          <div class="fbody"><div>
+            <label class="sw-row">
+              <span class="info"><b>Verified internship</b><span>Shows the trust indicator across InternHub. Only enable once you have confirmed the opportunity with the company directly.</span></span>
+              <span class="switch"><input type="checkbox" id="fVerified"><span class="track"></span></span>
+            </label>
+            <label class="sw-row">
+              <span class="info"><b>Featured</b><span>Stronger placement in Browse and on the landing page.</span></span>
+              <span class="switch"><input type="checkbox" id="fFeatured"><span class="track"></span></span>
+            </label>
+          </div></div>
+        </section>
+      </form>
+    </div>
+
+    <aside class="pv-col">
+      <p class="eyebrow pv-label"><span class="dot"></span>Live student preview
+        <button type="button" class="pv-toggle" id="pvToggle">Preview</button></p>
+      <article class="pv-card" id="pvCard"></article>
+      <p class="hint" id="pvNote">Rendered with the same card students see in Browse. Nothing is written until you save.</p>
+    </aside>
+  </div>
+
+  <!-- save bar + success modal live inside #view because Shell.init() re-attaches only that subtree -->
+  <div class="savebar">
+    <div class="savebar-l">
+      <button type="button" class="btn btn-ghost btn-sm" id="discardBtn">
+        <svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2M6.5 7l1 13h9l1-13M10 11v5m4-5v5"/></svg>Discard</button>
+      <a class="btn btn-ghost btn-sm only-mobile" href="internships.html">Back to list</a>
+    </div>
+    <button type="button" class="btn btn-dark" id="draftBtn">
+      <svg width="15" height="15" viewBox="0 0 24 24" aria-hidden="true"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><path d="M17 21v-8H7v8M7 3v5h8"/></svg><span id="draftLabel">Save draft</span></button>
+    <button type="button" class="btn btn-primary" id="publishBtn">
+      <svg width="15" height="15" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 3 10.5 13.5M21 3l-7 18-3.5-7.5L3 10l18-7Z"/></svg><span id="publishLabel">Publish internship</span></button>
+  </div>
+
+  <div class="modal-backdrop" id="doneModal" hidden>
+    <div class="modal modal--success" role="dialog" aria-modal="true" aria-labelledby="dmTitle">
+      <button type="button" class="dm-x" data-close aria-label="Close"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+      <div class="dm-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m4.5 12.5 5 5 10-11"/></svg></div>
+      <h3 class="modal-title" id="dmTitle">Internship published</h3>
+      <p class="modal-msg" id="dmMsg"></p>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-ghost" id="anotherBtn">Add another</button>
+        <a class="btn btn-primary" href="internships.html">Manage internships</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+<script src="../assets/js/firebase-config.js"></script>
+<script src="../assets/js/lib/ui.js"></script>
+<script src="../assets/js/services/platform.js"></script>
+<script src="../assets/js/services/auth.js"></script>
+<script src="../assets/js/services/internships.js"></script>
+<script src="../assets/js/services/suggestions.js"></script>
+<script src="../assets/js/services/users.js"></script>
+<script src="../assets/js/services/notifications.js"></script>
+<script src="../assets/js/lib/notify-ui.js"></script>
+<script src="../assets/js/lib/shell.js"></script>
+<script src="../assets/js/lib/router.js"></script>
+<script>
+window.onReady(async function () {
+  if (!(await Auth.requireAdmin())) return;
+
+  const $ = (s) => document.querySelector(s);
+  const params = new URLSearchParams(location.search);
+  let id = params.get('id') || '';
+
+  const el = {
+    form: $('#edForm'), crumb: $('#crumb'), heading: $('#pageTitle'), saveState: $('#saveState'),
+    dirtyDot: $('#dirtyDot'), pv: $('#pvCard'), imgThumb: $('#imgThumb'), imgHint: $('#imgHint'),
+    fieldChips: $('#fieldChips'), catChips: $('#catChips'), cityChips: $('#cityChips'),
+    cityOtherWrap: $('#cityOtherWrap'), cityOther: $('#cityOther'), modeSeg: $('#modeSeg'),
+    draftBtn: $('#draftBtn'), publishBtn: $('#publishBtn'), draftLabel: $('#draftLabel'),
+    publishLabel: $('#publishLabel'), done: $('#doneModal'), doneMsg: $('#dmMsg')
+  };
+
+  // Every text input mirrors a real Firestore field on `internships`.
+  const F = {
+    title: '', company: '', image: '', field: '', category: '', city: '', area: '', workMode: '',
+    duration: '', stipend: '', description: '', responsibilities: '', requirements: '',
+    applicationUrl: '', sourceUrl: '', contactEmail: '', contactPhone: '', deadline: '',
+    verified: false, featured: false
+  };
+  const TEXT = ['title_f:title', 'company:company', 'duration:duration', 'stipend:stipend', 'area:area',
+    'description:description', 'responsibilities:responsibilities', 'requirements:requirements',
+    'applicationUrl:applicationUrl', 'sourceUrl:sourceUrl', 'contactEmail:contactEmail',
+    'contactPhone:contactPhone', 'deadline:deadline', 'cityOther:city'];
+  const COUNTS = { title_f: ['titleCount', 120], description: ['descCount', 2000],
+    responsibilities: ['respCount', 1500], requirements: ['reqCount', 1500] };
+  const MODE_ICONS = { 'On-site': 'building', 'Hybrid': 'users', 'Remote': 'globe' };
+  const URL_RE = /^https?:\/\/.+\..+/;
+  const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  const DIRTY = new Set();
+  let KNOWN_CITIES = [];
+  let otherCity = false;
+  let imgOk = false;
+  let imgT = null;
+  let saved = false;
+  let isLive = false;
+  let editing = null;
+
+  const localISODate = (d) =>
+    `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+
+  /* ---------- save state ---------- */
+  function setSaveState(text, cls) {
+    el.saveState.textContent = text;
+    el.saveState.className = 'save-state' + (cls ? ' ' + cls : '');
+  }
+  function markDirty() {
+    saved = false;
+    setSaveState('Unsaved changes', 'warn');
+    el.dirtyDot.hidden = false;
+  }
+  function markClean(text) {
+    saved = true;
+    DIRTY.clear();
+    setSaveState(text, 'ok');
+    el.dirtyDot.hidden = true;
+  }
+
+  /* ---------- live preview ---------- */
+  function preview() {
+    const media = (F.image && imgOk)
+      ? `<img src="${UI.esc(F.image)}" alt="">`
+      : `<div class="noimg">${UI.esc(UI.initials(F.company || 'IH'))}</div>`;
+    const loc = [F.city, F.area].filter(Boolean).join(' · ');
+    const badges = [];
+    badges.push(isLive ? '<span class="bdg bdg-new">Just added</span>' : '<span class="bdg bdg-pend">Draft</span>');
+    if (F.verified) badges.push('<span class="bdg bdg-ver">Verified</span>');
+    if (F.featured) badges.push('<span class="bdg bdg-soon">Featured</span>');
+    const meta = [
+      F.field ? `<li>${UI.icon(UI.fieldIcon(F.field), 13)}${UI.esc(F.field)}</li>`
+              : `<li class="ph">${UI.icon('briefcase', 13)}Field</li>`,
+      loc ? `<li>${UI.icon('pin', 13)}${UI.esc(loc)}</li>`
+          : `<li class="ph">${UI.icon('pin', 13)}City</li>`,
+      F.workMode ? `<li>${UI.icon('globe', 13)}${UI.esc(F.workMode)}</li>`
+                 : `<li class="ph">${UI.icon('globe', 13)}Work mode</li>`,
+      F.duration ? `<li>${UI.icon('clock', 13)}${UI.esc(F.duration)}</li>` : '',
+      F.stipend ? `<li>${UI.icon('coin', 13)}${UI.esc(F.stipend)}</li>` : ''
+    ].filter(Boolean).join('');
+    el.pv.innerHTML = `<div class="pv-media">${media}
+        <div class="ic-badges">${badges.join('')}</div>
+        <span class="mono-av">${UI.esc(UI.initials(F.company || 'IH'))}</span></div>
+      <div class="pv-body">
+        <h3 class="${F.title ? '' : 'ph'}">${UI.esc(F.title || 'Internship title')}</h3>
+        <p class="pv-co ${F.company ? '' : 'ph'}">${UI.icon('building', 13)}${UI.esc(F.company || 'Company name')}${F.verified ? `<span class="vcheck">${UI.icon('check', 9)}</span>` : ''}</p>
+        <ul class="pv-meta">${meta}</ul>
+      </div>
+      <div class="pv-foot"><span>${UI.esc(F.deadline ? 'Closes ' + UI.fmtDate(F.deadline) : 'Rolling deadline')}</span>
+        <span class="mono">${id && editing && editing.sourceSuggestionId ? 'From a student suggestion' : 'Admin added'}</span></div>`;
+  }
+
+  /* ---------- controls from the live taxonomy ---------- */
+  function buildControls(cfg) {
+    const chips = (node, list, attr, cls, current) => {
+      const vals = [...new Set([...list, ...(current && !list.includes(current) ? [current] : [])])];
+      node.innerHTML = vals.map((v) =>
+        `<button type="button" class="${cls}" data-${attr}="${UI.esc(v)}">${UI.esc(v)}</button>`).join('');
+    };
+    el.fieldChips.innerHTML = (cfg.fields || []).map((f) =>
+      `<button type="button" class="fchip" data-field="${UI.esc(f)}">${UI.icon(UI.fieldIcon(f), 14)}${UI.esc(f)}</button>`).join('');
+    chips(el.catChips, cfg.categories || [], 'cat', 'cchip', F.category);
+    KNOWN_CITIES = (cfg.locations || []).slice();
+    chips(el.cityChips, KNOWN_CITIES, 'city', 'cchip', F.city);
+    el.cityChips.insertAdjacentHTML('beforeend', '<button type="button" class="cchip" data-city="__other">Other</button>');
+    el.modeSeg.innerHTML = (cfg.workModes || ['On-site', 'Hybrid', 'Remote']).map((m) =>
+      `<button type="button" data-mode="${UI.esc(m)}">${UI.icon(MODE_ICONS[m] || 'briefcase', 14)}${UI.esc(m)}</button>`).join('');
+    if (F.field && !(cfg.fields || []).includes(F.field)) {
+      el.fieldChips.insertAdjacentHTML('beforeend',
+        `<button type="button" class="fchip" data-field="${UI.esc(F.field)}">${UI.icon(UI.fieldIcon(F.field), 14)}${UI.esc(F.field)}</button>`);
+    }
+  }
+
+  function syncControls() {
+    el.fieldChips.querySelectorAll('[data-field]').forEach((b) => b.classList.toggle('is-on', b.dataset.field === F.field));
+    el.catChips.querySelectorAll('[data-cat]').forEach((b) => b.classList.toggle('is-on', b.dataset.cat === F.category));
+    const other = otherCity || (!!F.city && !KNOWN_CITIES.includes(F.city));
+    el.cityOtherWrap.hidden = !other;
+    el.cityChips.querySelectorAll('[data-city]').forEach((b) => {
+      b.classList.toggle('is-on', b.dataset.city === '__other' ? other : F.city === b.dataset.city);
+    });
+    el.modeSeg.querySelectorAll('[data-mode]').forEach((b) => b.classList.toggle('is-on', b.dataset.mode === F.workMode));
+    $('#fVerified').checked = F.verified;
+    $('#fFeatured').checked = F.featured;
+  }
+
+  /* ---------- image url (debounced probe) ---------- */
+  function renderThumb() {
+    el.imgThumb.innerHTML = '';
+    if (!(F.image && imgOk)) {
+      const mg = document.createElement('span');
+      mg.className = 'mg';
+      mg.textContent = UI.initials(F.company || 'IH');
+      el.imgThumb.appendChild(mg);
+      return;
+    }
+    const img = document.createElement('img');
+    img.src = F.image; img.alt = '';
+    img.addEventListener('error', () => {
+      imgOk = false;
+      el.imgHint.classList.remove('good');
+      el.imgHint.classList.add('bad');
+      el.imgHint.textContent = "Couldn't load that URL. We'll use the branded cover instead.";
+      renderThumb(); preview();
+    });
+    el.imgThumb.appendChild(img);
+  }
+  function probeImage(markUnsaved) {
+    if (markUnsaved) { DIRTY.add('image'); markDirty(); }
+    el.imgHint.classList.remove('good', 'bad');
+    clearTimeout(imgT);
+    if (!F.image) {
+      imgOk = false;
+      el.imgHint.textContent = 'Paste a direct link to an image. If empty, we use the InternHub branded cover.';
+      renderThumb(); preview(); return;
+    }
+    if (!URL_RE.test(F.image)) {
+      imgOk = false;
+      el.imgHint.textContent = 'A link should start with http:// or https://';
+      el.imgHint.classList.add('bad');
+      renderThumb(); preview(); return;
+    }
+    imgOk = false;
+    el.imgHint.textContent = 'Checking image…';
+    el.imgThumb.classList.add('loading');
+    imgT = setTimeout(() => {
+      const t = new Image();
+      t.onload = () => {
+        imgOk = true; el.imgThumb.classList.remove('loading');
+        el.imgHint.textContent = 'Image loaded — preview updated.';
+        el.imgHint.classList.add('good'); renderThumb(); preview();
+      };
+      t.onerror = () => {
+        imgOk = false; el.imgThumb.classList.remove('loading');
+        el.imgHint.textContent = "Couldn't load that URL. We'll use the branded cover instead.";
+        el.imgHint.classList.add('bad'); renderThumb(); preview();
+      };
+      t.src = F.image;
+    }, 450);
+  }
+  function onImageInput() {
+    F.image = $('#image').value.trim();
+    probeImage(true);
+  }
+
+  /* ---------- validation ---------- */
+  function setErr(key, msg) {
+    const w = document.getElementById(key);
+    if (w) w.classList.toggle('is-invalid', !!msg);
+  }
+  function validate(mode) {
+    const publish = mode === 'publish';
+    const errs = [];
+    const bad = (key, ok, msg) => { setErr(key, ok ? '' : msg); if (!ok) errs.push(key); };
+    bad('wTitle', !!F.title.trim(), 'Add an internship title.');
+    bad('wCompany', !!F.company.trim(), 'Add the company name.');
+    const app = F.applicationUrl.trim();
+    bad('wApp',
+      publish ? URL_RE.test(app) : !app || URL_RE.test(app),
+      app ? 'Use a full http(s) link.' : 'Add where students will apply.');
+    const email = F.contactEmail.trim();
+    bad('wEmail', !email || EMAIL_RE.test(email), 'Enter a valid email address.');
+    if (publish) {
+      bad('wField', !!F.field, 'Choose the field this role belongs to.');
+      bad('wCity', !!F.city.trim(), 'Pick a city — or “Other” to type one in.');
+      bad('wMode', !!F.workMode, 'Choose how the intern will work.');
+      bad('wDesc', !!F.description.trim(), 'Describe the internship.');
+    }
+    return errs;
+  }
+  function urlHint(node, val, orig) {
+    node.classList.remove('good', 'bad');
+    if (!val) { node.textContent = orig; return; }
+    if (URL_RE.test(val)) { node.textContent = 'Link looks good.'; node.classList.add('good'); }
+    else { node.textContent = 'Hmm — a link should start with http:// or https://'; node.classList.add('bad'); }
+  }
+  const ORIG = {
+    app: $('#appHint').textContent,
+    src: $('#srcHint').textContent
+  };
+
+  /* ---------- payload ---------- */
+  function payload(published) {
+    const t = (v) => v.trim();
+    return {
+      title: t(F.title), company: t(F.company), image: t(F.image),
+      field: F.field, category: F.category, city: t(F.city), area: t(F.area),
+      workMode: F.workMode || 'On-site', duration: t(F.duration), stipend: t(F.stipend),
+      description: t(F.description), responsibilities: t(F.responsibilities), requirements: t(F.requirements),
+      applicationUrl: t(F.applicationUrl), sourceUrl: t(F.sourceUrl),
+      contactEmail: t(F.contactEmail), contactPhone: t(F.contactPhone),
+      deadline: F.deadline ? new Date(F.deadline).toISOString() : null,
+      published,
+      verified: F.verified, featured: F.featured
+    };
+  }
+
+  async function save(published) {
+    const btn = published ? el.publishBtn : el.draftBtn;
+    const errs = validate(published ? 'publish' : 'draft');
+    if (errs.length) {
+      setSaveState('Check the highlighted fields', 'warn');
+      UI.toast(published ? 'A few required fields still need attention.' : 'Add a title and company before saving.', 'error');
+      const first = document.getElementById(errs[0]);
+      if (first) {
+        const card = first.closest('.fcard');
+        if (card && card.classList.contains('collapsed')) {
+          card.classList.remove('collapsed');
+          const chev = card.querySelector('.fchev');
+          if (chev) { chev.setAttribute('aria-expanded', 'true'); chev.setAttribute('aria-label', 'Collapse section'); }
+        }
+        first.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        const input = first.querySelector('input,textarea');
+        if (input) input.focus({ preventScroll: true });
+      }
+      return;
+    }
+    const data = payload(published);
+    btn.classList.add('is-loading'); btn.disabled = true;
+    setSaveState(published ? 'Publishing…' : 'Saving…', 'warn');
+    let res;
+    if (id) {
+      // Content through update(); flags through the setters that keep
+      // status / publishedAt / verifiedAt and the activity log in step.
+      const { published: _p, verified: _v, featured: _f, ...content } = data;
+      res = await Internships.update(id, content);
+      if (res && res.ok) {
+        if (!!editing.published !== published) await Internships.setPublished(id, published);
+        if (!!editing.verified !== F.verified) await Internships.setVerified(id, F.verified);
+        if (!!editing.featured !== F.featured) await Internships.setFeatured(id, F.featured);
+      }
+    } else {
+      res = await Internships.create(data);
+      if (res && res.ok && res.id) {
+        id = res.id;
+        history.replaceState(null, '', `internship-editor.html?id=${encodeURIComponent(id)}`);
+        el.crumb.textContent = F.title.trim() || 'Edit listing';
+      }
+    }
+    btn.classList.remove('is-loading'); btn.disabled = false;
+    if (!res || !res.ok) {
+      setSaveState('Not saved', 'warn');
+      UI.toast((res && res.error) || 'Could not save this internship.', 'error');
+      return;
+    }
+    editing = Object.assign(editing || {}, data);
+    isLive = published;
+    el.publishLabel.textContent = published ? 'Save & keep live' : 'Save & publish';
+    el.heading.firstChild.textContent = id ? 'Edit internship' : 'Add internship';
+    preview();
+    if (published) {
+      markClean('Published');
+      el.doneMsg.textContent = `“${data.title}” at ${data.company} is now live across InternHub${F.verified ? ' with the verified trust indicator' : ''}${F.featured ? ' and featured in discovery' : ''}.`;
+      openDone();
+    } else {
+      markClean('Draft saved');
+      UI.toast('Draft saved — it stays out of Browse until you publish.');
+    }
+    document.dispatchEvent(new CustomEvent('shell:admin:refresh'));
+  }
+
+  function openDone() {
+    el.done.hidden = false;
+    requestAnimationFrame(() => el.done.classList.add('is-open'));
+    document.body.style.overflow = 'hidden';
+  }
+  function closeDone() {
+    el.done.classList.remove('is-open');
+    document.body.style.overflow = '';
+    setTimeout(() => { el.done.hidden = true; }, 220);
+  }
+
+  function resetForm() {
+    Object.keys(F).forEach((k) => { F[k] = typeof F[k] === 'boolean' ? false : ''; });
+    el.form.reset();
+    Object.keys(COUNTS).forEach((fid) => {
+      const [cid, max] = COUNTS[fid];
+      $('#' + cid).textContent = `0 / ${max}`;
+    });
+    ['wTitle', 'wCompany', 'wApp', 'wEmail', 'wField', 'wCity', 'wMode', 'wDesc'].forEach((k) => setErr(k, ''));
+    $('#appHint').textContent = ORIG.app; $('#srcHint').textContent = ORIG.src;
+    el.imgHint.textContent = 'Paste a direct link to an image. If empty, we use the InternHub branded cover.';
+    el.imgHint.classList.remove('good', 'bad');
+    imgOk = false; DIRTY.clear(); saved = false;
+    otherCity = false;
+    id = '';
+    editing = null;
+    isLive = false;
+    history.replaceState(null, '', 'internship-editor.html');
+    el.heading.firstChild.textContent = 'Add internship';
+    el.crumb.textContent = 'New internship';
+    el.draftLabel.textContent = 'Save draft';
+    el.publishLabel.textContent = 'Publish internship';
+    setSaveState('Not saved yet', '');
+    buildControls(Settings.data || {});
+    syncControls(); renderThumb(); preview();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function discard() {
+    if (!DIRTY.size) { UI.toast('Nothing to discard yet.'); return; }
+    UI.confirm({
+      title: id ? 'Leave without saving?' : 'Discard this internship?',
+      message: id
+        ? 'Your edits to this listing will be lost. The saved version stays as it is.'
+        : "You'll lose everything you've entered. This cannot be undone.",
+      confirmLabel: id ? 'Discard changes' : 'Discard',
+      danger: true
+    }).then((ok) => {
+      if (!ok) return;
+      if (id) { location.href = 'internships.html'; return; }
+      resetForm();
+      UI.toast('Discarded — start fresh.');
+    });
+  }
+
+  /* ---------- load existing listing ---------- */
+  const cfg = (await Settings.load()) || {};
+  if (id) {
+    editing = await Internships.getAny(id);
+    if (!editing) UI.toast('We couldn’t find that internship — starting a new one.', 'error');
+  }
+  if (editing) {
+    Object.keys(F).forEach((k) => { if (editing[k] !== undefined && editing[k] !== null) F[k] = editing[k]; });
+    const dl = UI.toDate(editing.deadline);
+    F.deadline = dl ? localISODate(dl) : '';
+    isLive = !!editing.published;
+    el.heading.firstChild.textContent = 'Edit internship';
+    el.crumb.textContent = editing.title || 'Edit listing';
+    el.draftLabel.textContent = 'Save as draft';
+    el.publishLabel.textContent = editing.published ? 'Save & keep live' : 'Save & publish';
+  }
+  $('#fVerified').checked = F.verified;
+  $('#fFeatured').checked = F.featured;
+
+  buildControls(cfg);
+
+  const g = (fid) => document.getElementById(fid);
+  g('title_f').value = F.title; g('company').value = F.company; g('duration').value = F.duration;
+  g('stipend').value = F.stipend; g('area').value = F.area; g('description').value = F.description;
+  g('responsibilities').value = F.responsibilities; g('requirements').value = F.requirements;
+  g('applicationUrl').value = F.applicationUrl; g('sourceUrl').value = F.sourceUrl;
+  g('contactEmail').value = F.contactEmail; g('contactPhone').value = F.contactPhone;
+  g('image').value = F.image; g('cityOther').value = KNOWN_CITIES.includes(F.city) ? '' : F.city;
+  if (F.deadline) g('deadline').value = F.deadline;
+  Object.keys(COUNTS).forEach((fid) => {
+    const [cid, max] = COUNTS[fid];
+    $('#' + cid).textContent = `${g(fid).value.length} / ${max}`;
+  });
+  urlHint($('#appHint'), F.applicationUrl, ORIG.app);
+  urlHint($('#srcHint'), F.sourceUrl, ORIG.src);
+  if (F.image) probeImage(false); else renderThumb();
+  syncControls(); preview();
+
+  /* ---------- wiring ---------- */
+  TEXT.forEach((pair) => {
+    const [fid, key] = pair.split(':');
+    const node = g(fid);
+    node.addEventListener('input', () => {
+      F[key] = node.value;
+      DIRTY.add(key); markDirty();
+      if (COUNTS[fid]) {
+        const [cid, max] = COUNTS[fid];
+        $('#' + cid).textContent = `${node.value.length} / ${max}`;
+      }
+      if (fid === 'applicationUrl') urlHint($('#appHint'), node.value.trim(), ORIG.app);
+      if (fid === 'sourceUrl') urlHint($('#srcHint'), node.value.trim(), ORIG.src);
+      if (fid === 'cityOther') { F.city = node.value.trim(); otherCity = true; }
+      node.closest('.field').classList.remove('is-invalid');
+      preview();
+    });
+  });
+  $('#image').addEventListener('input', onImageInput);
+  $('#deadline').min = localISODate(new Date());
+
+  el.fieldChips.addEventListener('click', (e) => {
+    const b = e.target.closest('[data-field]'); if (!b) return;
+    F.field = F.field === b.dataset.field ? '' : b.dataset.field;
+    DIRTY.add('field'); markDirty(); syncControls(); preview();
+  });
+  el.catChips.addEventListener('click', (e) => {
+    const b = e.target.closest('[data-cat]'); if (!b) return;
+    F.category = F.category === b.dataset.cat ? '' : b.dataset.cat;
+    DIRTY.add('category'); markDirty(); syncControls();
+  });
+  el.cityChips.addEventListener('click', (e) => {
+    const b = e.target.closest('[data-city]'); if (!b) return;
+    const other = b.dataset.city === '__other';
+    otherCity = other;
+    F.city = other ? el.cityOther.value.trim() : b.dataset.city;
+    DIRTY.add('city'); markDirty(); syncControls(); preview();
+    if (other) el.cityOther.focus();
+  });
+  el.modeSeg.addEventListener('click', (e) => {
+    const b = e.target.closest('[data-mode]'); if (!b) return;
+    F.workMode = b.dataset.mode;
+    DIRTY.add('workMode'); markDirty(); syncControls(); preview();
+  });
+  $('#fVerified').addEventListener('change', (e) => { F.verified = e.target.checked; DIRTY.add('verified'); markDirty(); preview(); });
+  $('#fFeatured').addEventListener('change', (e) => { F.featured = e.target.checked; DIRTY.add('featured'); markDirty(); preview(); });
+
+  document.querySelectorAll('.fcard .fhead').forEach((h) => {
+    h.addEventListener('click', () => {
+      const card = h.closest('.fcard');
+      const collapsed = card.classList.toggle('collapsed');
+      const chev = h.querySelector('.fchev');
+      chev.setAttribute('aria-expanded', String(!collapsed));
+      chev.setAttribute('aria-label', collapsed ? 'Expand section' : 'Collapse section');
+    });
+  });
+
+  $('#pvToggle').addEventListener('click', () => {
+    const card = $('.pv-card'), note = $('#pvNote');
+    const hidden = card.style.display === 'none';
+    card.style.display = hidden ? '' : 'none';
+    note.style.display = hidden ? '' : 'none';
+    $('#pvToggle').textContent = hidden ? 'Preview' : 'Hide';
+  });
+
+  el.draftBtn.addEventListener('click', () => save(false));
+  el.publishBtn.addEventListener('click', () => save(true));
+  $('#discardBtn').addEventListener('click', discard);
+  $('#anotherBtn').addEventListener('click', () => { closeDone(); resetForm(); });
+  el.form.addEventListener('submit', (e) => { e.preventDefault(); save(true); });
+  el.done.addEventListener('click', (e) => { if (e.target === el.done || e.target.closest('[data-close]')) closeDone(); });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !el.done.hidden) closeDone(); });
+  window.addEventListener('beforeunload', (e) => {
+    if (DIRTY.size && !saved) { e.preventDefault(); e.returnValue = ''; }
+  });
+});
+</script>
+</body>
+</html>
